@@ -1,0 +1,81 @@
+/* ===== CSS RESET ===== */
+
+/* box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* убираем отступы */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* базовые настройки документа */
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+/* тело документа */
+body {
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeSpeed;
+  background: #000;
+}
+
+/* медиа */
+img,
+canvas,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* формы */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+/* кнопки */
+button {
+  cursor: pointer;
+}
+
+/* списки */
+ul,
+ol {
+  list-style: none;
+}
+
+/* ссылки */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* таблицы */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
