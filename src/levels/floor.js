@@ -2,7 +2,6 @@ import * as THREE from "three";
 import Environment from "./environment";
 
 export default class Floor extends Environment {
-  #floor;
   constructor(options = {}) {
     super(options);
 
@@ -11,8 +10,6 @@ export default class Floor extends Environment {
     this.levelGroup = levelGroup;
     this.y = y;
     this.cells = cells;
-   
-    this.#floor = [];
     this.createFloor()
   }
 
@@ -34,10 +31,8 @@ export default class Floor extends Environment {
     this.instanced.instanceMatrix.needsUpdate = true;
     this.instanced.userData = this.getUserData();
 
-    this.#floor = this.instanced;
+    this.setMesh(this.instanced);
     this.levelGroup.add(this.instanced);
   }
-  getFloor() {
-    return this.#floor;
-  }
+  
 }

@@ -1,13 +1,24 @@
 import * as THREE from "three";
 
 export default class Environment {
-  constructor({ cols, rows, cellSize, gap, y, setCell, thickness = 0.1, color = "#ffffff" } = {}) {
+  #mesh;
+  #cells;
+  constructor({
+    cols,
+    rows,
+    cellSize,
+    gap,
+    y,
+    setCell,
+    thickness = 0.1,
+    color = "#ffffff",
+  } = {}) {
     this.cols = cols;
     this.rows = rows;
     this.cellSize = cellSize;
     this.gap = gap;
     this.y = y;
-    this.setCell = setCell
+    this.setCell = setCell;
     this.count = cols * rows;
     this.thickness = thickness;
     this.color = color;
@@ -32,7 +43,10 @@ export default class Environment {
       this.thickness,
       this.cellSize,
     );
-    this.material = new THREE.MeshBasicMaterial({ color: this.color });
+    this.material = new THREE.MeshBasicMaterial({
+      color: this.color,
+      
+    });
 
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
@@ -66,5 +80,12 @@ export default class Environment {
   }
   cellKey({ col, row }) {
     return `${col}:${row}`;
+  }
+  create() {
+    return { instanced: this.#mesh, cells: this.#cells };
+  }
+  setMesh(mesh, cells) {
+    this.#mesh = mesh;
+    this.#cells = cells;
   }
 }

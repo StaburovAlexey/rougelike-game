@@ -3,7 +3,6 @@ import Environment from "./environment";
 
 export default class Doors extends Environment {
   #doors;
-  #doorsMesh;
   constructor(options = {}) {
     super({ ...options, thickness: 1.2, color: "#ffffff" });
 
@@ -111,14 +110,11 @@ export default class Doors extends Environment {
     this.instanced.instanceColor.needsUpdate = true;
 
     this.#doors = doors;
-    this.#doorsMesh = this.instanced;
+    this.setMesh(this.instanced, this.#doors);
     this.levelGroup.add(this.instanced);
   }
 
   getDoors() {
     return this.#doors;
-  }
-  getInstanceDoors() {
-    return this.#doorsMesh;
   }
 }

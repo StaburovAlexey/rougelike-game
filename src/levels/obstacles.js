@@ -59,7 +59,7 @@ export default class Obstacles extends Environment {
       const cell = allowed.splice(this.randomInt(allowed.length), 1)[0];
       const x = this.getX(cell);
       const z = this.getZ(cell);
-      this.dummy.scale.set(0.7, 1, 0.7);
+      this.dummy.scale.set(0.7, 1.5, 0.7);
       this.dummy.position.set(x, this.y + (this.cellSize + 0.1) / 2, z);
       this.dummy.updateMatrix();
       this.instanced.setMatrixAt(i, this.dummy.matrix);
@@ -69,10 +69,8 @@ export default class Obstacles extends Environment {
     }
 
     this.instanced.instanceMatrix.needsUpdate = true;
+    this.setMesh(this.instanced,this.#obstacles);
     this.levelGroup.add(this.instanced);
   }
 
-  getObstacles() {
-    return this.#obstacles;
-  }
 }

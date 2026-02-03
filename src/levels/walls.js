@@ -2,7 +2,6 @@ import * as THREE from "three";
 import Environment from "./environment";
 
 export default class Walls extends Environment {
-  #wall;
   constructor(options = {}) {
     super({ ...options });
 
@@ -21,7 +20,6 @@ export default class Walls extends Environment {
     this.cells = cells;
     this.skipCells = skipCells;
     this.setCell = setCell;
-    this.#wall = null;
     this.cols = cols;
     this.rows = rows;
 
@@ -69,10 +67,8 @@ export default class Walls extends Environment {
     this.instanced.instanceMatrix.needsUpdate = true;
     this.instanced.userData = this.getUserData();
 
-    this.#wall = this.instanced;
+    this.setMesh(this.instanced);
     this.levelGroup.add(this.instanced);
   }
-  getWall() {
-    return this.#wall;
-  }
+  
 }

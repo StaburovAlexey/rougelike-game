@@ -65,14 +65,11 @@ export default class Loot extends Environment {
       this.instanced.setMatrixAt(i, this.dummy.matrix);
 
       this.setCell(cell, { type: "loot" });
-      this.#loot.push(cell);
     }
 
     this.instanced.instanceMatrix.needsUpdate = true;
+    this.setMesh(this.instanced);
     this.levelGroup.add(this.instanced);
   }
 
-  getLoot() {
-    return this.#loot;
-  }
 }

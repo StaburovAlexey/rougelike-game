@@ -20,19 +20,54 @@ const mouse = new THREE.Vector2();
 const camera = new Camera(size);
 const controls = new Controls(camera.getCamera(), renderer.domElement);
 const level = new CreateLevel();
-console.log('Level created:', level.getLevel());
 sceneManager.add(level.getLevel());
-window.addEventListener('pointerdown', (e) => {
+
+const floor = level.state.floor.instanced;
+const hoverColor = new THREE.Color("#1fc51f");
+const baseColor = new THREE.Color(floor.material.color);
+let lastHoverId = null;
+
+function handlePointerMove(e) {
   mouse.x = (e.clientX / innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera.getCamera());
 
-  const hit = raycaster.intersectObject(level.floor, false)[0];
+  const hit = raycaster.intersectObject(floor, false)[0];
+  if (!hit) {
+    if (lastHoverId !== null) {
+      floor.setColorAt(lastHoverId, baseColor);
+      floor.instanceColor.needsUpdate = true;
+      lastHoverId = null;
+    }
+    return;
+  }
+
+  const id = hit.instanceId;
+  if (id !== lastHoverId) {
+    if (lastHoverId !== null) {
+      floor.setColorAt(lastHoverId, baseColor);
+    }
+    floor.setColorAt(id, hoverColor);
+    floor.instanceColor.needsUpdate = true;
+    lastHoverId = id;
+  }
+}
+
+function handlePointerDown(e) {
+  mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera.getCamera());
+
+  const hit = raycaster.intersectObject(floor, false)[0];
   if (!hit) return;
   const cell = level.idToGrid(hit.instanceId);
-  console.log(cell.content);
-});
+  console.log(cell);
+}
+
+window.addEventListener('pointerdown', handlePointerDown);
+window.addEventListener('pointermove', handlePointerMove);
 
 let last = performance.now();
 function loop(now) {
