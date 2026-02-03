@@ -1,5 +1,7 @@
-import * as THREE from 'three';
-
+import * as THREE from "three";
+import Floor from "./floor";
+import Doors from "./doors";
+import Walls from "./walls";
 export default class CreateLevel {
   constructor({ cols = 10, rows = 10, cellSize = 1, gap = 0.1, y = 0 } = {}) {
     this.cols = cols;
@@ -9,11 +11,41 @@ export default class CreateLevel {
     this.y = y;
     this.cellContents = new Map();
     this.levelGroup = new THREE.Group();
-    this.createGridFloorInstanced();
-    this.doors = this.pickDoors(3);
-
-    this.createWalls({ skipCells: this.doors });
-    this.createDoorsInstanced(this.doors);
+    const floorInstance = new Floor({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+      gap: this.gap,
+      y: this.y,
+      cells: this.#getAllCells(),
+      levelGroup: this.levelGroup,
+    });
+    this.floor = floorInstance.getFloor();
+    const doorsInstance = new Doors({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+      gap: this.gap,
+      y: this.y,
+      cells: this.#getPerimeterCells(),
+      levelGroup: this.levelGroup,
+      setCell: this.#setCell.bind(this),
+    });
+   
+    this.doors = doorsInstance.getDoors();
+    const instanceWalls = new Walls({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+      gap: this.gap,
+      y: this.y,
+      cells: this.#getPerimeterCells(),
+      skipCells: this.doors,
+      levelGroup: this.levelGroup,
+      setCell: this.#setCell.bind(this),
+    });
+ 
+    doorsInstance.createDoorsInstanced();
     this.obstacles = this.createObstacles({ skipCells: this.doors });
     this.createLoot({
       count: 2,
@@ -24,92 +56,54 @@ export default class CreateLevel {
     const key = this.#cellKey(cell);
     this.cellContents.set(key, data);
   };
-  createGridFloorInstanced() {
-    const { cols, rows, cellSize, gap, y } = this;
 
-    const count = cols * rows;
-    const thickness = 0.1;
-    const geometry = new THREE.BoxGeometry(cellSize, thickness, cellSize);
-    const material = new THREE.MeshBasicMaterial({});
-
-    const instanced = new THREE.InstancedMesh(geometry, material, count);
-    instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-
-    const step = cellSize + gap;
-    const halfW = (cols * step) / 2;
-    const halfH = (rows * step) / 2;
-
-    const dummy = new THREE.Object3D();
-
-    let i = 0;
+  #getAllCells() {
+    const cells = [];
+    const { cols, rows } = this;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const x = c * step - halfW + step / 2;
-        const z = r * step - halfH + step / 2;
+        let side = "inner";
 
-        dummy.position.set(x, y, z);
-        dummy.updateMatrix();
-        dummy.position.y = y + thickness;
-        instanced.setMatrixAt(i, dummy.matrix);
+        const isTop = r === 0;
+        const isBottom = r === rows - 1;
+        const isLeft = c === 0;
+        const isRight = c === cols - 1;
 
-        i++;
+        if (isTop) side = "top";
+        if (isBottom) side = "bottom";
+        if (isLeft) side = "left";
+        if (isRight) side = "right";
+
+        if ((isTop || isBottom) && (isLeft || isRight)) {
+          side = "corner";
+        }
+
+        cells.push({ col: c, row: r, side });
       }
     }
 
-    instanced.instanceMatrix.needsUpdate = true;
-
-    instanced.userData = {
-      cols,
-      rows,
-      cellSize,
-      gap,
-      y,
-    };
-
-    this.floor = instanced;
-    this.levelGroup.add(instanced);
+    return cells;
   }
   #getPerimeterCells() {
-    const cells = [];
-    const { cols, rows } = this;
-    for (let c = 0; c < cols; c++) {
-      cells.push({ col: c, row: 0, side: 'top' });
-      cells.push({ col: c, row: rows - 1, side: 'bottom' });
-    }
-    for (let r = 1; r < rows - 1; r++) {
-      cells.push({ col: 0, row: r, side: 'left' });
-      cells.push({ col: cols - 1, row: r, side: 'right' });
-    }
-    return cells;
+    return this.#getAllCells().filter((cell) => {
+      return cell.side !== "inner";
+    });
   }
   #getInnerCells() {
-    const cells = [];
-    const { cols, rows } = this;
-
-    for (let r = 1; r < rows - 1; r++) {
-      for (let c = 1; c < cols - 1; c++) {
-        cells.push({
-          col: c,
-          row: r,
-          side: 'inner',
-        });
-      }
-    }
-
-    return cells;
+    return this.#getAllCells().filter((cell) => {
+      return cell.side == "inner";
+    });
   }
   #getFreeCells() {
     const cells = this.#getInnerCells();
     const free = [];
-
     for (const cell of cells) {
       const key = this.#cellKey(cell);
       if (!this.cellContents.has(key)) {
         free.push(cell);
       }
     }
-
     return free;
   }
 
@@ -135,7 +129,7 @@ export default class CreateLevel {
       cellSize / 1.5,
     );
     const material = new THREE.MeshBasicMaterial({
-      color: '#aa0000',
+      color: "#aa0000",
     });
     const instanced = new THREE.InstancedMesh(geometry, material, count);
     instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -152,69 +146,14 @@ export default class CreateLevel {
       dummy.position.set(x, y + (cellSize + 0.1) / 2, z);
       dummy.updateMatrix();
       instanced.setMatrixAt(i, dummy.matrix);
-      this.#setCell(cell, { type: 'obstacle' });
+      this.#setCell(cell, { type: "obstacle" });
       obstacles.push(cell);
     }
     instanced.instanceMatrix.needsUpdate = true;
     this.levelGroup.add(instanced);
     return obstacles;
   }
-  createWalls({ skipCells = [] } = {}) {
-    const { cols, rows, cellSize, gap, y } = this;
-    const skip = new Set(skipCells.map((c) => this.#cellKey(c)));
-    const perimetrCells = this.#getPerimeterCells();
-    const count = perimetrCells.reduce((acc, cell) => {
-      const key = this.#cellKey(cell);
-      return acc + (skip.has(key) ? 0 : 1);
-    }, 0);
-    const wallHeight = 1;
-    const geometry = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x888888,
-    });
-    const instanced = new THREE.InstancedMesh(geometry, material, count);
-    instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    const step = cellSize + gap;
-    const halfW = (cols * step) / 2;
-    const halfH = (rows * step) / 2;
 
-    const dummy = new THREE.Object3D();
-
-    let i = 0;
-    for (const cell of perimetrCells) {
-      const key = this.#cellKey(cell);
-      if (skip.has(key)) continue;
-      const colStartAndEnd = cell.col === 0 || cell.col === cols - 1;
-      const rowStartAndEnd = cell.row === 0 || cell.row === rows - 1;
-      const x = cell.col * step - halfW + step / 2;
-      const z = cell.row * step - halfH + step / 2;
-      dummy.scale.set(1, 1, 1);
-      if (colStartAndEnd) {
-        dummy.scale.set(0.5, 1, 1);
-      } else if (rowStartAndEnd) {
-        dummy.scale.set(1, 1, 0.5);
-      }
-      if (this.isCorner(cell)) {
-        dummy.scale.set(1, 1, 1);
-      }
-      dummy.position.set(x, y, z);
-      dummy.position.y = y + (wallHeight + 0.1) / 2;
-      dummy.updateMatrix();
-      instanced.setMatrixAt(i, dummy.matrix);
-      this.#setCell(cell, { type: 'wall' });
-      i++;
-    }
-    instanced.userData = {
-      cols,
-      rows,
-      cellSize,
-      gap,
-      y,
-    };
-    instanced.instanceMatrix.needsUpdate = true;
-    this.wall = instanced;
-    this.levelGroup.add(instanced);
-  }
   createLoot({ count = 4, skipCells = [] } = {}) {
     const { cols, rows, cellSize, gap, y } = this;
     const innerCells = this.#getInnerCells();
@@ -237,7 +176,7 @@ export default class CreateLevel {
       cellSize / 2,
     );
     const material = new THREE.MeshBasicMaterial({
-      color: '#ddd019',
+      color: "#ddd019",
     });
     const instanced = new THREE.InstancedMesh(geometry, material, count);
     instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -253,7 +192,7 @@ export default class CreateLevel {
       dummy.position.set(x, y + (cellSize / 2 + 0.1) / 2, z);
       dummy.updateMatrix();
       instanced.setMatrixAt(i, dummy.matrix);
-      this.#setCell(cell, { type: 'loot' });
+      this.#setCell(cell, { type: "loot" });
     }
     instanced.instanceMatrix.needsUpdate = true;
     this.levelGroup.add(instanced);
@@ -262,12 +201,12 @@ export default class CreateLevel {
     return `${col}:${row}`;
   }
   pickDoors(total = 3) {
-    if (total < 1) throw new Error('total doors must be >= 1');
+    if (total < 1) throw new Error("total doors must be >= 1");
     const perimeter = this.#getPerimeterCells();
     const candidates = perimeter.filter((cell) => !this.isCorner(cell));
 
     if (candidates.length < total) {
-      throw new Error('not enough perimeter cells for doors');
+      throw new Error("not enough perimeter cells for doors");
     }
     const inCell = candidates[this.#randomInt(candidates.length)];
     const usedKeys = new Set([this.#cellKey(inCell)]);
@@ -286,8 +225,8 @@ export default class CreateLevel {
       outs.push(candidate);
     }
     return [
-      { ...inCell, type: 'in' },
-      ...outs.map((c) => ({ ...c, type: 'out' })),
+      { ...inCell, type: "in" },
+      ...outs.map((c) => ({ ...c, type: "out" })),
     ];
   }
   createDoorsInstanced(doors) {
@@ -295,7 +234,7 @@ export default class CreateLevel {
     const wallHeight = 1.2;
     const geometry = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    console.log('Creating doors instanced:', doors);
+    console.log("Creating doors instanced:", doors);
     const instanced = new THREE.InstancedMesh(geometry, material, doors.length);
     instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
@@ -317,7 +256,7 @@ export default class CreateLevel {
 
       const cx = col * step - halfW + step / 2;
       const cz = row * step - halfH + step / 2;
-      if (doors[i].side === 'top' || doors[i].side === 'bottom') {
+      if (doors[i].side === "top" || doors[i].side === "bottom") {
         dummy.scale.set(1, 1, 0.5);
       } else {
         dummy.scale.set(0.5, 1, 1);
@@ -328,11 +267,11 @@ export default class CreateLevel {
       dummy.updateMatrix();
       instanced.setMatrixAt(i, dummy.matrix);
 
-      if (type === 'in') color.setHex(0x00ff00);
+      if (type === "in") color.setHex(0x00ff00);
       else color.setHex(0x3366ff);
 
       instanced.setColorAt(i, color);
-      this.#setCell({ col, row }, { type: 'door', doorType: type });
+      this.#setCell({ col, row }, { type: "door", doorType: type });
     }
 
     instanced.instanceMatrix.needsUpdate = true;
@@ -345,7 +284,7 @@ export default class CreateLevel {
     const col = instanceId % this.cols;
     const row = Math.floor(instanceId / this.cols);
     const key = this.#cellKey({ col, row });
-    const content = this.cellContents.get(key) || { type: 'floor' };
+    const content = this.cellContents.get(key) || { type: "floor" };
     return { col, row, key, content };
   }
 
