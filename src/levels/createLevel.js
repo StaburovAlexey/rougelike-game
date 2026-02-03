@@ -11,10 +11,14 @@ export default class CreateLevel {
     this.levelGroup = new THREE.Group();
     this.createGridFloorInstanced();
     this.doors = this.pickDoors(3);
-    
+
     this.createWalls({ skipCells: this.doors });
-    this.createObstacles({ skipCells: this.doors });
     this.createDoorsInstanced(this.doors);
+    this.obstacles = this.createObstacles({ skipCells: this.doors });
+    this.createLoot({
+      count: 2,
+      skipCells: [...this.doors, ...this.obstacles],
+    });
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -96,18 +100,19 @@ export default class CreateLevel {
     return cells;
   }
   #getFreeCells() {
-  const cells = this.#getInnerCells() 
-  const free = [];
+    const cells = this.#getInnerCells();
+    const free = [];
 
-  for (const cell of cells) {
-    const key = this.#cellKey(cell);
-    if (!this.cellContents.has(key)) {
-      free.push(cell);
+    for (const cell of cells) {
+      const key = this.#cellKey(cell);
+      if (!this.cellContents.has(key)) {
+        free.push(cell);
+      }
     }
+
+    return free;
   }
 
-  return free;
-}
   createObstacles({ skipCells = [], count = 4 } = {}) {
     const { cols, rows, cellSize, gap, y } = this;
     const innerCells = this.#getInnerCells();
@@ -139,6 +144,7 @@ export default class CreateLevel {
     const halfH = (rows * step) / 2;
 
     const dummy = new THREE.Object3D();
+    const obstacles = [];
     for (let i = 0; i < count; i++) {
       const cell = allowed.splice(this.#randomInt(allowed.length), 1)[0];
       const x = cell.col * step - halfW + step / 2;
@@ -147,10 +153,11 @@ export default class CreateLevel {
       dummy.updateMatrix();
       instanced.setMatrixAt(i, dummy.matrix);
       this.#setCell(cell, { type: 'obstacle' });
+      obstacles.push(cell);
     }
     instanced.instanceMatrix.needsUpdate = true;
-    this.obstacles = instanced;
     this.levelGroup.add(instanced);
+    return obstacles;
   }
   createWalls({ skipCells = [] } = {}) {
     const { cols, rows, cellSize, gap, y } = this;
@@ -206,6 +213,49 @@ export default class CreateLevel {
     };
     instanced.instanceMatrix.needsUpdate = true;
     this.wall = instanced;
+    this.levelGroup.add(instanced);
+  }
+  createLoot({ count = 4, skipCells = [] } = {}) {
+    const { cols, rows, cellSize, gap, y } = this;
+    const innerCells = this.#getInnerCells();
+    const skip = new Set(skipCells.map((c) => this.#cellKey(c)));
+    for (const cell of skipCells) {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const col = cell.col + dc;
+          const row = cell.row + dr;
+          if (col < 0 || col >= this.cols) continue;
+          if (row < 0 || row >= this.rows) continue;
+          skip.add(this.#cellKey({ col, row }));
+        }
+      }
+    }
+    const allowed = innerCells.filter((cell) => !skip.has(this.#cellKey(cell)));
+    const geometry = new THREE.BoxGeometry(
+      cellSize / 2,
+      cellSize / 2,
+      cellSize / 2,
+    );
+    const material = new THREE.MeshBasicMaterial({
+      color: '#ddd019',
+    });
+    const instanced = new THREE.InstancedMesh(geometry, material, count);
+    instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    const step = cellSize + gap;
+    const halfW = (cols * step) / 2;
+    const halfH = (rows * step) / 2;
+
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      const cell = allowed.splice(this.#randomInt(allowed.length), 1)[0];
+      const x = cell.col * step - halfW + step / 2;
+      const z = cell.row * step - halfH + step / 2;
+      dummy.position.set(x, y + (cellSize / 2 + 0.1) / 2, z);
+      dummy.updateMatrix();
+      instanced.setMatrixAt(i, dummy.matrix);
+      this.#setCell(cell, { type: 'loot' });
+    }
+    instanced.instanceMatrix.needsUpdate = true;
     this.levelGroup.add(instanced);
   }
   #cellKey({ col, row }) {
