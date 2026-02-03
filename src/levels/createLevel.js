@@ -2,6 +2,8 @@ import * as THREE from "three";
 import Floor from "./floor";
 import Doors from "./doors";
 import Walls from "./walls";
+import Obstacles from "./obstacles";
+import Loot from "./loot";
 export default class CreateLevel {
   constructor({ cols = 10, rows = 10, cellSize = 1, gap = 0.1, y = 0 } = {}) {
     this.cols = cols;
@@ -46,11 +48,33 @@ export default class CreateLevel {
     });
  
     doorsInstance.createDoorsInstanced();
-    this.obstacles = this.createObstacles({ skipCells: this.doors });
-    this.createLoot({
-      count: 2,
-      skipCells: [...this.doors, ...this.obstacles],
+    const obstaclesInstance = new Obstacles({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+      gap: this.gap,
+      y: this.y,
+      cells: this.#getInnerCells(),
+      skipCells: this.doors,
+      levelGroup: this.levelGroup,
+      setCell: this.#setCell.bind(this),
+      count: 4,
     });
+    this.obstacles = obstaclesInstance.getObstacles();
+
+    const lootInstance = new Loot({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+      gap: this.gap,
+      y: this.y,
+      cells: this.#getInnerCells(),
+      skipCells: [...this.doors, ...this.obstacles],
+      levelGroup: this.levelGroup,
+      setCell: this.#setCell.bind(this),
+      count: 2,
+    });
+    this.loot = lootInstance.getLoot();
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -199,86 +223,6 @@ export default class CreateLevel {
   }
   #cellKey({ col, row }) {
     return `${col}:${row}`;
-  }
-  pickDoors(total = 3) {
-    if (total < 1) throw new Error("total doors must be >= 1");
-    const perimeter = this.#getPerimeterCells();
-    const candidates = perimeter.filter((cell) => !this.isCorner(cell));
-
-    if (candidates.length < total) {
-      throw new Error("not enough perimeter cells for doors");
-    }
-    const inCell = candidates[this.#randomInt(candidates.length)];
-    const usedKeys = new Set([this.#cellKey(inCell)]);
-    const usedSides = new Set([inCell.side]);
-    const outs = [];
-
-    while (outs.length < total - 1) {
-      const candidate = candidates[this.#randomInt(candidates.length)];
-      const key = this.#cellKey(candidate);
-
-      if (usedKeys.has(key)) continue;
-      if (usedSides.has(candidate.side)) continue;
-
-      usedKeys.add(key);
-      usedSides.add(candidate.side);
-      outs.push(candidate);
-    }
-    return [
-      { ...inCell, type: "in" },
-      ...outs.map((c) => ({ ...c, type: "out" })),
-    ];
-  }
-  createDoorsInstanced(doors) {
-    const { cols, rows, cellSize, gap, y } = this;
-    const wallHeight = 1.2;
-    const geometry = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    console.log("Creating doors instanced:", doors);
-    const instanced = new THREE.InstancedMesh(geometry, material, doors.length);
-    instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-
-    // если хочешь разные цвета (вход/выход)
-    instanced.instanceColor = new THREE.InstancedBufferAttribute(
-      new Float32Array(doors.length * 3),
-      3,
-    );
-
-    const step = cellSize + gap;
-    const halfW = (cols * step) / 2;
-    const halfH = (rows * step) / 2;
-
-    const dummy = new THREE.Object3D();
-    const color = new THREE.Color();
-    dummy.scale.set(1, 1, 1);
-    for (let i = 0; i < doors.length; i++) {
-      const { col, row, type } = doors[i];
-
-      const cx = col * step - halfW + step / 2;
-      const cz = row * step - halfH + step / 2;
-      if (doors[i].side === "top" || doors[i].side === "bottom") {
-        dummy.scale.set(1, 1, 0.5);
-      } else {
-        dummy.scale.set(0.5, 1, 1);
-      }
-      dummy.position.set(cx, y + (wallHeight + 0.1) / 2, cz);
-      dummy.rotation.set(0, 0, 0);
-
-      dummy.updateMatrix();
-      instanced.setMatrixAt(i, dummy.matrix);
-
-      if (type === "in") color.setHex(0x00ff00);
-      else color.setHex(0x3366ff);
-
-      instanced.setColorAt(i, color);
-      this.#setCell({ col, row }, { type: "door", doorType: type });
-    }
-
-    instanced.instanceMatrix.needsUpdate = true;
-    instanced.instanceColor.needsUpdate = true;
-
-    this.doorsMesh = instanced;
-    this.levelGroup.add(instanced);
   }
   idToGrid(instanceId) {
     const col = instanceId % this.cols;
