@@ -198,7 +198,7 @@ export default class CreateLevel {
     this.createLevel();
     return this.levelGroup;
   }
-  colorCellGo(row, col) {
+  getMoveCells(row, col) {
     const freeCell = this.#getFreeCells();
     const freeSet = new Set(freeCell.map((c) => this.#cellKey(c)));
     const candidates = [
@@ -207,8 +207,11 @@ export default class CreateLevel {
       { col, row: row + 1 },
       { col, row: row - 1 },
     ];
-
-    const filtered = candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+    return candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+  }
+  colorCellGo(row, col) {
+    const filtered = this.getMoveCells(row, col);
+    this.moveCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
     const floor = this.state?.floor?.instanced;
     if (!floor) return;
     const baseColor = new THREE.Color(floor.material.color);

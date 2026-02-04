@@ -106,7 +106,7 @@ function handlePointerDown(e) {
   const hit = raycaster.intersectObject(floor, false)[0];
   if (!hit) return;
   const cell = level.idToGrid(hit.instanceId);
-  console.log(cell);
+  player.click(cell)
 }
 
 window.addEventListener('pointerdown', handlePointerDown);

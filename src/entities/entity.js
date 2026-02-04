@@ -33,21 +33,20 @@ export default class Entity {
     const key = `${col}:${row}`;
     const content = this.level.cellContents.get(key);
     if (!content) return true;
-    return content.type === "floor";
+    return (
+      content.type === "floor" ||
+      content.type === "door" ||
+      content.type === "loot"
+    );
   }
 
-  tryMove(dx, dy) {
-    const nextCol = this.col + dx;
-    const nextRow = this.row + dy;
-    if (!this.canEnter(nextCol, nextRow)) return false;
-
-    this.col = nextCol;
-    this.row = nextRow;
+  move(cell) {
+    const { row, col } = cell;
+    if (!this.canEnter(col, row)) return false;
+    this.col = col;
+    this.row = row;
     this.updateWorldPosition();
-
-    return true;
   }
-
   getObject3D() {
     return this.mesh;
   }
