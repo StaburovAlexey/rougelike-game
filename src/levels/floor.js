@@ -1,11 +1,11 @@
-import * as THREE from "three";
+
 import Environment from "./environment";
 
 export default class Floor extends Environment {
   constructor(options = {}) {
     super(options);
 
-    const { y = 0, cells = [], levelGroup = new THREE.Group() } = options;
+    const { y = 0, cells = [], levelGroup } = options;
 
     this.levelGroup = levelGroup;
     this.y = y;

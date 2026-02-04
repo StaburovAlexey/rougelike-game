@@ -1,4 +1,5 @@
-import * as THREE from "three";
+
+import { Color } from "three";
 import Environment from "./environment";
 
 export default class Doors extends Environment {
@@ -6,13 +7,7 @@ export default class Doors extends Environment {
   constructor(options = {}) {
     super({ ...options, thickness: 1.2, color: "#ffffff" });
 
-    const {
-      y = 0,
-      cells = [],
-      levelGroup = new THREE.Group(),
-      total = 3,
-      setCell,
-    } = options;
+    const { y = 0, cells = [], levelGroup, total = 3, setCell } = options;
 
     this.levelGroup = levelGroup;
     this.y = y;
@@ -74,12 +69,12 @@ export default class Doors extends Environment {
   }
   createDoorsInstanced() {
     const doors = this.#doors;
-    this.createInstance({ count: doors.length, thickness: 1.2, color: "#ffffff" });
-    this.instanced.instanceColor = new THREE.InstancedBufferAttribute(
-      new Float32Array(doors.length * 3),
-      3,
-    );
-    const color = new THREE.Color();
+    this.createInstance({
+      count: doors.length,
+      thickness: 1.2,
+      color: "#ffffff",
+    });
+    const color = new Color();
     this.dummy.scale.set(1, 1, 1);
 
     for (let i = 0; i < doors.length; i++) {

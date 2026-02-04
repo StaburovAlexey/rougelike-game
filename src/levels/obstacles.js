@@ -1,4 +1,4 @@
-import * as THREE from "three";
+
 import Environment from "./environment";
 
 export default class Obstacles extends Environment {
@@ -11,7 +11,7 @@ export default class Obstacles extends Environment {
       y = 0,
       cells = [],
       skipCells = [],
-      levelGroup = new THREE.Group(),
+      levelGroup,
       count = 4,
       setCell,
     } = options;

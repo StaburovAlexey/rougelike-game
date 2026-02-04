@@ -1,4 +1,4 @@
-import * as THREE from "three";
+
 import Environment from "./environment";
 
 export default class Walls extends Environment {
@@ -11,7 +11,7 @@ export default class Walls extends Environment {
       cols,
       cells = [],
       skipCells = [],
-      levelGroup = new THREE.Group(),
+      levelGroup,
       setCell,
     } = options;
 

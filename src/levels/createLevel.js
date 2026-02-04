@@ -15,6 +15,7 @@ export default class CreateLevel {
     this.levelGroup = new THREE.Group();
     this.allCells = this.#getAllCells();
     this.state = {};
+    this.isBuilt = false;
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -105,6 +106,7 @@ export default class CreateLevel {
     return Math.floor(Math.random() * max);
   }
   createLevel() {
+    if (this.isBuilt) return;
     const ctx = {
       cols: this.cols,
       rows: this.rows,
@@ -139,9 +141,46 @@ export default class CreateLevel {
       skipCells: [...this.state.doors.cells, ...this.state.obstacles.cells],
       count: 2,
     }).create();
+    this.isBuilt = true;
+  }
+  getSpawnCell() {
+    this.createLevel();
+    const doors = this.state?.doors?.cells || [];
+    const inDoor = doors.find((d) => d.type === "in");
+    if (!inDoor) return { col: 1, row: 1 };
+
+    let candidate = null;
+    if (inDoor.side === "top") candidate = { col: inDoor.col, row: inDoor.row + 1 };
+    if (inDoor.side === "bottom") candidate = { col: inDoor.col, row: inDoor.row - 1 };
+    if (inDoor.side === "left") candidate = { col: inDoor.col + 1, row: inDoor.row };
+    if (inDoor.side === "right") candidate = { col: inDoor.col - 1, row: inDoor.row };
+
+    const isFree = (cell) => {
+      if (!cell) return false;
+      if (cell.col < 0 || cell.col >= this.cols) return false;
+      if (cell.row < 0 || cell.row >= this.rows) return false;
+      const key = this.#cellKey(cell);
+      return !this.cellContents.has(key);
+    };
+
+    if (isFree(candidate)) return candidate;
+
+    const around = [
+      candidate,
+      { col: candidate.col + 1, row: candidate.row },
+      { col: candidate.col - 1, row: candidate.row },
+      { col: candidate.col, row: candidate.row + 1 },
+      { col: candidate.col, row: candidate.row - 1 },
+    ];
+    for (const cell of around) {
+      if (isFree(cell)) return cell;
+    }
+
+    const free = this.#getFreeCells();
+    return free[0] || { col: 1, row: 1 };
   }
   getLevel() {
-    this.createLevel()
+    this.createLevel();
     return this.levelGroup;
   }
 }
