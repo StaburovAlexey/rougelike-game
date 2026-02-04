@@ -1,9 +1,9 @@
-import * as THREE from "three";
-import Floor from "./floor";
-import Doors from "./doors";
-import Walls from "./walls";
-import Obstacles from "./obstacles";
-import Loot from "./loot";
+import * as THREE from 'three';
+import Floor from './floor';
+import Doors from './doors';
+import Walls from './walls';
+import Obstacles from './obstacles';
+import Loot from './loot';
 export default class CreateLevel {
   constructor({ cols = 10, rows = 10, cellSize = 1, gap = 0.1, y = 0 } = {}) {
     this.cols = cols;
@@ -17,32 +17,37 @@ export default class CreateLevel {
     this.state = {};
     this.isBuilt = false;
     this._highlightedIds = [];
+    this.cellPlayer = null;
+    this.moveCellsSet;
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
     this.cellContents.set(key, data);
   };
-
+  setCellPlayer(cell) {
+    this.cellPlayer = cell;
+    console.log('player cell', this.cellPlayer);
+  }
   #getAllCells() {
     const cells = [];
     const { cols, rows } = this;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        let side = "inner";
+        let side = 'inner';
 
         const isTop = r === 0;
         const isBottom = r === rows - 1;
         const isLeft = c === 0;
         const isRight = c === cols - 1;
 
-        if (isTop) side = "top";
-        if (isBottom) side = "bottom";
-        if (isLeft) side = "left";
-        if (isRight) side = "right";
+        if (isTop) side = 'top';
+        if (isBottom) side = 'bottom';
+        if (isLeft) side = 'left';
+        if (isRight) side = 'right';
 
         if ((isTop || isBottom) && (isLeft || isRight)) {
-          side = "corner";
+          side = 'corner';
         }
 
         cells.push({ col: c, row: r, side });
@@ -53,12 +58,12 @@ export default class CreateLevel {
   }
   #getPerimeterCells() {
     return this.allCells.filter((cell) => {
-      return cell.side !== "inner";
+      return cell.side !== 'inner';
     });
   }
   #getInnerCells() {
     return this.allCells.filter((cell) => {
-      return cell.side == "inner";
+      return cell.side == 'inner';
     });
   }
   #getFreeCells() {
@@ -91,7 +96,7 @@ export default class CreateLevel {
     const col = instanceId % this.cols;
     const row = Math.floor(instanceId / this.cols);
     const key = this.#cellKey({ col, row });
-    const content = this.cellContents.get(key) || { type: "floor" };
+    const content = this.cellContents.get(key) || { type: 'floor' };
     return { col, row, key, content };
   }
 
@@ -157,17 +162,17 @@ export default class CreateLevel {
   }
   getSpawnCell() {
     const doors = this.state?.doors?.cells || [];
-    const inDoor = doors.find((d) => d.type === "in");
+    const inDoor = doors.find((d) => d.type === 'in');
     if (!inDoor) return { col: 1, row: 1 };
 
     let candidate = null;
-    if (inDoor.side === "top")
+    if (inDoor.side === 'top')
       candidate = { col: inDoor.col, row: inDoor.row + 1 };
-    if (inDoor.side === "bottom")
+    if (inDoor.side === 'bottom')
       candidate = { col: inDoor.col, row: inDoor.row - 1 };
-    if (inDoor.side === "left")
+    if (inDoor.side === 'left')
       candidate = { col: inDoor.col + 1, row: inDoor.row };
-    if (inDoor.side === "right")
+    if (inDoor.side === 'right')
       candidate = { col: inDoor.col - 1, row: inDoor.row };
 
     const isFree = (cell) => {
@@ -201,16 +206,28 @@ export default class CreateLevel {
   getMoveCells(row, col) {
     const freeCell = this.#getFreeCells();
     const freeSet = new Set(freeCell.map((c) => this.#cellKey(c)));
+    const candidates = this.getCandidatesCells({ row, col }).candidates;
+    return candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+  }
+  getCandidatesCells(cell) {
+    const { col, row } = cell;
     const candidates = [
       { col: col + 1, row },
       { col: col - 1, row },
       { col, row: row + 1 },
       { col, row: row - 1 },
     ];
-    return candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+    const candidatesMap = new Map();
+    candidates.forEach((item) => {
+      const key = this.#cellKey(item);
+      candidatesMap.set(key, item);
+    });
+    return { candidates, candidatesMap };
   }
   colorCellGo(row, col) {
+    console.log('filtered', this.getMoveCells(row, col));
     const filtered = this.getMoveCells(row, col);
+
     this.moveCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
     const floor = this.state?.floor?.instanced;
     if (!floor) return;
@@ -222,7 +239,7 @@ export default class CreateLevel {
       this._highlightedIds = [];
     }
 
-    const color = new THREE.Color("#ffd54a");
+    const color = new THREE.Color('#ffd54a');
     for (const cell of filtered) {
       const id = cell.row * this.cols + cell.col;
       floor.setColorAt(id, color);

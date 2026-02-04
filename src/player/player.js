@@ -1,4 +1,4 @@
-import Entity from "../entities/entity.js";
+import Entity from '../entities/entity.js';
 
 export default class Player extends Entity {
   constructor(options = {}) {
@@ -15,12 +15,19 @@ export default class Player extends Entity {
   }
   interaction(cell) {
     const { col, row, content } = cell;
-    if (!this.canEnter(col, row)) return false;
-    if (content.type === "loot") {
-      console.log("Give surprise!");
+    const candidatesMap = this.level.getCandidatesCells(
+      this.level.cellPlayer,
+    ).candidatesMap;
+    const key = `${col}:${row}`;
+    if (!candidatesMap.has(key)) return;
+    if (content.type === 'loot') {
+      console.log('Give surprise!');
     }
-    if (content.type === "door") {
-      console.log("Get out of here!");
+    if (content.type === 'door') {
+      if (content.doorType === 'out') {
+        console.log('new level');
+      }
+      console.log('Get out of here!', content);
     }
   }
 }

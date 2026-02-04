@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 
 export default class Entity {
   constructor({
@@ -8,7 +8,7 @@ export default class Entity {
     height = 1,
     color = 0xffffff,
   } = {}) {
-    if (!level) throw new Error("Entity: level is required");
+    if (!level) throw new Error('Entity: level is required');
     this.level = level;
     this.col = start.col;
     this.row = start.row;
@@ -24,19 +24,19 @@ export default class Entity {
     const pos = this.level.gridToWorld(this.col, this.row, height);
     this.mesh.position.copy(pos);
     this.hightligtMoveCell();
+    this.level.setCellPlayer({ col: this.col, row: this.row });
   }
 
   canEnter(col, row) {
     if (col < 0 || col >= this.level.cols) return false;
     if (row < 0 || row >= this.level.rows) return false;
-
     const key = `${col}:${row}`;
     const content = this.level.cellContents.get(key);
     if (!content) return true;
     return (
-      content.type === "floor" ||
-      content.type === "door" ||
-      content.type === "loot"
+      content.type === 'floor' ||
+      content.type === 'door' ||
+      content.type === 'loot'
     );
   }
 
