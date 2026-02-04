@@ -23,6 +23,7 @@ export default class Entity {
   updateWorldPosition(height = 0.5) {
     const pos = this.level.gridToWorld(this.col, this.row, height);
     this.mesh.position.copy(pos);
+    this.hightligtMoveCell();
   }
 
   canEnter(col, row) {
@@ -32,11 +33,7 @@ export default class Entity {
     const key = `${col}:${row}`;
     const content = this.level.cellContents.get(key);
     if (!content) return true;
-    return (
-      content.type === "floor" ||
-      content.type === "loot" ||
-      content.type === "door"
-    );
+    return content.type === "floor";
   }
 
   tryMove(dx, dy) {
@@ -47,10 +44,14 @@ export default class Entity {
     this.col = nextCol;
     this.row = nextRow;
     this.updateWorldPosition();
+
     return true;
   }
 
   getObject3D() {
     return this.mesh;
+  }
+  hightligtMoveCell() {
+    this.level.colorCellGo(this.row, this.col);
   }
 }

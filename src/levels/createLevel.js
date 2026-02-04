@@ -16,6 +16,7 @@ export default class CreateLevel {
     this.allCells = this.#getAllCells();
     this.state = {};
     this.isBuilt = false;
+    this._highlightedIds = [];
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -66,6 +67,17 @@ export default class CreateLevel {
     for (const cell of cells) {
       const key = this.#cellKey(cell);
       if (!this.cellContents.has(key)) {
+        free.push(cell);
+      }
+    }
+    return free;
+  }
+  #getBusyCells() {
+    const cells = this.#getInnerCells();
+    const free = [];
+    for (const cell of cells) {
+      const key = this.#cellKey(cell);
+      if (this.cellContents.has(key)) {
         free.push(cell);
       }
     }
@@ -144,16 +156,19 @@ export default class CreateLevel {
     this.isBuilt = true;
   }
   getSpawnCell() {
-    this.createLevel();
     const doors = this.state?.doors?.cells || [];
     const inDoor = doors.find((d) => d.type === "in");
     if (!inDoor) return { col: 1, row: 1 };
 
     let candidate = null;
-    if (inDoor.side === "top") candidate = { col: inDoor.col, row: inDoor.row + 1 };
-    if (inDoor.side === "bottom") candidate = { col: inDoor.col, row: inDoor.row - 1 };
-    if (inDoor.side === "left") candidate = { col: inDoor.col + 1, row: inDoor.row };
-    if (inDoor.side === "right") candidate = { col: inDoor.col - 1, row: inDoor.row };
+    if (inDoor.side === "top")
+      candidate = { col: inDoor.col, row: inDoor.row + 1 };
+    if (inDoor.side === "bottom")
+      candidate = { col: inDoor.col, row: inDoor.row - 1 };
+    if (inDoor.side === "left")
+      candidate = { col: inDoor.col + 1, row: inDoor.row };
+    if (inDoor.side === "right")
+      candidate = { col: inDoor.col - 1, row: inDoor.row };
 
     const isFree = (cell) => {
       if (!cell) return false;
@@ -182,5 +197,34 @@ export default class CreateLevel {
   getLevel() {
     this.createLevel();
     return this.levelGroup;
+  }
+  colorCellGo(row, col) {
+    const freeCell = this.#getFreeCells();
+    const freeSet = new Set(freeCell.map((c) => this.#cellKey(c)));
+    const candidates = [
+      { col: col + 1, row },
+      { col: col - 1, row },
+      { col, row: row + 1 },
+      { col, row: row - 1 },
+    ];
+
+    const filtered = candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+    const floor = this.state?.floor?.instanced;
+    if (!floor) return;
+    const baseColor = new THREE.Color(floor.material.color);
+    if (this._highlightedIds.length > 0) {
+      for (const id of this._highlightedIds) {
+        floor.setColorAt(id, baseColor);
+      }
+      this._highlightedIds = [];
+    }
+
+    const color = new THREE.Color("#ffd54a");
+    for (const cell of filtered) {
+      const id = cell.row * this.cols + cell.col;
+      floor.setColorAt(id, color);
+      this._highlightedIds.push(id);
+    }
+    floor.instanceColor.needsUpdate = true;
   }
 }
