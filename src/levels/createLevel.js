@@ -5,12 +5,14 @@ import Walls from './walls';
 import Obstacles from './obstacles';
 import Loot from './loot';
 export default class CreateLevel {
-  constructor({ cols = 10, rows = 10, cellSize = 1, gap = 0.1, y = 0 } = {}) {
+  constructor({ cols = 10, rows = 10 } = {}) {
     this.cols = cols;
     this.rows = rows;
-    this.cellSize = cellSize;
-    this.gap = gap;
-    this.y = y;
+    this.countObstacles = Math.floor(rows * cols * 0.04);
+    this.countLoot = Math.max(1, Math.floor(rows * cols * 0.01));
+    this.cellSize = 1;
+    this.gap = 0.1;
+    this.y = 0;
     this.cellContents = new Map();
     this.levelGroup = new THREE.Group();
     this.allCells = this.#getAllCells();
@@ -140,6 +142,7 @@ export default class CreateLevel {
     this.state.doors = new Doors({
       ...ctx,
       cells: ctx.getPerimeterCells(),
+      total: 2,
     }).create();
     this.state.walls = new Walls({
       ...ctx,
@@ -150,13 +153,13 @@ export default class CreateLevel {
       ...ctx,
       cells: ctx.getInnerCells(),
       skipCells: this.state.doors.cells,
-      count: 4,
+      count: this.countObstacles,
     }).create();
     this.state.loot = new Loot({
       ...ctx,
       cells: ctx.getInnerCells(),
       skipCells: [...this.state.doors.cells, ...this.state.obstacles.cells],
-      count: 2,
+      count: this.countLoot,
     }).create();
     this.isBuilt = true;
   }
