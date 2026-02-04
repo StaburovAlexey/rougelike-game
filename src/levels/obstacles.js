@@ -5,7 +5,7 @@ export default class Obstacles extends Environment {
   #obstacles;
 
   constructor(options = {}) {
-    super({ ...options, thickness: options.thickness ?? options.cellSize });
+    super({ ...options, thickness: 1.5 });
 
     const {
       y = 0,
@@ -51,7 +51,7 @@ export default class Obstacles extends Environment {
 
     this.createInstance({
       count: this.count,
-      thickness: this.cellSize,
+      thickness: this.thickness,
       color: "#aa0000",
     });
 
@@ -59,8 +59,8 @@ export default class Obstacles extends Environment {
       const cell = allowed.splice(this.randomInt(allowed.length), 1)[0];
       const x = this.getX(cell);
       const z = this.getZ(cell);
-      this.dummy.scale.set(0.7, 1.5, 0.7);
-      this.dummy.position.set(x, this.y + (this.cellSize + 0.1) / 2, z);
+      this.dummy.scale.set(0.7, 1, 0.7);
+      this.dummy.position.set(x, this.y + (this.thickness + 0.1) / 2, z);
       this.dummy.updateMatrix();
       this.instanced.setMatrixAt(i, this.dummy.matrix);
 

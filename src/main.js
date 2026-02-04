@@ -24,9 +24,10 @@ const controls = new Controls(camera.getCamera(), renderer.domElement);
 let level = null;
 let floor = null;
 let player = null;
-const hoverColor = new THREE.Color("#1fc51f");
-let baseColor = null;
+
 let lastHoverId = null;
+let hoverMarker = null;
+let hoverHeightOffset = 0.02;
 
 function buildLevel() {
   if (level) {
@@ -36,7 +37,6 @@ function buildLevel() {
   sceneManager.add(level.getLevel());
 
   floor = level.state.floor.instanced;
-  baseColor = new THREE.Color(floor.material.color);
   lastHoverId = null;
 
   const spawn = level.getSpawnCell();
@@ -49,6 +49,25 @@ function buildLevel() {
     player.row = spawn.row;
     player.updateWorldPosition();
   }
+
+  if (hoverMarker) {
+    sceneManager.remove(hoverMarker);
+  }
+  const floorHeight = floor?.geometry?.parameters?.height ?? 0.1;
+  hoverHeightOffset = floorHeight / 2 + 0.01;
+  const markerSize = (level.cellSize || 1) * 0.9;
+  const markerGeo = new THREE.PlaneGeometry(markerSize, markerSize);
+  const markerMat = new THREE.MeshBasicMaterial({
+    color: "#1e571e",
+    transparent: true,
+    opacity: 0.35,
+    depthTest: false,
+  });
+  hoverMarker = new THREE.Mesh(markerGeo, markerMat);
+  hoverMarker.rotation.x = -Math.PI / 2;
+  hoverMarker.renderOrder = 10;
+  hoverMarker.visible = false;
+  sceneManager.add(hoverMarker);
 }
 
 function handlePointerMove(e) {
@@ -60,22 +79,20 @@ function handlePointerMove(e) {
 
   const hit = raycaster.intersectObject(floor, false)[0];
   if (!hit) {
-    if (lastHoverId !== null) {
-      floor.setColorAt(lastHoverId, baseColor);
-      floor.instanceColor.needsUpdate = true;
-      lastHoverId = null;
-    }
+    lastHoverId = null;
+    if (hoverMarker) hoverMarker.visible = false;
     return;
   }
 
   const id = hit.instanceId;
   if (id !== lastHoverId) {
-    if (lastHoverId !== null) {
-      floor.setColorAt(lastHoverId, baseColor);
-    }
-    floor.setColorAt(id, hoverColor);
-    floor.instanceColor.needsUpdate = true;
     lastHoverId = id;
+    if (hoverMarker) {
+      const cell = level.idToGrid(id);
+      const pos = level.gridToWorld(cell.col, cell.row, hoverHeightOffset);
+      hoverMarker.position.copy(pos);
+      hoverMarker.visible = true;
+    }
   }
 }
 
