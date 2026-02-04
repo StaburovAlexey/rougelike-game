@@ -21,8 +21,8 @@ class SceneManager {
     this.scene.add(obj);
   }
 
-  remove(obj) {
-    this.scene.remove(obj);
+  remove(...obj) {
+    this.scene.remove(...obj);
   }
 }
 

@@ -28,7 +28,7 @@ export default class CreateLevel {
   };
   setCellPlayer(cell) {
     this.cellPlayer = cell;
-    console.log('player cell', this.cellPlayer);
+   
   }
   #getAllCells() {
     const cells = [];
@@ -202,6 +202,31 @@ export default class CreateLevel {
     const free = this.#getFreeCells();
     return free[0] || { col: 1, row: 1 };
   }
+  getEnemySpawnCells({ count = 1, avoidCell, minDistance = 3 } = {}) {
+    const free = this.#getFreeCells();
+    const distance = (a, b) =>
+      Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+
+    const isAvoid = (cell) =>
+      avoidCell && cell.col === avoidCell.col && cell.row === avoidCell.row;
+
+    let candidates = free.filter(
+      (cell) => !isAvoid(cell) && (!avoidCell || distance(cell, avoidCell) >= minDistance)
+    );
+
+    if (candidates.length < count) {
+      candidates = free.filter((cell) => !isAvoid(cell));
+    }
+
+    const picks = [];
+    const pool = [...candidates];
+    const limit = Math.min(count, pool.length);
+    for (let i = 0; i < limit; i++) {
+      const idx = this.#randomInt(pool.length);
+      picks.push(pool.splice(idx, 1)[0]);
+    }
+    return picks;
+  }
   getLevel() {
     this.createLevel();
     return this.levelGroup;
@@ -228,7 +253,7 @@ export default class CreateLevel {
     return { candidates, candidatesMap };
   }
   colorCellGo(row, col) {
-    console.log('filtered', this.getMoveCells(row, col));
+ 
     const filtered = this.getMoveCells(row, col);
 
     this.moveCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));

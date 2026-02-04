@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { sceneManager } from '../core/sceneManager';
 import CreateLevel from '../levels/createLevel.js';
 import Player from '../player/player.js';
+import Enemy from '../entities/enemy.js';
 
 export default class RunManager {
   constructor() {
@@ -10,22 +11,26 @@ export default class RunManager {
     this.player;
     this.activeLevel;
     this.run;
+    this.enemys = [];
   }
   createRun() {
     const run = {
       start: 0,
       levels: [
         {
-          cols: 6,
-          rows: 6,
+          cols: 10,
+          rows: 10,
+          enemy: 3,
         },
         {
           cols: 12,
           rows: 5,
+          enemy: 1,
         },
         {
           cols: 10,
           rows: 10,
+          enemy: 10,
         },
       ],
     };
@@ -41,7 +46,11 @@ export default class RunManager {
     const spawn = this.level.getSpawnCell();
     this.floor = this.level.state.floor.instanced;
     if (!this.player) {
-      this.player = new Player({ level: this.level, start: spawn, onExit: this.next.bind(this) });
+      this.player = new Player({
+        level: this.level,
+        start: spawn,
+        onExit: this.next.bind(this),
+      });
       sceneManager.add(this.player.getObject3D());
     } else {
       this.player.level = this.level;
@@ -49,18 +58,39 @@ export default class RunManager {
       this.player.row = spawn.row;
       this.player.updateWorldPosition();
     }
+    this.spawnEnemys(spawn);
+  }
+  spawnEnemys(spawnPlayer) {
+    if (this.enemys.length != 0) {
+      sceneManager.remove(...this.enemys);
+      this.enemys = [];
+    }
+    const level = this.getLevel();
+    const countEnemy = level.enemy;
+    if (countEnemy === 0) return;
+    const spawnCells = this.level.getEnemySpawnCells({
+      count: countEnemy,
+      avoidCell: spawnPlayer,
+      minDistance: 5,
+    });
+    for (let i = 0; i < spawnCells.length; i++) {
+      const enemy = new Enemy({
+        level: this.level,
+        start: spawnCells[i],
+      }).getObject3D();
+      this.enemys.push(enemy);
+      sceneManager.add(enemy);
+    }
   }
   getLevel() {
     return this.run.levels[this.activeLevel];
   }
   start() {
     this.run = this.createRun();
-    console.log(this.run);
     this.activeLevel = this.run.start;
     this.buildLevel(this.getLevel());
   }
   next() {
-    console.log(this.run);
     const lastLevel = this.run.levels.length - 1;
 
     if (lastLevel === this.activeLevel) {
@@ -68,7 +98,7 @@ export default class RunManager {
       return;
     }
     this.activeLevel++;
-    console.log(this.activeLevel);
+
     this.buildLevel(this.getLevel());
   }
   end() {
