@@ -3,8 +3,7 @@ import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager.js';
 import Controls from './core/orbitControls.js';
 import Camera from './core/camera.js';
-// import CreateLevel from './levels/createLevel.js';
-// import Player from "./player/player.js";
+import HoverHightlight from './ui/hoverCellHightlight.js';
 import RunManager from './runManager/runManager.js';
 import GUI from 'lil-gui';
 const container = document.getElementById('canvas-container');
@@ -22,58 +21,11 @@ const mouse = new THREE.Vector2();
 
 const camera = new Camera(size);
 const controls = new Controls(camera.getCamera(), renderer.domElement);
-
-
-
-let lastHoverId = null;
-let hoverMarker = null;
-let hoverHeightOffset = 0.02;
 const runManager = new RunManager();
 runManager.start();
-
-
-
-
-// function buildLevel() {
-//   if (level) {
-//     sceneManager.remove(level.getLevel());
-//   }
-//   level = new CreateLevel();
-//   sceneManager.add(level.getLevel());
-
-//   floor = level.state.floor.instanced;
-//   lastHoverId = null;
-
-//   const spawn = level.getSpawnCell();
-//   if (!player) {
-//     player = new Player({ level, start: spawn });
-//     sceneManager.add(player.getObject3D());
-//   } else {
-//     player.level = level;
-//     player.col = spawn.col;
-//     player.row = spawn.row;
-//     player.updateWorldPosition();
-//   }
-
-//   if (hoverMarker) {
-//     sceneManager.remove(hoverMarker);
-//   }
-//   const floorHeight = floor?.geometry?.parameters?.height ?? 0.1;
-//   hoverHeightOffset = floorHeight / 2 + 0.01;
-//   const markerSize = (level.cellSize || 1) * 0.9;
-//   const markerGeo = new THREE.PlaneGeometry(markerSize, markerSize);
-//   const markerMat = new THREE.MeshBasicMaterial({
-//     color: "#1e571e",
-//     transparent: true,
-//     opacity: 0.35,
-//     depthTest: false,
-//   });
-//   hoverMarker = new THREE.Mesh(markerGeo, markerMat);
-//   hoverMarker.rotation.x = -Math.PI / 2;
-//   hoverMarker.renderOrder = 10;
-//   hoverMarker.visible = false;
-//   sceneManager.add(hoverMarker);
-// }
+const highLight = new HoverHightlight();
+highLight.createMesh({ floor: runManager.floor, level: runManager.level });
+sceneManager.add(highLight.hoverMarker);
 
 function handlePointerMove(e) {
   if (!runManager.floor) return;
@@ -84,19 +36,23 @@ function handlePointerMove(e) {
 
   const hit = raycaster.intersectObject(runManager.floor, false)[0];
   if (!hit) {
-    lastHoverId = null;
-    if (hoverMarker) hoverMarker.visible = false;
+    highLight.setLastHoverId(null)
+    if (highLight.hoverMarker) highLight.hoverMarker.visible = false;
     return;
   }
 
   const id = hit.instanceId;
-  if (id !== lastHoverId) {
-    lastHoverId = id;
-    if (hoverMarker) {
+  if (id !== highLight.getLastHoverId()) {
+    highLight.setLastHoverId(id)
+    if (highLight.hoverMarker) {
       const cell = runManager.level.idToGrid(id);
-      const pos = runManager.level.gridToWorld(cell.col, cell.row, hoverHeightOffset);
-      hoverMarker.position.copy(pos);
-      hoverMarker.visible = true;
+      const pos = runManager.level.gridToWorld(
+        cell.col,
+        cell.row,
+        highLight.hoverHeightOffset,
+      );
+      highLight.hoverMarker.position.copy(pos);
+      highLight.hoverMarker.visible = true;
     }
   }
 }
@@ -113,10 +69,7 @@ function handlePointerDown(e) {
   if (!hit) return;
 
   const cell = runManager.level.idToGrid(hit.instanceId);
-  console.log('click', cell);
   runManager.player.click(cell);
-
-
 }
 
 window.addEventListener('pointerdown', handlePointerDown);
