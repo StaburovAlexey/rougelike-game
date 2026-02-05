@@ -23,13 +23,14 @@ export default class Entity {
   updateWorldPosition(height = 0.5) {
     const pos = this.level.gridToWorld(this.col, this.row, height);
     this.mesh.position.copy(pos);
+    this.level.registerEntity(this, { col: this.col, row: this.row });
     this.hightligtMoveCell();
-    this.level.setCellPlayer({ col: this.col, row: this.row });
   }
 
   canEnter(col, row) {
     if (col < 0 || col >= this.level.cols) return false;
     if (row < 0 || row >= this.level.rows) return false;
+    if (this.level.isCellOccupied({ col, row }, this)) return false;
     const key = `${col}:${row}`;
     const content = this.level.cellContents.get(key);
     if (!content) return true;
@@ -46,6 +47,7 @@ export default class Entity {
     this.col = col;
     this.row = row;
     this.updateWorldPosition();
+    return true;
   }
   getObject3D() {
     return this.mesh;

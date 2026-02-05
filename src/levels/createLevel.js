@@ -14,6 +14,8 @@ export default class CreateLevel {
     this.gap = 0.1;
     this.y = 0;
     this.cellContents = new Map();
+    this.occupiedCells = new Map();
+    this.entityPositions = new Map();
     this.levelGroup = new THREE.Group();
     this.allCells = this.#getAllCells();
     this.state = {};
@@ -29,6 +31,41 @@ export default class CreateLevel {
   setCellPlayer(cell) {
     this.cellPlayer = cell;
    
+  }
+  registerEntity(entity, cell) {
+    const key = this.#cellKey(cell);
+    const prevKey = this.entityPositions.get(entity);
+    if (prevKey && prevKey !== key) {
+      this.occupiedCells.delete(prevKey);
+    }
+    this.entityPositions.set(entity, key);
+    this.occupiedCells.set(key, entity);
+  }
+  removeEntity(entity) {
+    const key = this.entityPositions.get(entity);
+    if (!key) return;
+    this.occupiedCells.delete(key);
+    this.entityPositions.delete(entity);
+  }
+  isCellOccupied(cell, ignoreEntity = null) {
+    const key = this.#cellKey(cell);
+    const occupant = this.occupiedCells.get(key);
+    if (!occupant) return false;
+    if (ignoreEntity && occupant === ignoreEntity) return false;
+    return true;
+  }
+  isCellWalkable(cell) {
+    if (!cell) return false;
+    if (cell.col < 0 || cell.col >= this.cols) return false;
+    if (cell.row < 0 || cell.row >= this.rows) return false;
+    const key = this.#cellKey(cell);
+    const content = this.cellContents.get(key);
+    if (!content) return true;
+    return (
+      content.type === 'floor' ||
+      content.type === 'door' ||
+      content.type === 'loot'
+    );
   }
   #getAllCells() {
     const cells = [];
@@ -232,10 +269,10 @@ export default class CreateLevel {
     return this.levelGroup;
   }
   getMoveCells(row, col) {
-    const freeCell = this.#getFreeCells();
-    const freeSet = new Set(freeCell.map((c) => this.#cellKey(c)));
     const candidates = this.getCandidatesCells({ row, col }).candidates;
-    return candidates.filter((c) => freeSet.has(this.#cellKey(c)));
+    return candidates.filter(
+      (c) => this.isCellWalkable(c) && !this.isCellOccupied(c),
+    );
   }
   getCandidatesCells(cell) {
     const { col, row } = cell;

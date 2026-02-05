@@ -50,6 +50,7 @@ export default class RunManager {
         level: this.level,
         start: spawn,
         onExit: this.next.bind(this),
+        onMove: this.onPlayerMove.bind(this),
       });
       sceneManager.add(this.player.getObject3D());
     } else {
@@ -62,7 +63,9 @@ export default class RunManager {
   }
   spawnEnemys(spawnPlayer) {
     if (this.enemys.length != 0) {
-      sceneManager.remove(...this.enemys);
+      for (const enemy of this.enemys) {
+        sceneManager.remove(enemy.getObject3D());
+      }
       this.enemys = [];
     }
     const level = this.getLevel();
@@ -77,9 +80,19 @@ export default class RunManager {
       const enemy = new Enemy({
         level: this.level,
         start: spawnCells[i],
-      }).getObject3D();
+      });
       this.enemys.push(enemy);
-      sceneManager.add(enemy);
+      sceneManager.add(enemy.getObject3D());
+    }
+  }
+  onPlayerMove() {
+    this.runEnemyTurns();
+  }
+  runEnemyTurns() {
+    const playerCell = this.level.cellPlayer;
+    if (!playerCell) return;
+    for (const enemy of this.enemys) {
+      enemy.takeTurn(playerCell);
     }
   }
   getLevel() {
