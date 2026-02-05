@@ -5,6 +5,8 @@ export default class Player extends Entity {
     super({ ...options, color: 0x44ff66 });
     this.onExit = options.onExit;
     this.onMove = options.onMove;
+    this.isPlayer = true;
+    this.label = 'Player';
   }
 
   updateWorldPosition(height = 0.5) {
@@ -24,10 +26,30 @@ export default class Player extends Entity {
         }
         if (this.onMove) this.onMove();
       }
-    } else {
-      this.interaction(cell);
+      return;
     }
+    if (this.tryAttack(cell)) return;
+    this.interaction(cell);
   }
+
+  tryAttack(cell) {
+    if (!this.isAdjacent(cell)) return false;
+    const target = this.level.getEntityAt(cell);
+    if (!target || !target.isEnemy) return false;
+    const result = this.attack(target);
+    if (target.isAlive?.()) {
+      target.attack(this);
+    }
+    this.updateWorldPosition();
+    return result.damage > 0;
+  }
+
+  isAdjacent(cell) {
+    return (
+      Math.abs(this.col - cell.col) + Math.abs(this.row - cell.row) === 1
+    );
+  }
+
   interaction(cell) {
     const { col, row, content } = cell;
     const candidatesMap = this.level.getCandidatesCells(
@@ -37,9 +59,6 @@ export default class Player extends Entity {
     if (!candidatesMap.has(key)) return;
     if (content.type === 'loot') {
       console.log('Give surprise!');
-    }
-    if (content.type === 'door' && content.doorType === 'out') {
-      this.onExit();
     }
   }
 }

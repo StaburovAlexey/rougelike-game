@@ -1,8 +1,10 @@
-import * as THREE from 'three';
-import { sceneManager } from '../core/sceneManager';
-import CreateLevel from '../levels/createLevel.js';
-import Player from '../player/player.js';
-import Enemy from '../entities/enemy.js';
+import * as THREE from "three";
+import { sceneManager } from "../core/sceneManager";
+import CreateLevel from "../levels/createLevel.js";
+import Player from "../player/player.js";
+import Enemy from "../entities/enemy.js";
+
+const ENEMY_TYPES = ["chaser", "bruiser", "skirmisher", "guard", "ambusher"];
 
 export default class RunManager {
   constructor() {
@@ -14,27 +16,74 @@ export default class RunManager {
     this.enemys = [];
   }
   createRun() {
-    const run = {
+    const defaultLevels = [
+      {
+        cols: 8,
+        rows: 8,
+        enemy: 2,
+        enemyTypes: ["chaser"],
+        strong: 2,
+      },
+      {
+        cols: 9,
+        rows: 8,
+        enemy: 3,
+        enemyTypes: ["chaser", "guard"],
+      },
+      {
+        cols: 10,
+        rows: 8,
+        enemy: 4,
+        enemyTypes: ["chaser", "skirmisher"],
+      },
+      {
+        cols: 10,
+        rows: 10,
+        enemy: 5,
+        enemyTypes: ["chaser", "bruiser", "guard"],
+      },
+      {
+        cols: 12,
+        rows: 8,
+        enemy: 6,
+        enemyTypes: ["skirmisher", "guard", "chaser"],
+      },
+      {
+        cols: 12,
+        rows: 10,
+        enemy: 7,
+        enemyTypes: ["bruiser", "chaser", "skirmisher"],
+      },
+      {
+        cols: 12,
+        rows: 12,
+        enemy: 8,
+        enemyTypes: ["guard", "ambusher", "chaser"],
+      },
+      {
+        cols: 14,
+        rows: 10,
+        enemy: 9,
+        enemyTypes: ["ambusher", "skirmisher", "bruiser"],
+      },
+      {
+        cols: 14,
+        rows: 12,
+        enemy: 10,
+        enemyTypes: ["ambusher", "guard", "bruiser", "chaser"],
+      },
+      {
+        cols: 15,
+        rows: 12,
+        enemy: 12,
+        enemyTypes: ["chaser", "bruiser", "skirmisher", "guard", "ambusher"],
+      },
+    ];
+
+    return {
       start: 0,
-      levels: [
-        {
-          cols: 10,
-          rows: 10,
-          enemy: 3,
-        },
-        {
-          cols: 12,
-          rows: 5,
-          enemy: 1,
-        },
-        {
-          cols: 10,
-          rows: 10,
-          enemy: 10,
-        },
-      ],
+      levels: defaultLevels,
     };
-    return run;
   }
   buildLevel(options) {
     const { rows, cols } = options;
@@ -60,6 +109,7 @@ export default class RunManager {
       this.player.updateWorldPosition();
     }
     this.spawnEnemys(spawn);
+    this.player.updateWorldPosition();
   }
   spawnEnemys(spawnPlayer) {
     if (this.enemys.length != 0) {
@@ -76,24 +126,34 @@ export default class RunManager {
       avoidCell: spawnPlayer,
       minDistance: 5,
     });
+    const types = level.enemyTypes ?? ENEMY_TYPES;
+    const strong = level?.strong || 1;
     for (let i = 0; i < spawnCells.length; i++) {
       const enemy = new Enemy({
         level: this.level,
         start: spawnCells[i],
+        type: types[i % types.length],
+        strong: strong,
+        onDeath: this.onEnemyDeath.bind(this),
       });
       this.enemys.push(enemy);
       sceneManager.add(enemy.getObject3D());
     }
   }
+  onEnemyDeath(enemy) {
+    sceneManager.remove(enemy.getObject3D());
+    this.enemys = this.enemys.filter((item) => item !== enemy);
+  }
   onPlayerMove() {
     this.runEnemyTurns();
   }
   runEnemyTurns() {
-    const playerCell = this.level.cellPlayer;
-    if (!playerCell) return;
+    const player = this.player;
+    if (!player) return;
     for (const enemy of this.enemys) {
-      enemy.takeTurn(playerCell);
+      enemy.takeTurn(player);
     }
+    player.updateWorldPosition();
   }
   getLevel() {
     return this.run.levels[this.activeLevel];
@@ -115,6 +175,6 @@ export default class RunManager {
     this.buildLevel(this.getLevel());
   }
   end() {
-    console.log('End run!');
+    console.log("End run!");
   }
 }

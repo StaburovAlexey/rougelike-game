@@ -54,6 +54,10 @@ export default class CreateLevel {
     if (ignoreEntity && occupant === ignoreEntity) return false;
     return true;
   }
+  getEntityAt(cell) {
+    const key = this.#cellKey(cell);
+    return this.occupiedCells.get(key) || null;
+  }
   isCellWalkable(cell) {
     if (!cell) return false;
     if (cell.col < 0 || cell.col >= this.cols) return false;
