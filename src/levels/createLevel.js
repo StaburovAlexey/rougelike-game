@@ -29,6 +29,7 @@ export default class CreateLevel {
     this.moveCellsSet;
     this.attackCellsSet;
     this.lootCellsSet;
+    this.lootInstanceByKey = new Map();
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -208,6 +209,10 @@ export default class CreateLevel {
       skipCells: [...this.state.doors.cells, ...this.state.obstacles.cells],
       count: this.countLoot,
     }).create();
+    this.lootInstanceByKey.clear();
+    this.state.loot.cells.forEach((cell, instanceId) => {
+      this.lootInstanceByKey.set(this.#cellKey(cell), instanceId);
+    });
     this.state.trap = new Trap({
       ...ctx,
       cells: ctx.getInnerCells(),
@@ -298,12 +303,35 @@ export default class CreateLevel {
   }
   isCellLoot(cell) {
     const key = this.#cellKey(cell);
-    const loot = new Set(
-      this.state.loot.cells.map((c) =>
-        this.#cellKey({ col: c.col, row: c.row }),
-      ),
-    );
-    return loot.has(key);
+    const content = this.cellContents.get(key);
+    return content?.type === 'loot';
+  }
+  pickupLoot(cell) {
+    const key = this.#cellKey(cell);
+    const content = this.cellContents.get(key);
+    if (content?.type !== 'loot') return false;
+
+    this.cellContents.delete(key);
+
+    const instanceId = this.lootInstanceByKey.get(key);
+    const instanced = this.state?.loot?.instanced;
+    if (instanced && Number.isInteger(instanceId)) {
+      const hidden = new THREE.Object3D();
+      hidden.scale.set(0.001, 0.001, 0.001);
+      hidden.position.set(0, -1000, 0);
+      hidden.updateMatrix();
+      instanced.setMatrixAt(instanceId, hidden.matrix);
+      instanced.instanceMatrix.needsUpdate = true;
+    }
+
+    this.lootInstanceByKey.delete(key);
+    if (this.state?.loot?.cells) {
+      this.state.loot.cells = this.state.loot.cells.filter(
+        (item) => this.#cellKey(item) !== key,
+      );
+    }
+
+    return true;
   }
   isCellTrap(cell) {
     const key = this.#cellKey(cell);
@@ -382,6 +410,7 @@ export default class CreateLevel {
       this._highlightedMoveIds.push(id);
     }
   }
+
   clearInteractiveHighlights({ floor, baseColor }) {
     for (const id of this._highlightedMoveIds) floor.setColorAt(id, baseColor);
     for (const id of this._hightlightedAtackIds)

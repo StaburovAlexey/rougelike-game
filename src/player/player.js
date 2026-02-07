@@ -25,12 +25,16 @@ export default class Player extends Entity {
           this.onExit?.();
           return;
         }
+        if (content?.type === 'loot') {
+          this.takeLoot(cell);
+        
+        }
         if (this.onMove) this.onMove();
       }
       return;
     }
     if (this.tryAttack(cell)) return;
-    this.interaction(cell);
+   
   }
 
   tryAttack(cell) {
@@ -44,26 +48,22 @@ export default class Player extends Entity {
     this.updateWorldPosition();
     return result.damage > 0;
   }
+  takeLoot(cell) {
+    const picked = this.level.pickupLoot(cell);
+    if (!picked) return false;
+
+    console.log(
+      `${this.getLabel()} picked loot`,
+    );
+    return true;
+  }
 
   isAdjacent(cell) {
     return (
       Math.abs(this.col - cell.col) + Math.abs(this.row - cell.row) === 1
     );
   }
-
-  interaction(cell) {
-    const { col, row, content } = cell;
-    const candidatesMap = this.level.getCandidatesCells(
-      this.level.cellPlayer,
-    ).candidatesMap;
-    const key = `${col}:${row}`;
-    if (!candidatesMap.has(key)) return;
-    if (content.type === 'loot') {
-      console.log('Give surprise!');
-    }
-  }
-   hightligtMoveCell() {
+  hightligtMoveCell() {
     this.level.colorCellsInteractive({ row: this.row, col: this.col });
-    // this.level.colorCellAtack(this.row,this.col)
   }
 }
