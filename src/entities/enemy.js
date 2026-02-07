@@ -60,7 +60,8 @@ export default class Enemy extends Entity {
     super({ ...options, color: 0xff4444 });
     this.hasCustomHp = options.hp !== undefined;
     this.hasCustomAtk = options.atk !== undefined;
-    this.strong = options.strong ?? 1;
+    this.protection = options.protection ?? 1;
+    this.strength = options.strength ?? 1;
     this.id = enemyId++;
     this.type = options.type ?? "chaser";
     this.aggroRange = options.aggroRange ?? AGGRO_RANGE;
@@ -99,14 +100,10 @@ export default class Enemy extends Entity {
   #applyArchetype() {
     const stats = ENEMY_STATS[this.type] || ENEMY_STATS.chaser;
     if (!this.hasCustomAtk && stats.atk !== undefined) {
-      this.baseAttack = stats.atk;
+      this.baseAttack = stats.atk * this.strength;
     }
     if (!this.hasCustomHp && stats.hp !== undefined) {
-      this.maxHp = stats.hp
-      this.hp = this.maxHp;
-    }
-    if (this.strong !== 1) {
-      this.maxHp = this.maxHp * this.strong;
+      this.maxHp = stats.hp * this.protection;
       this.hp = this.maxHp;
     }
   }

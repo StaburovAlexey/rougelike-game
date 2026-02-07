@@ -1,17 +1,18 @@
-import * as THREE from "three";
-import { sceneManager } from "../core/sceneManager";
-import CreateLevel from "../levels/createLevel.js";
-import Player from "../player/player.js";
-import Enemy from "../entities/enemy.js";
-import LootManager from "../loot/lootManager.js";
+import * as THREE from 'three';
+import { sceneManager } from '../core/sceneManager';
+import CreateLevel from '../levels/createLevel.js';
+import Player from '../player/player.js';
+import Enemy from '../entities/enemy.js';
+import EnemyManager from '../entities/enemyManager.js';
+import LootManager from '../loot/lootManager.js';
 
 const ENEMY_TYPES = [
-  "chaser",
-  "bruiser",
-  "skirmisher",
-  "guard",
-  "ambusher",
-  "berserker",
+  'chaser',
+  'bruiser',
+  'skirmisher',
+  'guard',
+  'ambusher',
+  'berserker',
 ];
 
 export default class RunManager {
@@ -22,6 +23,7 @@ export default class RunManager {
     this.activeLevel;
     this.run;
     this.enemys = [];
+    this.enemyManager = new EnemyManager();
     this.lootManager = new LootManager();
   }
   createRun() {
@@ -29,75 +31,53 @@ export default class RunManager {
       {
         cols: 8,
         rows: 8,
-        enemy: 1,
-        enemyTypes: ["skirmisher"],
-        strong: 1,
       },
       {
         cols: 9,
         rows: 8,
-        enemy: 2,
-        enemyTypes: ["chaser", "berserker"],
       },
       {
         cols: 10,
         rows: 8,
-        enemy: 4,
-        enemyTypes: ["chaser", "skirmisher"],
       },
       {
         cols: 10,
         rows: 10,
-        enemy: 5,
-        enemyTypes: ["chaser", "bruiser", "guard"],
       },
       {
         cols: 12,
         rows: 8,
-        enemy: 6,
-        enemyTypes: ["skirmisher", "guard", "chaser"],
       },
       {
         cols: 12,
         rows: 10,
-        enemy: 7,
-        enemyTypes: ["bruiser", "chaser", "skirmisher"],
       },
       {
         cols: 12,
         rows: 12,
-        enemy: 8,
-        enemyTypes: ["guard", "ambusher", "chaser"],
       },
       {
         cols: 14,
         rows: 10,
-        enemy: 9,
-        enemyTypes: ["ambusher", "skirmisher", "bruiser"],
       },
       {
         cols: 14,
         rows: 12,
-        enemy: 10,
-        enemyTypes: ["ambusher", "guard", "bruiser", "chaser"],
       },
       {
         cols: 15,
         rows: 12,
-        enemy: 12,
-        enemyTypes: [
-          "chaser",
-          "bruiser",
-          "skirmisher",
-          "guard",
-          "ambusher",
-          "berserker",
-        ],
       },
     ];
 
     const defaultLevels = baseLevels.map((level, levelIndex, levels) => ({
       ...level,
+      ...this.enemyManager.getEnemyPlanForLevel({
+        levelIndex,
+        totalLevels: levels.length,
+        cols: level.cols,
+        rows: level.rows,
+      }),
       lootPlan: this.lootManager.getLootPlanForLevel({
         levelIndex,
         totalLevels: levels.length,
@@ -154,13 +134,15 @@ export default class RunManager {
       exitMinDistance: 2,
     });
     const types = level.enemyTypes ?? ENEMY_TYPES;
-    const strong = level?.strong || 1;
+    const protection = level?.protection || 1;
+    const strength = level?.strength || 1;
     for (let i = 0; i < spawnCells.length; i++) {
       const enemy = new Enemy({
         level: this.level,
         start: spawnCells[i],
         type: types[i % types.length],
-        strong: strong,
+        protection,
+        strength,
         onDeath: this.onEnemyDeath.bind(this),
       });
       this.enemys.push(enemy);
@@ -190,7 +172,7 @@ export default class RunManager {
   }
   start() {
     this.run = this.createRun();
-    console.log(this.run)
+    console.log('run', this.run);
     this.activeLevel = this.run.start;
     this.buildLevel(this.getLevel());
   }
@@ -206,6 +188,6 @@ export default class RunManager {
     this.buildLevel(this.getLevel());
   }
   end() {
-    console.log("End run!");
+    console.log('End run!');
   }
 }
