@@ -18,8 +18,8 @@ export default class EnemyManager {
   getEnemyPlanForLevel({ levelIndex, totalLevels, cols, rows }) {
     const progress = totalLevels <= 1 ? 1 : levelIndex / (totalLevels - 1);
     const cells = cols * rows;
-    const baseCount = Math.max(1, Math.floor(cells * 0.03));
-    const progressBonus = Math.floor(progress * 5);
+    const baseCount = Math.max(1, Math.floor(cells * 0.02));
+    const progressBonus = Math.floor(progress * 4);
     const randomBonus = Math.random() < 0.45 + progress * 0.3 ? 1 : 0;
     const enemy = baseCount + progressBonus + randomBonus;
 

@@ -6,13 +6,15 @@ import Obstacles from './obstacles';
 import Loot from './loot';
 import Trap from './trap';
 export default class CreateLevel {
-  constructor({ cols = 10, rows = 10, lootPlan = null } = {}) {
+  constructor({ cols = 10, rows = 10, lootPlan = null, levelPlan = null } = {}) {
     this.cols = cols;
     this.rows = rows;
-    this.countObstacles = Math.floor(rows * cols * 0.04);
+    this.levelPlan = levelPlan;
+    this.countObstacles = levelPlan?.obstacleCount ?? Math.floor(rows * cols * 0.04);
     this.lootPlan = lootPlan;
     this.countLoot = lootPlan?.items?.length ?? Math.max(1, Math.floor(rows * cols * 0.01));
-    this.countTrap = Math.max(1, Math.floor(rows * cols * 0.02));
+    this.countTrap = levelPlan?.trapCount ?? Math.max(1, Math.floor(rows * cols * 0.02));
+    this.doorTotal = levelPlan?.doorTotal ?? 3;
     this.cellSize = 1;
     this.gap = 0.1;
     this.y = 0;
@@ -191,7 +193,7 @@ export default class CreateLevel {
     this.state.doors = new Doors({
       ...ctx,
       cells: ctx.getPerimeterCells(),
-      total: 3,
+      total: this.doorTotal,
     }).create();
     this.state.walls = new Walls({
       ...ctx,
@@ -272,7 +274,7 @@ export default class CreateLevel {
     count = 1,
     avoidCell,
     minDistance = 3,
-    exitMinDistance = 3,
+    exitMinDistance = 2,
   } = {}) {
     const free = this.#getFreeCells();
     const distance = (a, b) =>

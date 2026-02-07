@@ -4,6 +4,7 @@ import CreateLevel from '../levels/createLevel.js';
 import Player from '../player/player.js';
 import Enemy from '../entities/enemy.js';
 import EnemyManager from '../entities/enemyManager.js';
+import LevelGenManager from '../levels/levelGenManager.js';
 import LootManager from '../loot/lootManager.js';
 
 const ENEMY_TYPES = [
@@ -24,55 +25,29 @@ export default class RunManager {
     this.run;
     this.enemys = [];
     this.enemyManager = new EnemyManager();
+    this.levelGenManager = new LevelGenManager();
     this.lootManager = new LootManager();
   }
   createRun() {
-    const baseLevels = [
-      {
-        cols: 8,
-        rows: 8,
-      },
-      {
-        cols: 9,
-        rows: 8,
-      },
-      {
-        cols: 10,
-        rows: 8,
-      },
-      {
-        cols: 10,
-        rows: 10,
-      },
-      {
-        cols: 12,
-        rows: 8,
-      },
-      {
-        cols: 12,
-        rows: 10,
-      },
-      {
-        cols: 12,
-        rows: 12,
-      },
-      {
-        cols: 14,
-        rows: 10,
-      },
-      {
-        cols: 14,
-        rows: 12,
-      },
-      {
-        cols: 15,
-        rows: 12,
-      },
-    ];
+    const totalLevels = 10;
+    const minSize = 5;
+    const maxSize = 14;
+    const randomInt = (min, max) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+    const baseLevels = Array.from({ length: totalLevels }, () => ({
+      cols: randomInt(minSize, maxSize),
+      rows: randomInt(minSize, maxSize),
+    }));
 
     const defaultLevels = baseLevels.map((level, levelIndex, levels) => ({
       ...level,
       ...this.enemyManager.getEnemyPlanForLevel({
+        levelIndex,
+        totalLevels: levels.length,
+        cols: level.cols,
+        rows: level.rows,
+      }),
+      levelPlan: this.levelGenManager.getLevelPlanForLevel({
         levelIndex,
         totalLevels: levels.length,
         cols: level.cols,
@@ -92,11 +67,11 @@ export default class RunManager {
     };
   }
   buildLevel(options) {
-    const { rows, cols, lootPlan } = options;
+    const { rows, cols, lootPlan, levelPlan } = options;
     if (this.level) {
       sceneManager.remove(this.level.getLevel());
     }
-    this.level = new CreateLevel({ rows, cols, lootPlan });
+    this.level = new CreateLevel({ rows, cols, lootPlan, levelPlan });
     sceneManager.add(this.level.getLevel());
     const spawn = this.level.getSpawnCell();
     this.floor = this.level.state.floor.instanced;
