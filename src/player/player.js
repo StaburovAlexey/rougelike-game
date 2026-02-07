@@ -12,6 +12,7 @@ export default class Player extends Entity {
   updateWorldPosition(height = 0.5) {
     super.updateWorldPosition(height);
     this.level.setCellPlayer({ col: this.col, row: this.row });
+    this.hightligtMoveCell()
   }
 
   click(cell) {
@@ -60,5 +61,9 @@ export default class Player extends Entity {
     if (content.type === 'loot') {
       console.log('Give surprise!');
     }
+  }
+   hightligtMoveCell() {
+    this.level.colorCellsInteractive({ row: this.row, col: this.col });
+    // this.level.colorCellAtack(this.row,this.col)
   }
 }

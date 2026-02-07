@@ -38,7 +38,7 @@ export default class Entity {
     const pos = this.level.gridToWorld(this.col, this.row, height);
     this.mesh.position.copy(pos);
     this.level.registerEntity(this, { col: this.col, row: this.row });
-    this.hightligtMoveCell();
+    
   }
 
   canEnter(col, row) {
@@ -114,8 +114,5 @@ export default class Entity {
   }
   getObject3D() {
     return this.mesh;
-  }
-  hightligtMoveCell() {
-    this.level.colorCellGo(this.row, this.col);
   }
 }

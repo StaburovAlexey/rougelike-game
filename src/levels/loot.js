@@ -1,5 +1,4 @@
-
-import Environment from "./environment";
+import Environment from './environment';
 
 export default class Loot extends Environment {
   #loot;
@@ -24,7 +23,7 @@ export default class Loot extends Environment {
     this.setCell = setCell;
 
     if (!this.setCell) {
-      throw new Error("Loot: setCell is required");
+      throw new Error('Loot: setCell is required');
     }
 
     this.#loot = [];
@@ -52,9 +51,9 @@ export default class Loot extends Environment {
     this.createInstance({
       count: this.count,
       thickness: this.cellSize / 2,
-      color: "#ddd019",
+      color: '#ddd019',
     });
-
+    const lootsCells = [];
     for (let i = 0; i < this.count; i++) {
       const cell = allowed.splice(this.randomInt(allowed.length), 1)[0];
       const x = this.getX(cell);
@@ -64,12 +63,12 @@ export default class Loot extends Environment {
       this.dummy.updateMatrix();
       this.instanced.setMatrixAt(i, this.dummy.matrix);
 
-      this.setCell(cell, { type: "loot" });
+      this.setCell(cell, { type: 'loot' });
+      lootsCells.push(cell);
     }
 
     this.instanced.instanceMatrix.needsUpdate = true;
-    this.setMesh(this.instanced);
+    this.setMesh(this.instanced, lootsCells);
     this.levelGroup.add(this.instanced);
   }
-
 }

@@ -20,9 +20,13 @@ export default class CreateLevel {
     this.allCells = this.#getAllCells();
     this.state = {};
     this.isBuilt = false;
-    this._highlightedIds = [];
+    this._highlightedMoveIds = [];
+    this._hightlightedAtackIds = [];
+    this._hightlightedLootIds = [];
     this.cellPlayer = null;
     this.moveCellsSet;
+    this.attackCellsSet;
+    this.lootCellsSet;
   }
   #setCell = (cell, data) => {
     const key = this.#cellKey(cell);
@@ -30,7 +34,6 @@ export default class CreateLevel {
   };
   setCellPlayer(cell) {
     this.cellPlayer = cell;
-   
   }
   registerEntity(entity, cell) {
     const key = this.#cellKey(cell);
@@ -252,7 +255,9 @@ export default class CreateLevel {
       avoidCell && cell.col === avoidCell.col && cell.row === avoidCell.row;
 
     let candidates = free.filter(
-      (cell) => !isAvoid(cell) && (!avoidCell || distance(cell, avoidCell) >= minDistance)
+      (cell) =>
+        !isAvoid(cell) &&
+        (!avoidCell || distance(cell, avoidCell) >= minDistance),
     );
 
     if (candidates.length < count) {
@@ -278,6 +283,23 @@ export default class CreateLevel {
       (c) => this.isCellWalkable(c) && !this.isCellOccupied(c),
     );
   }
+  isCellLoot(cell) {
+    const key = this.#cellKey(cell);
+    const loot = new Set(
+      this.state.loot.cells.map((c) =>
+        this.#cellKey({ col: c.col, row: c.row }),
+      ),
+    );
+    return loot.has(key);
+  }
+  getAttackCells(row, col) {
+    const candidates = this.getCandidatesCells({ row, col }).candidates;
+    return candidates.filter((c) => this.isCellOccupied(c));
+  }
+  getLootCells(row, col) {
+    const candidates = this.getCandidatesCells({ row, col }).candidates;
+    return candidates.filter((c) => this.isCellLoot(c));
+  }
   getCandidatesCells(cell) {
     const { col, row } = cell;
     const candidates = [
@@ -293,27 +315,59 @@ export default class CreateLevel {
     });
     return { candidates, candidatesMap };
   }
-  colorCellGo(row, col) {
- 
-    const filtered = this.getMoveCells(row, col);
-
-    this.moveCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
+  colorCellsInteractive({ row, col }) {
     const floor = this.state?.floor?.instanced;
     if (!floor) return;
     const baseColor = new THREE.Color(floor.material.color);
-    if (this._highlightedIds.length > 0) {
-      for (const id of this._highlightedIds) {
-        floor.setColorAt(id, baseColor);
-      }
-      this._highlightedIds = [];
+    this.clearInteractiveHighlights({ floor, baseColor });
+    this.colorCellMove({ row, col, floor, baseColor });
+    this.colorCellAttack({ row, col, floor, baseColor });
+    this.colorCellLoot({ row, col, floor, baseColor });
+
+    floor.instanceColor.needsUpdate = true;
+  }
+  colorCellLoot({ row, col, floor }) {
+    const filtered = this.getLootCells(row, col);
+    this.lootCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
+
+    const color = new THREE.Color('#0ff52e');
+    for (const cell of filtered) {
+      const id = cell.row * this.cols + cell.col;
+      floor.setColorAt(id, color);
+      this._hightlightedLootIds.push(id);
     }
+  }
+  colorCellAttack({ row, col, floor }) {
+    const filtered = this.getAttackCells(row, col);
+    this.attackCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
+
+    const color = new THREE.Color('#f51e0f');
+    for (const cell of filtered) {
+      const id = cell.row * this.cols + cell.col;
+      floor.setColorAt(id, color);
+      this._hightlightedAtackIds.push(id);
+    }
+  }
+
+  colorCellMove({ row, col, floor }) {
+    const filtered = this.getMoveCells(row, col);
+    this.moveCellsSet = new Set(filtered.map((c) => this.#cellKey(c)));
 
     const color = new THREE.Color('#ffd54a');
     for (const cell of filtered) {
       const id = cell.row * this.cols + cell.col;
       floor.setColorAt(id, color);
-      this._highlightedIds.push(id);
+      this._highlightedMoveIds.push(id);
     }
-    floor.instanceColor.needsUpdate = true;
+  }
+  clearInteractiveHighlights({ floor, baseColor }) {
+    for (const id of this._highlightedMoveIds) floor.setColorAt(id, baseColor);
+    for (const id of this._hightlightedAtackIds)
+      floor.setColorAt(id, baseColor);
+    for (const id of this._hightlightedLootIds) floor.setColorAt(id, baseColor);
+
+    this._highlightedMoveIds = [];
+    this._hightlightedAtackIds = [];
+    this._hightlightedLootIds = [];
   }
 }

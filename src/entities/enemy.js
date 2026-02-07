@@ -66,10 +66,6 @@ export default class Enemy extends Entity {
     this.#applyVisuals();
   }
 
-  hightligtMoveCell() {
-    // Enemy does not highlight move cells.
-  }
-
   takeTurn(player) {
     if (!player || !player.isAlive?.()) return false;
     switch (this.type) {
