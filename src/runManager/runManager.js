@@ -5,9 +5,7 @@ import Player from '../player/player.js';
 import Enemy from '../entities/enemy.js';
 import EnemyManager from '../entities/enemyManager.js';
 import LevelGenManager from '../levels/levelGenManager.js';
-import DoorEffectsManager, {
-  SPECIAL_ROOM_EFFECT,
-} from '../levels/doorEffectsManager.js';
+import DoorEffectsManager from '../levels/doorEffectsManager.js';
 import LootManager from '../loot/lootManager.js';
 
 const ENEMY_TYPES = [
@@ -182,30 +180,16 @@ export default class RunManager {
       `[DoorTransition] entered "${selectedEffect}" door at level ${this.activeLevel}`,
       doorContent,
     );
-    if (selectedEffect === SPECIAL_ROOM_EFFECT) {
-      const handled = this.enterSpecialRoom({ doorContent });
-      if (handled) return;
-      console.warn(
-        "[SpecialRoom] not implemented yet, fallback to normal transition.",
-      );
-    }
-
     this.activeLevel++;
-    const effectForNextLevel =
-      selectedEffect === SPECIAL_ROOM_EFFECT ? "normal" : selectedEffect;
     const nextLevel = this.run.levels[this.activeLevel];
     this.run.levels[this.activeLevel] =
       this.doorEffectsManager.applyEffectToNextLevel({
-        effectId: effectForNextLevel,
+        effectId: selectedEffect,
         level: nextLevel,
         levelIndex: this.activeLevel,
       });
 
     this.buildLevel(this.getLevel());
-  }
-  // Plug your custom special-room build logic here later.
-  enterSpecialRoom() {
-    return false;
   }
   end() {
     console.log('End run!');

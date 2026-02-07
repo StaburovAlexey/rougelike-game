@@ -1,7 +1,6 @@
 import LootManager from "../loot/lootManager.js";
 
 const DEFAULT_EFFECT = "normal";
-const SPECIAL_ROOM_EFFECT = "special_room";
 
 function weightedPick(entries) {
   const total = entries.reduce((sum, item) => sum + Math.max(0, item.weight), 0);
@@ -21,7 +20,6 @@ export default class DoorEffectsManager {
     this.effects = new Map();
     this.lastSafeOfferedLevelIndex = -Infinity;
     this.safeCooldownLevels = 4;
-    this.specialRoomOffered = false;
     this.lootManager = new LootManager();
 
     this.registerDefaults();
@@ -156,14 +154,6 @@ export default class DoorEffectsManager {
       },
     });
 
-    this.registerEffect(SPECIAL_ROOM_EFFECT, {
-      weight: 0.8,
-      minLevelIndex: 3,
-      canAppear: ({ levelIndex }) =>
-        !this.specialRoomOffered && levelIndex < 9,
-      // Special room should be handled outside of regular level generation.
-      apply: ({ level }) => level,
-    });
   }
 
   generateOutDoorEffects({ levelIndex, outDoorsCount }) {
@@ -182,9 +172,6 @@ export default class DoorEffectsManager {
 
     if (result.includes("safe")) {
       this.lastSafeOfferedLevelIndex = levelIndex;
-    }
-    if (result.includes(SPECIAL_ROOM_EFFECT)) {
-      this.specialRoomOffered = true;
     }
 
     return this.#shuffle(result);
@@ -234,5 +221,3 @@ export default class DoorEffectsManager {
     });
   }
 }
-
-export { SPECIAL_ROOM_EFFECT };

@@ -53,7 +53,7 @@ export default class Obstacles extends Environment {
     this.createInstance({
       count: actualCount,
       thickness: this.thickness,
-      color: "#aa0000",
+      color: 0x888888,
     });
 
     for (let i = 0; i < actualCount; i++) {

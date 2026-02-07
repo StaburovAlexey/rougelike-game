@@ -115,7 +115,6 @@ export default class Doors extends Environment {
       else if (doorEffect === "elite") color.setHex(0xaa66ff);
       else if (doorEffect === "swarm") color.setHex(0xff44aa);
       else if (doorEffect === "blacksmith") color.setHex(0xffaa33);
-      else if (doorEffect === "special_room") color.setHex(0xffffff);
       else color.setHex(0x3366ff);
       this.instanced.setColorAt(i, color);
 
