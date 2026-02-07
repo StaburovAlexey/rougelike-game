@@ -190,7 +190,7 @@ export default class CreateLevel {
     this.state.doors = new Doors({
       ...ctx,
       cells: ctx.getPerimeterCells(),
-      total: 2,
+      total: 3,
     }).create();
     this.state.walls = new Walls({
       ...ctx,

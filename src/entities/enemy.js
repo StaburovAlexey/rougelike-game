@@ -62,6 +62,7 @@ export default class Enemy extends Entity {
     this.label = `Enemy#${this.id}(${this.type})`;
     this.windUp = 0;
     this.ambushTriggered = false;
+    this.skirmisherMoveAttackReady = false;
     this.#applyArchetype();
     this.#applyVisuals();
   }
@@ -140,13 +141,32 @@ export default class Enemy extends Entity {
 
   #takeSkirmisherTurn(player) {
     const dist = manhattan(this, player);
-    if (dist > this.aggroRange) return false;
-    if (dist === 1) {
-      this.attack(player);
-      this.#retreatFrom(player);
-      return true;
+    if (dist > this.aggroRange) {
+      this.skirmisherMoveAttackReady = false;
+      return false;
     }
-    return this.#chase(player, 1);
+    if (dist === 1) {
+      return this.#skirmisherAttackOrCharge(player);
+    }
+
+    const moved = this.#chase(player, 1);
+    if (!moved || !this.isAlive()) return moved;
+
+    if (manhattan(this, player) !== 1) return moved;
+    return this.#skirmisherAttackOrCharge(player) || moved;
+  }
+
+  #skirmisherAttackOrCharge(player) {
+    if (!this.skirmisherMoveAttackReady) {
+      this.skirmisherMoveAttackReady = true;
+      return false;
+    }
+    this.attack(player);
+    if (this.isAlive()) {
+      this.#retreatFrom(player);
+    }
+    this.skirmisherMoveAttackReady = false;
+    return true;
   }
 
   #takeGuardTurn(player) {

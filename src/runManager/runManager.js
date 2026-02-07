@@ -20,9 +20,9 @@ export default class RunManager {
       {
         cols: 8,
         rows: 8,
-        enemy: 2,
-        enemyTypes: ["chaser"],
-        strong: 2,
+        enemy: 1,
+        enemyTypes: ["skirmisher"],
+        strong: 1,
       },
       {
         cols: 9,
