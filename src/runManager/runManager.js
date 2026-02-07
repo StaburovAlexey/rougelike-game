@@ -3,6 +3,7 @@ import { sceneManager } from "../core/sceneManager";
 import CreateLevel from "../levels/createLevel.js";
 import Player from "../player/player.js";
 import Enemy from "../entities/enemy.js";
+import LootManager from "../loot/lootManager.js";
 
 const ENEMY_TYPES = [
   "chaser",
@@ -21,9 +22,10 @@ export default class RunManager {
     this.activeLevel;
     this.run;
     this.enemys = [];
+    this.lootManager = new LootManager();
   }
   createRun() {
-    const defaultLevels = [
+    const baseLevels = [
       {
         cols: 8,
         rows: 8,
@@ -94,17 +96,27 @@ export default class RunManager {
       },
     ];
 
+    const defaultLevels = baseLevels.map((level, levelIndex, levels) => ({
+      ...level,
+      lootPlan: this.lootManager.getLootPlanForLevel({
+        levelIndex,
+        totalLevels: levels.length,
+        cols: level.cols,
+        rows: level.rows,
+      }),
+    }));
+
     return {
       start: 0,
       levels: defaultLevels,
     };
   }
   buildLevel(options) {
-    const { rows, cols } = options;
+    const { rows, cols, lootPlan } = options;
     if (this.level) {
       sceneManager.remove(this.level.getLevel());
     }
-    this.level = new CreateLevel({ rows, cols });
+    this.level = new CreateLevel({ rows, cols, lootPlan });
     sceneManager.add(this.level.getLevel());
     const spawn = this.level.getSpawnCell();
     this.floor = this.level.state.floor.instanced;
@@ -170,11 +182,15 @@ export default class RunManager {
     }
     player.updateWorldPosition();
   }
+  update(camera) {
+    this.level?.update?.(camera);
+  }
   getLevel() {
     return this.run.levels[this.activeLevel];
   }
   start() {
     this.run = this.createRun();
+    console.log(this.run)
     this.activeLevel = this.run.start;
     this.buildLevel(this.getLevel());
   }

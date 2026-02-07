@@ -26,7 +26,7 @@ export default class Player extends Entity {
           return;
         }
         if (content?.type === 'loot') {
-          this.takeLoot(cell);
+          this.takeLoot(cell, content);
         
         }
         if (this.onMove) this.onMove();
@@ -48,12 +48,13 @@ export default class Player extends Entity {
     this.updateWorldPosition();
     return result.damage > 0;
   }
-  takeLoot(cell) {
+  takeLoot(cell, lootInfo = null) {
     const picked = this.level.pickupLoot(cell);
     if (!picked) return false;
 
     console.log(
       `${this.getLabel()} picked loot`,
+      lootInfo,
     );
     return true;
   }

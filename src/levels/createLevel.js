@@ -6,11 +6,12 @@ import Obstacles from './obstacles';
 import Loot from './loot';
 import Trap from './trap';
 export default class CreateLevel {
-  constructor({ cols = 10, rows = 10 } = {}) {
+  constructor({ cols = 10, rows = 10, lootPlan = null } = {}) {
     this.cols = cols;
     this.rows = rows;
     this.countObstacles = Math.floor(rows * cols * 0.04);
-    this.countLoot = Math.max(1, Math.floor(rows * cols * 0.01));
+    this.lootPlan = lootPlan;
+    this.countLoot = lootPlan?.items?.length ?? Math.max(1, Math.floor(rows * cols * 0.01));
     this.countTrap = Math.max(1, Math.floor(rows * cols * 0.02));
     this.cellSize = 1;
     this.gap = 0.1;
@@ -208,11 +209,14 @@ export default class CreateLevel {
       cells: ctx.getInnerCells(),
       skipCells: [...this.state.doors.cells, ...this.state.obstacles.cells],
       count: this.countLoot,
+      lootPlan: this.lootPlan,
     }).create();
     this.lootInstanceByKey.clear();
-    this.state.loot.cells.forEach((cell, instanceId) => {
-      this.lootInstanceByKey.set(this.#cellKey(cell), instanceId);
-    });
+    if (this.state.loot.instanceByCellKey) {
+      for (const [key, instanceId] of this.state.loot.instanceByCellKey.entries()) {
+        this.lootInstanceByKey.set(key, instanceId);
+      }
+    }
     this.state.trap = new Trap({
       ...ctx,
       cells: ctx.getInnerCells(),
@@ -306,6 +310,9 @@ export default class CreateLevel {
     this.createLevel();
     return this.levelGroup;
   }
+  update(camera) {
+    this.state?.loot?.updateBillboards?.(camera);
+  }
   getMoveCells(row, col) {
     const candidates = this.getCandidatesCells({ row, col }).candidates;
     return candidates.filter(
@@ -333,6 +340,12 @@ export default class CreateLevel {
       hidden.updateMatrix();
       instanced.setMatrixAt(instanceId, hidden.matrix);
       instanced.instanceMatrix.needsUpdate = true;
+    }
+    const meshByCellKey = this.state?.loot?.meshByCellKey;
+    const mesh = meshByCellKey?.get?.(key);
+    if (mesh) {
+      this.levelGroup.remove(mesh);
+      meshByCellKey.delete(key);
     }
 
     this.lootInstanceByKey.delete(key);

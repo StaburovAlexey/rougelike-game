@@ -93,6 +93,7 @@ function loop(now) {
   const delta = (now - last) / 1000;
   last = now;
   controls.update();
+  runManager.update(camera.getCamera());
   renderer.render(sceneManager.getScene(), camera.getCamera());
 
   requestAnimationFrame(loop);
