@@ -125,6 +125,7 @@ export default class RunManager {
       count: countEnemy,
       avoidCell: spawnPlayer,
       minDistance: 5,
+      exitMinDistance: 2,
     });
     const types = level.enemyTypes ?? ENEMY_TYPES;
     const strong = level?.strong || 1;

@@ -264,22 +264,33 @@ export default class CreateLevel {
     const free = this.#getFreeCells();
     return free[0] || { col: 1, row: 1 };
   }
-  getEnemySpawnCells({ count = 1, avoidCell, minDistance = 3 } = {}) {
+  getEnemySpawnCells({
+    count = 1,
+    avoidCell,
+    minDistance = 3,
+    exitMinDistance = 3,
+  } = {}) {
     const free = this.#getFreeCells();
     const distance = (a, b) =>
       Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+    const exits = (this.state?.doors?.cells || []).filter(
+      (door) => door.type === 'out',
+    );
 
     const isAvoid = (cell) =>
       avoidCell && cell.col === avoidCell.col && cell.row === avoidCell.row;
+    const isNearExit = (cell) =>
+      exits.some((exit) => distance(cell, exit) <= exitMinDistance);
 
     let candidates = free.filter(
       (cell) =>
         !isAvoid(cell) &&
+        !isNearExit(cell) &&
         (!avoidCell || distance(cell, avoidCell) >= minDistance),
     );
 
     if (candidates.length < count) {
-      candidates = free.filter((cell) => !isAvoid(cell));
+      candidates = free.filter((cell) => !isAvoid(cell) && !isNearExit(cell));
     }
 
     const picks = [];
