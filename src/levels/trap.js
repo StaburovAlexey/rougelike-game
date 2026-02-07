@@ -40,14 +40,15 @@ export default class Trap extends Environment {
     }
 
     const allowed = this.cells.filter((cell) => !skip.has(this.cellKey(cell)));
+    const actualCount = Math.min(this.count, allowed.length);
 
     this.createInstance({
-      count: this.count,
+      count: actualCount,
       thickness: this.cellSize / 5,
       color: '#030300',
     });
     const trapCells = [];
-    for (let i = 0; i < this.count; i++) {
+    for (let i = 0; i < actualCount; i++) {
       const cell = allowed.splice(this.randomInt(allowed.length), 1)[0];
       const x = this.getX(cell);
       const z = this.getZ(cell);

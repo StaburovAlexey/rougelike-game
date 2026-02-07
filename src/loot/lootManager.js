@@ -44,18 +44,66 @@ export default class LootManager {
     const goldRandomBonus = Math.random() < 0.4 + progress * 0.35 ? 1 : 0;
     const goldCount = baseGoldCount + goldBonusByProgress + goldRandomBonus;
 
-    const rarityWeights = {
+    return this.buildLootPlan({
+      progress,
+      nonGoldCount,
+      goldCount,
+    });
+  }
+
+  buildLootPlan({
+    progress = 0,
+    nonGoldCount = 0,
+    goldCount = 0,
+    nonGoldTypeWeights = null,
+  } = {}) {
+    const rarityWeights = this.getRarityWeights(progress);
+    const resolvedNonGoldTypeWeights =
+      nonGoldTypeWeights ?? this.getNonGoldTypeWeights(progress);
+    const items = this.generateItems({
+      progress,
+      nonGoldCount,
+      goldCount,
+      rarityWeights,
+      nonGoldTypeWeights: resolvedNonGoldTypeWeights,
+    });
+
+    return {
+      count: items.length,
+      nonGoldCount,
+      goldCount,
+      progress,
+      items,
+      weights: {
+        rarity: rarityWeights,
+        nonGoldType: resolvedNonGoldTypeWeights,
+      },
+    };
+  }
+
+  getRarityWeights(progress = 0) {
+    return {
       [RARITY_COMMON]: 84 - 36 * progress,
       [RARITY_EPIC]: 14 + 23 * progress,
       [RARITY_LEGENDARY]: 2 + 13 * progress,
     };
+  }
 
-    const nonGoldTypeWeights = {
+  getNonGoldTypeWeights(progress = 0) {
+    return {
       weapon: 18 + 16 * progress,
       armor: 22 + 20 * progress,
       consumable: 30 - 8 * progress,
     };
+  }
 
+  generateItems({
+    progress = 0,
+    nonGoldCount = 0,
+    goldCount = 0,
+    rarityWeights = this.getRarityWeights(progress),
+    nonGoldTypeWeights = this.getNonGoldTypeWeights(progress),
+  } = {}) {
     const nonGoldItems = [];
     for (let i = 0; i < nonGoldCount; i++) {
       const lootType = weightedPick(nonGoldTypeWeights);
@@ -68,19 +116,8 @@ export default class LootManager {
       const rarity = weightedPick(rarityWeights) ?? RARITY_COMMON;
       goldItems.push(this.#createItem({ lootType: "gold", rarity, progress }));
     }
-    const items = [...nonGoldItems, ...goldItems];
 
-    return {
-      count: items.length,
-      nonGoldCount,
-      goldCount,
-      progress,
-      items,
-      weights: {
-        rarity: rarityWeights,
-        nonGoldType: nonGoldTypeWeights,
-      },
-    };
+    return [...nonGoldItems, ...goldItems];
   }
 
   #createItem({ lootType, rarity, progress }) {

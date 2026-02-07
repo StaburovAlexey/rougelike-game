@@ -7,12 +7,20 @@ export default class Doors extends Environment {
   constructor(options = {}) {
     super({ ...options, thickness: 1.2, color: "#ffffff" });
 
-    const { y = 0, cells = [], levelGroup, total = 3, setCell } = options;
+    const {
+      y = 0,
+      cells = [],
+      levelGroup,
+      total = 3,
+      setCell,
+      outDoorEffects = [],
+    } = options;
 
     this.levelGroup = levelGroup;
     this.y = y;
     this.cells = cells;
     this.total = total;
+    this.outDoorEffects = outDoorEffects;
     this.#doors = this.pickDoors();
     this.setCell = setCell;
     if (!this.setCell) {
@@ -76,9 +84,14 @@ export default class Doors extends Environment {
     });
     const color = new Color();
     this.dummy.scale.set(1, 1, 1);
+    let outEffectIndex = 0;
 
     for (let i = 0; i < doors.length; i++) {
       const { col, row, type } = doors[i];
+      const doorEffect =
+        type === "out"
+          ? this.outDoorEffects[outEffectIndex++] || "normal"
+          : "normal";
 
       const x = this.getX(doors[i]);
       const z = this.getZ(doors[i]);
@@ -95,10 +108,21 @@ export default class Doors extends Environment {
       this.dummy.updateMatrix();
       this.instanced.setMatrixAt(i, this.dummy.matrix);
 
-      color.setHex(type === "in" ? 0x00ff00 : 0x3366ff);
+      if (type === "in") color.setHex(0x00ff00);
+      else if (doorEffect === "greed") color.setHex(0xffcc33);
+      else if (doorEffect === "hazard") color.setHex(0xff5533);
+      else if (doorEffect === "safe") color.setHex(0x66ccff);
+      else if (doorEffect === "elite") color.setHex(0xaa66ff);
+      else if (doorEffect === "swarm") color.setHex(0xff44aa);
+      else if (doorEffect === "blacksmith") color.setHex(0xffaa33);
+      else if (doorEffect === "special_room") color.setHex(0xffffff);
+      else color.setHex(0x3366ff);
       this.instanced.setColorAt(i, color);
 
-      this.setCell({ col, row }, { type: "door", doorType: type });
+      this.setCell(
+        { col, row },
+        { type: "door", doorType: type, doorEffect },
+      );
     }
 
     this.instanced.instanceMatrix.needsUpdate = true;

@@ -48,14 +48,15 @@ export default class Obstacles extends Environment {
     }
 
     const allowed = this.cells.filter((cell) => !skip.has(this.cellKey(cell)));
+    const actualCount = Math.min(this.count, allowed.length);
 
     this.createInstance({
-      count: this.count,
+      count: actualCount,
       thickness: this.thickness,
       color: "#aa0000",
     });
 
-    for (let i = 0; i < this.count; i++) {
+    for (let i = 0; i < actualCount; i++) {
       const cell = allowed.splice(this.randomInt(allowed.length), 1)[0];
       const x = this.getX(cell);
       const z = this.getZ(cell);

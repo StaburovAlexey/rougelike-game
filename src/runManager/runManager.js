@@ -5,6 +5,9 @@ import Player from '../player/player.js';
 import Enemy from '../entities/enemy.js';
 import EnemyManager from '../entities/enemyManager.js';
 import LevelGenManager from '../levels/levelGenManager.js';
+import DoorEffectsManager, {
+  SPECIAL_ROOM_EFFECT,
+} from '../levels/doorEffectsManager.js';
 import LootManager from '../loot/lootManager.js';
 
 const ENEMY_TYPES = [
@@ -27,6 +30,7 @@ export default class RunManager {
     this.enemyManager = new EnemyManager();
     this.levelGenManager = new LevelGenManager();
     this.lootManager = new LootManager();
+    this.doorEffectsManager = new DoorEffectsManager();
   }
   createRun() {
     const totalLevels = 10;
@@ -39,27 +43,37 @@ export default class RunManager {
       rows: randomInt(minSize, maxSize),
     }));
 
-    const defaultLevels = baseLevels.map((level, levelIndex, levels) => ({
-      ...level,
-      ...this.enemyManager.getEnemyPlanForLevel({
+    const defaultLevels = baseLevels.map((level, levelIndex, levels) => {
+      const enemyPlan = this.enemyManager.getEnemyPlanForLevel({
         levelIndex,
         totalLevels: levels.length,
         cols: level.cols,
         rows: level.rows,
-      }),
-      levelPlan: this.levelGenManager.getLevelPlanForLevel({
+      });
+      const levelPlan = this.levelGenManager.getLevelPlanForLevel({
         levelIndex,
         totalLevels: levels.length,
         cols: level.cols,
         rows: level.rows,
-      }),
-      lootPlan: this.lootManager.getLootPlanForLevel({
+      });
+      const lootPlan = this.lootManager.getLootPlanForLevel({
         levelIndex,
         totalLevels: levels.length,
         cols: level.cols,
         rows: level.rows,
-      }),
-    }));
+      });
+
+      return {
+        ...level,
+        ...enemyPlan,
+        levelPlan,
+        lootPlan,
+        outDoorEffects: this.doorEffectsManager.generateOutDoorEffects({
+          levelIndex,
+          outDoorsCount: Math.max(1, (levelPlan.doorTotal ?? 3) - 1),
+        }),
+      };
+    });
 
     return {
       start: 0,
@@ -67,11 +81,17 @@ export default class RunManager {
     };
   }
   buildLevel(options) {
-    const { rows, cols, lootPlan, levelPlan } = options;
+    const { rows, cols, lootPlan, levelPlan, outDoorEffects = [] } = options;
     if (this.level) {
       sceneManager.remove(this.level.getLevel());
     }
-    this.level = new CreateLevel({ rows, cols, lootPlan, levelPlan });
+    this.level = new CreateLevel({
+      rows,
+      cols,
+      lootPlan,
+      levelPlan,
+      outDoorEffects,
+    });
     sceneManager.add(this.level.getLevel());
     const spawn = this.level.getSpawnCell();
     this.floor = this.level.state.floor.instanced;
@@ -147,20 +167,45 @@ export default class RunManager {
   }
   start() {
     this.run = this.createRun();
-    console.log('run', this.run);
     this.activeLevel = this.run.start;
     this.buildLevel(this.getLevel());
   }
-  next() {
+  next(doorContent = null) {
     const lastLevel = this.run.levels.length - 1;
 
     if (lastLevel === this.activeLevel) {
       this.end();
       return;
     }
+    const selectedEffect = doorContent?.doorEffect || "normal";
+    console.log(
+      `[DoorTransition] entered "${selectedEffect}" door at level ${this.activeLevel}`,
+      doorContent,
+    );
+    if (selectedEffect === SPECIAL_ROOM_EFFECT) {
+      const handled = this.enterSpecialRoom({ doorContent });
+      if (handled) return;
+      console.warn(
+        "[SpecialRoom] not implemented yet, fallback to normal transition.",
+      );
+    }
+
     this.activeLevel++;
+    const effectForNextLevel =
+      selectedEffect === SPECIAL_ROOM_EFFECT ? "normal" : selectedEffect;
+    const nextLevel = this.run.levels[this.activeLevel];
+    this.run.levels[this.activeLevel] =
+      this.doorEffectsManager.applyEffectToNextLevel({
+        effectId: effectForNextLevel,
+        level: nextLevel,
+        levelIndex: this.activeLevel,
+      });
 
     this.buildLevel(this.getLevel());
+  }
+  // Plug your custom special-room build logic here later.
+  enterSpecialRoom() {
+    return false;
   }
   end() {
     console.log('End run!');

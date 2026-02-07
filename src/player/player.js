@@ -22,7 +22,7 @@ export default class Player extends Entity {
       if (moved) {
         const content = this.level.cellContents.get(key);
         if (content?.type === 'door' && content.doorType === 'out') {
-          this.onExit?.();
+          this.onExit?.(content);
           return;
         }
         if (content?.type === 'loot') {
