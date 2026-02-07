@@ -305,6 +305,15 @@ export default class CreateLevel {
     );
     return loot.has(key);
   }
+  isCellTrap(cell) {
+    const key = this.#cellKey(cell);
+    const trap = new Set(
+      this.state.trap.cells.map((c) =>
+        this.#cellKey({ col: c.col, row: c.row }),
+      ),
+    );
+    return trap.has(key);
+  }
   getAttackCells(row, col) {
     const candidates = this.getCandidatesCells({ row, col }).candidates;
     return candidates.filter((c) => this.isCellOccupied(c));

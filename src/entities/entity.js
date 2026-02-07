@@ -38,7 +38,6 @@ export default class Entity {
     const pos = this.level.gridToWorld(this.col, this.row, height);
     this.mesh.position.copy(pos);
     this.level.registerEntity(this, { col: this.col, row: this.row });
-    
   }
 
   canEnter(col, row) {
@@ -56,7 +55,14 @@ export default class Entity {
     if (!this.canEnter(col, row)) return false;
     this.col = col;
     this.row = row;
+
     this.updateWorldPosition();
+    if (this.level.isCellTrap({ col, row })) {
+      const died = this.takeDamage(1);
+      console.log('Get damage trap', this.getLabel(), 'осталось ХП', this.hp);
+      if (died) return true;
+    }
+
     this.resetFatigue();
     return true;
   }
