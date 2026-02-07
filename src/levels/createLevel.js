@@ -4,12 +4,14 @@ import Doors from './doors';
 import Walls from './walls';
 import Obstacles from './obstacles';
 import Loot from './loot';
+import Trap from './trap';
 export default class CreateLevel {
   constructor({ cols = 10, rows = 10 } = {}) {
     this.cols = cols;
     this.rows = rows;
     this.countObstacles = Math.floor(rows * cols * 0.04);
     this.countLoot = Math.max(1, Math.floor(rows * cols * 0.01));
+    this.countTrap = Math.max(1, Math.floor(rows * cols * 0.02));
     this.cellSize = 1;
     this.gap = 0.1;
     this.y = 0;
@@ -71,7 +73,8 @@ export default class CreateLevel {
     return (
       content.type === 'floor' ||
       content.type === 'door' ||
-      content.type === 'loot'
+      content.type === 'loot' ||
+      content.type === 'trap'
     );
   }
   #getAllCells() {
@@ -204,6 +207,16 @@ export default class CreateLevel {
       cells: ctx.getInnerCells(),
       skipCells: [...this.state.doors.cells, ...this.state.obstacles.cells],
       count: this.countLoot,
+    }).create();
+    this.state.trap = new Trap({
+      ...ctx,
+      cells: ctx.getInnerCells(),
+      skipCells: [
+        ...this.state.doors.cells,
+        ...this.state.loot.cells,
+        ...this.state.obstacles.cells,
+      ],
+      count: this.countTrap,
     }).create();
     this.isBuilt = true;
   }

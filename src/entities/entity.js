@@ -48,11 +48,7 @@ export default class Entity {
     const key = `${col}:${row}`;
     const content = this.level.cellContents.get(key);
     if (!content) return true;
-    return (
-      content.type === 'floor' ||
-      content.type === 'door' ||
-      content.type === 'loot'
-    );
+    return this.level.isCellWalkable({ col, row });
   }
 
   move(cell) {
