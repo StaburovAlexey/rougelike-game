@@ -4,12 +4,15 @@ import Entity from "./entity.js";
 const AGGRO_RANGE = 4;
 const AMBUSH_RANGE = 3;
 const AMBUSH_SPEED = 2;
+const BERSERKER_FRIENDLY_FIRE_CHANCE = 0.35;
+const BERSERKER_DESTROY_LOOT_CHANCE = 0.6;
 const ENEMY_STATS = {
   chaser: { hp: 2, atk: 3 },
   bruiser: { hp: 6, atk: 4 },
   skirmisher: { hp: 5, atk: 3 },
   guard: { hp: 5, atk: 3 },
   ambusher: { hp: 5, atk: 3 },
+  berserker: { hp: 6, atk: 4 },
 };
 const ENEMY_VISUALS = {
   // Chaser: преследователь, идет к игроку и бьет вблизи.
@@ -40,6 +43,12 @@ const ENEMY_VISUALS = {
     build: (size) => new THREE.TetrahedronGeometry(size * 0.7),
     scaleY: true,
   },
+  // Berserker: хаотично ходит, может задеть союзника в ближнем бою.
+  berserker: {
+    color: 0xff8833,
+    build: (size) => new THREE.DodecahedronGeometry(size * 0.7),
+    scaleY: true,
+  },
 };
 
 let enemyId = 1;
@@ -63,6 +72,7 @@ export default class Enemy extends Entity {
     this.windUp = 0;
     this.ambushTriggered = false;
     this.skirmisherMoveAttackReady = false;
+    this.berserkerMoveReady = true;
     this.#applyArchetype();
     this.#applyVisuals();
   }
@@ -78,6 +88,8 @@ export default class Enemy extends Entity {
         return this.#takeGuardTurn(player);
       case "ambusher":
         return this.#takeAmbusherTurn(player);
+      case "berserker":
+        return this.#takeBerserkerTurn(player);
       case "chaser":
       default:
         return this.#takeChaserTurn(player);
@@ -190,6 +202,66 @@ export default class Enemy extends Entity {
       return true;
     }
     return this.#chase(player, this.ambushSpeed);
+  }
+
+  #takeBerserkerTurn(player) {
+    const dist = manhattan(this, player);
+    if (dist === 1) {
+      this.attack(player);
+      return true;
+    }
+
+    if (Math.random() < BERSERKER_FRIENDLY_FIRE_CHANCE) {
+      const targets = this.#getAdjacentEnemyTargets();
+      if (targets.length > 0) {
+        const target = targets[Math.floor(Math.random() * targets.length)];
+        this.attack(target);
+        return true;
+      }
+    }
+
+    if (!this.berserkerMoveReady) {
+      this.berserkerMoveReady = true;
+      return false;
+    }
+
+    const moves = this.level
+      .getCandidatesCells(this)
+      .candidates.filter((cell) => this.canEnter(cell.col, cell.row));
+    if (moves.length === 0) return false;
+    const next = moves[Math.floor(Math.random() * moves.length)];
+    const moved = this.move(next);
+    if (moved) {
+      this.berserkerMoveReady = false;
+      if (this.isAlive()) {
+        this.#tryDestroyLootUnderfoot();
+      }
+    }
+    return moved;
+  }
+
+  #tryDestroyLootUnderfoot() {
+    const cell = { col: this.col, row: this.row };
+    if (!this.level.isCellLoot(cell)) return false;
+    if (Math.random() > BERSERKER_DESTROY_LOOT_CHANCE) return false;
+    const destroyed = this.level.pickupLoot(cell);
+    if (destroyed) {
+      console.log(`${this.getLabel()} destroyed loot at ${this.col}:${this.row}`);
+    }
+    return destroyed;
+  }
+
+  #getAdjacentEnemyTargets() {
+    const neighbors = this.level.getCandidatesCells(this).candidates;
+    const targets = [];
+    for (const cell of neighbors) {
+      const target = this.level.getEntityAt(cell);
+      if (!target || target === this) continue;
+      if (!target.isEnemy) continue;
+      if (!target.isAlive?.()) continue;
+      targets.push(target);
+    }
+    return targets;
   }
 
   #chase(player, speed = 1) {

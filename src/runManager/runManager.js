@@ -4,7 +4,14 @@ import CreateLevel from "../levels/createLevel.js";
 import Player from "../player/player.js";
 import Enemy from "../entities/enemy.js";
 
-const ENEMY_TYPES = ["chaser", "bruiser", "skirmisher", "guard", "ambusher"];
+const ENEMY_TYPES = [
+  "chaser",
+  "bruiser",
+  "skirmisher",
+  "guard",
+  "ambusher",
+  "berserker",
+];
 
 export default class RunManager {
   constructor() {
@@ -27,8 +34,8 @@ export default class RunManager {
       {
         cols: 9,
         rows: 8,
-        enemy: 3,
-        enemyTypes: ["chaser", "guard"],
+        enemy: 2,
+        enemyTypes: ["chaser", "berserker"],
       },
       {
         cols: 10,
@@ -76,7 +83,14 @@ export default class RunManager {
         cols: 15,
         rows: 12,
         enemy: 12,
-        enemyTypes: ["chaser", "bruiser", "skirmisher", "guard", "ambusher"],
+        enemyTypes: [
+          "chaser",
+          "bruiser",
+          "skirmisher",
+          "guard",
+          "ambusher",
+          "berserker",
+        ],
       },
     ];
 

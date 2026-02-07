@@ -23,3 +23,11 @@
 ## Где менять логику
 Основная логика поведения находится в `src/entities/enemy.js`.  
 HP/ATK по типам задаются в `ENEMY_STATS`.
+
+## Berserker
+`Berserker`:
+- Moves randomly by 1 cell each turn.
+- Attacks the player as usual if adjacent (Manhattan distance = 1).
+- If an allied enemy is adjacent, there is a chance (`BERSERKER_FRIENDLY_FIRE_CHANCE`) to attack that enemy.
+
+Current friendly-fire chance is `0.35` (35%).
