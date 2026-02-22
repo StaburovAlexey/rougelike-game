@@ -8,8 +8,8 @@ export default class StaticInstancedRenderer {
     this.gap = 0.1;
     this.count = this.size.cols * this.size.rows;
     this.step = cellSize + this.gap;
-    this.halfW = (this.size.rows * this.step) / 2;
-    this.halfH = (this.size.cols * this.step) / 2;
+    this.halfW = ((this.size.cols - 1) * this.step) / 2;
+    this.halfH = ((this.size.rows - 1) * this.step) / 2;
     this.options = {
       cellSize: this.cellSize,
       size: this.size,
