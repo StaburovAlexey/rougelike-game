@@ -9,9 +9,10 @@ export default class Floor {
     this.halfH = options.halfH;
     this.y = 0.2;
     this.geometry = new THREE.BoxGeometry(this.cellSize, this.y, this.cellSize);
-    this.material = new THREE.MeshBasicMaterial({
-      color: 0x3a3a3a,
+    this.material = new THREE.MeshLambertMaterial({
+      normalMap: textureManager.get('floorNormal'),
       map: textureManager.get('floorDiff'),
+      aoMap: textureManager.get('floorAo'),
     });
     this.instanced = new THREE.InstancedMesh(
       this.geometry,

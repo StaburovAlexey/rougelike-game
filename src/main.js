@@ -4,8 +4,10 @@ import Camera from './camera/camera';
 import LevelManager from './levelManager/levelManager';
 import Controls from './control/orbitControl';
 import textureManager from './core/textureManager';
+import DungeonLight from './light/dungeonLight';
 
 await textureManager.loadAll();
+new DungeonLight();
 
 const camera = new Camera(sceneManager.getSize());
 const control = new Controls(
