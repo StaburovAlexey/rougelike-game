@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-
+import { textureManager } from '../../core/textureManager';
 export default class Floor {
   constructor(options) {
     this.cellSize = options.cellSize;
@@ -10,7 +10,8 @@ export default class Floor {
     this.y = 0.2;
     this.geometry = new THREE.BoxGeometry(this.cellSize, this.y, this.cellSize);
     this.material = new THREE.MeshBasicMaterial({
-      color: '#f7f4f4',
+      color: 0x3a3a3a,
+      map: textureManager.get('floorDiff'),
     });
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
@@ -27,7 +28,7 @@ export default class Floor {
       for (let x = 0; x < this.size.cols; x++) {
         dummy.position.set(
           x * this.step - this.halfW,
-          this.y / 2, // высота пола
+          this.y / 2,
           z * this.step - this.halfH,
         );
 

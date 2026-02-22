@@ -3,6 +3,10 @@ import { sceneManager } from './scene/scene';
 import Camera from './camera/camera';
 import LevelManager from './levelManager/levelManager';
 import Controls from './control/orbitControl';
+import textureManager from './core/textureManager';
+
+await textureManager.loadAll();
+
 const camera = new Camera(sceneManager.getSize());
 const control = new Controls(
   camera.getCamera(),
