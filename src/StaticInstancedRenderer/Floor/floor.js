@@ -8,10 +8,13 @@ export default class Floor {
     this.halfW = options.halfW;
     this.halfH = options.halfH;
     this.y = 0.2;
+    const floorDiff = textureManager.get('floorDiff');
+    floorDiff.colorSpace = THREE.SRGBColorSpace;
+
     this.geometry = new THREE.BoxGeometry(this.cellSize, this.y, this.cellSize);
     this.material = new THREE.MeshLambertMaterial({
       normalMap: textureManager.get('floorNormal'),
-      map: textureManager.get('floorDiff'),
+      map: floorDiff,
       aoMap: textureManager.get('floorAo'),
     });
     this.instanced = new THREE.InstancedMesh(
@@ -43,5 +46,11 @@ export default class Floor {
     }
 
     this.instanced.instanceMatrix.needsUpdate = true;
+  }
+  hightLightMove(ids) {
+    for (const id of ids) {
+      this.instanced.setColorAt(id, new THREE.Color(0xff0000));
+    }
+    this.instanced.instanceColor.needsUpdate = true;
   }
 }
