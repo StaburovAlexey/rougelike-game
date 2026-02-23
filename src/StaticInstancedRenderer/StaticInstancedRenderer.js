@@ -21,7 +21,7 @@ export default class StaticInstancedRenderer {
   }
   #init() {
     const floor = new Floor(this.options);
-    floor.hightLightMove([2,4,5])
+    
     sceneManager.add(floor.instanced);
   }
 }
