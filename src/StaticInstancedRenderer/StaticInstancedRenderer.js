@@ -18,12 +18,13 @@ export default class StaticInstancedRenderer {
       halfW: this.halfW,
       halfH: this.halfH,
     };
+    this.cells = [];
     this.#init();
   }
   #init() {
     const floor = new Floor(this.options);
     const wall = new Wall(this.options, this.doorsCount);
-    
+    this.cells = wall.getInstancedCells();
     sceneManager.add(floor.instanced);
     sceneManager.add(wall.instanced);
   }

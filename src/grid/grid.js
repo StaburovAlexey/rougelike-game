@@ -23,6 +23,14 @@ export default class Grid {
       }
     }
   }
+  applyToGreed(cells) {
+    for (const cell of cells) {
+      const cellGrid = this.getId(cell.id);
+      cellGrid.type = cell.type;
+      cellGrid.blocked = true;
+    }
+    console.log('this.cells',this.cells)
+  }
   index(x, z) {
     return z * this.cols + x;
   }
@@ -31,6 +39,9 @@ export default class Grid {
   }
   inBounds(x, z) {
     return x >= 0 && z >= 0 && x < this.cols && z < this.rows;
+  }
+  getId(id) {
+    return this.cells[id];
   }
   get(x, z) {
     if (!this.inBounds(x, z)) return null;

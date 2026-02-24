@@ -47,7 +47,7 @@ export default class Wall {
     const result = [];
 
     for (const side of selectedSides) {
-      const cell = this.#pickCellOnSide(side, result, true);
+      const cell = this.#pickCellOnSide(side, result, true, 'door');
       if (!cell) continue;
       result.push(cell);
     }
@@ -76,7 +76,7 @@ export default class Wall {
     }
     return true;
   }
-  #pickCellOnSide(side, reserved = [], avoidCorners = true) {
+  #pickCellOnSide(side, reserved = [], avoidCorners = true, type) {
     const rows = this.size.rows;
     const cols = this.size.cols;
     const candidates = [];
@@ -100,6 +100,7 @@ export default class Wall {
       ...c,
       id: this.#toId(c.row, c.col),
       side,
+      type,
     }));
     const free = mapped.filter((cell) => {
       if (avoidCorners && this.#isCorner(cell.row, cell.col)) return false;
@@ -114,7 +115,13 @@ export default class Wall {
     const perimeter = [];
 
     for (let c = 0; c < cols; c++) {
-      perimeter.push({ row: 0, col: c, id: this.#toId(0, c), side: 'top' });
+      perimeter.push({
+        row: 0,
+        col: c,
+        id: this.#toId(0, c),
+        side: 'top',
+        type: 'wall',
+      });
     }
     if (rows > 1) {
       for (let c = 0; c < cols; c++) {
@@ -123,11 +130,18 @@ export default class Wall {
           col: c,
           id: this.#toId(rows - 1, c),
           side: 'bottom',
+          type: 'wall',
         });
       }
     }
     for (let r = 1; r < rows - 1; r++) {
-      perimeter.push({ row: r, col: 0, id: this.#toId(r, 0), side: 'left' });
+      perimeter.push({
+        row: r,
+        col: 0,
+        id: this.#toId(r, 0),
+        side: 'left',
+        type: 'wall',
+      });
     }
     if (cols > 1) {
       for (let r = 1; r < rows - 1; r++) {
@@ -136,6 +150,7 @@ export default class Wall {
           col: cols - 1,
           id: this.#toId(r, cols - 1),
           side: 'right',
+          type: 'wall',
         });
       }
     }
@@ -160,7 +175,7 @@ export default class Wall {
       attempts++;
       const side = sides[Math.floor(Math.random() * sides.length)];
       const reserved = [...this.doorCells, ...windows];
-      const cell = this.#pickCellOnSide(side, reserved, true);
+      const cell = this.#pickCellOnSide(side, reserved, true, 'window');
       if (!cell) continue;
       windows.push(cell);
     }
@@ -176,11 +191,19 @@ export default class Wall {
       attempts++;
       const side = sides[Math.floor(Math.random() * sides.length)];
       const reserved = [...this.doorCells, ...this.windowCells, ...torches];
-      const cell = this.#pickCellOnSide(side, reserved, true);
+      const cell = this.#pickCellOnSide(side, reserved, true, 'torch');
       if (!cell) continue;
       torches.push(cell);
     }
     return torches;
+  }
+  getInstancedCells() {
+    return [
+      this.doorCells,
+      this.windowCells,
+      this.torchCells,
+      this.wallCells,
+    ].flat();
   }
   getDoorCells() {
     return this.doorCells;
