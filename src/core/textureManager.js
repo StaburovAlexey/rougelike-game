@@ -10,6 +10,11 @@ class TextureManager {
       floorDisp: '/floor/cobblestone_floor_04_disp_1k.jpg',
       floorNormal: '/floor/cobblestone_floor_04_nor_gl_1k.jpg',
       floorRough: '/floor/cobblestone_floor_04_rough_1k.jpg',
+      wallAo: '/wall/japanese_stone_wall_ao_1k.jpg',
+      wallDiff: '/wall/japanese_stone_wall_diff_1k.jpg',
+      wallDisp: '/wall/japanese_stone_wall_disp_1k.jpg',
+      wallNormal: '/wall/japanese_stone_wall_nor_gl_1k.jpg',
+      wallRough: '/wall/japanese_stone_wall_rough_1k.jpg',
     };
   }
 

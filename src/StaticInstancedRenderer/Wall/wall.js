@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { textureManager } from '../../core/textureManager';
 export default class Wall {
   constructor(options, doorsCount = 1) {
     this.cellSize = options.cellSize;
@@ -22,7 +23,13 @@ export default class Wall {
       this.wallHeight,
       this.cellSize,
     );
-    this.material = new THREE.MeshLambertMaterial({ color: 0x777777 });
+    const wallDiff = textureManager.get('wallDiff');
+    wallDiff.colorSpace = THREE.SRGBColorSpace;
+    this.material = new THREE.MeshLambertMaterial({
+      normalMap: textureManager.get('wallNormal'),
+      map: wallDiff,
+      aoMap: textureManager.get('wallAo'),
+    });
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
       this.material,
@@ -192,13 +199,13 @@ export default class Wall {
 
     for (let i = 0; i < this.wallCells.length; i++) {
       const { row, col } = this.wallCells[i];
-      console.log('this.wallCells[i]', this.wallCells[i]);
+
+      dummy.rotation.set(0, 0, 0);
       dummy.position.set(
         col * this.step - this.halfW,
-        this.wallY + 0.2,
+        this.wallY + 0.05,
         row * this.step - this.halfH,
       );
-      dummy.rotation.set(0, 0, 0);
       if (
         this.wallCells[i].side === 'right' ||
         this.wallCells[i].side === 'left'
@@ -208,7 +215,12 @@ export default class Wall {
         dummy.scale.set(1, 0.7, 0.5);
       }
       if (this.#isCorner(this.wallCells[i].row, this.wallCells[i].col)) {
-        dummy.scale.set(1, 1.4, 1);
+        dummy.scale.set(1, 1, 1);
+        dummy.position.set(
+          col * this.step - this.halfW,
+          this.wallY + 0.2,
+          row * this.step - this.halfH,
+        );
       }
       dummy.updateMatrix();
       this.instanced.setMatrixAt(i, dummy.matrix);
