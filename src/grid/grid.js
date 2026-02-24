@@ -23,13 +23,13 @@ export default class Grid {
       }
     }
   }
-  applyToGreed(cells) {
+  setBlockInstanced(cells) {
     for (const cell of cells) {
       const cellGrid = this.getId(cell.id);
       cellGrid.type = cell.type;
       cellGrid.blocked = true;
     }
-    console.log('this.cells',this.cells)
+    
   }
   index(x, z) {
     return z * this.cols + x;

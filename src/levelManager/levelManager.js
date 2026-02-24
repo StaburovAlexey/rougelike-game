@@ -13,6 +13,6 @@ export default class LevelManager {
       cellSize: 1,
     });
 
-    this.grid.applyToGreed(staticInstanced.cells);
+    this.grid.setBlockInstanced(staticInstanced.cells);
   }
 }
