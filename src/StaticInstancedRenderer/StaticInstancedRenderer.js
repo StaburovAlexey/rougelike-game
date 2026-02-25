@@ -15,7 +15,7 @@ export default class StaticInstancedRenderer {
     halfW,
     gap,
     doorsCount = 4,
-    obstaclesDensity = 0.12,
+    obstaclesDensity = 0.08,
   } = {}) {
     this.size = size;
     this.cellSize = cellSize;

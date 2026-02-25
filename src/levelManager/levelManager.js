@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Grid from '../grid/grid';
 import StaticInstancedRenderer from '../StaticInstancedRenderer/StaticInstancedRenderer';
 import StaticMeshRenderer from '../StaticMeshRenderer/StaticMeshRenderer';
+import DungeonLight from '../light/dungeonLight';
 export default class LevelManager {
   constructor(cols, rows) {
     this.size = { cols, rows };
@@ -12,9 +13,11 @@ export default class LevelManager {
     this.halfW = ((cols - 1) * this.step) / 2;
     this.halfH = ((rows - 1) * this.step) / 2;
     this.grid = new Grid(cols, rows);
+    this.light = new DungeonLight();
     this.#init();
   }
   #init() {
+    
     const staticInstanced = new StaticInstancedRenderer({
       size: this.size,
       cellSize: this.cellSize,

@@ -4,17 +4,17 @@ import Camera from './camera/camera';
 import LevelManager from './levelManager/levelManager';
 import Controls from './control/orbitControl';
 import textureManager from './core/textureManager';
-import DungeonLight from './light/dungeonLight';
+
 
 await textureManager.loadAll();
-new DungeonLight();
+
 
 const camera = new Camera(sceneManager.getSize());
 const control = new Controls(
   camera.getCamera(),
   sceneManager.renderer.domElement,
 );
-const levelManager = new LevelManager(10, 10);
+const levelManager = new LevelManager(20, 20);
 let last = performance.now();
 function loop(now) {
   const delta = (now - last) / 1000;
