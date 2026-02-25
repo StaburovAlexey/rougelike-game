@@ -170,14 +170,24 @@ export default class Wall {
     const windows = [];
     const count = this.windowsCount;
     const sides = ['top', 'right', 'bottom', 'left'];
+    const uniqueSidesLimit = Math.min(count, 4);
+    const usedSides = new Set();
     let attempts = 0;
     while (windows.length < count && attempts < 200) {
       attempts++;
-      const side = sides[Math.floor(Math.random() * sides.length)];
+      const sidePool =
+        windows.length < uniqueSidesLimit
+          ? sides.filter((side) => !usedSides.has(side))
+          : sides;
+      if (!sidePool.length) continue;
+      const side = sidePool[Math.floor(Math.random() * sidePool.length)];
       const reserved = [...this.doorCells, ...windows];
       const cell = this.#pickCellOnSide(side, reserved, true, 'window');
       if (!cell) continue;
       windows.push(cell);
+      if (windows.length <= uniqueSidesLimit) {
+        usedSides.add(side);
+      }
     }
     return windows;
   }
@@ -186,14 +196,24 @@ export default class Wall {
     const torches = [];
     const count = this.torchesCount;
     const sides = ['top', 'right', 'bottom', 'left'];
+    const uniqueSidesLimit = Math.min(count, 4);
+    const usedSides = new Set();
     let attempts = 0;
     while (torches.length < count && attempts < 200) {
       attempts++;
-      const side = sides[Math.floor(Math.random() * sides.length)];
+      const sidePool =
+        torches.length < uniqueSidesLimit
+          ? sides.filter((side) => !usedSides.has(side))
+          : sides;
+      if (!sidePool.length) continue;
+      const side = sidePool[Math.floor(Math.random() * sidePool.length)];
       const reserved = [...this.doorCells, ...this.windowCells, ...torches];
       const cell = this.#pickCellOnSide(side, reserved, true, 'torch');
       if (!cell) continue;
       torches.push(cell);
+      if (torches.length <= uniqueSidesLimit) {
+        usedSides.add(side);
+      }
     }
     return torches;
   }

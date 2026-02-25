@@ -21,7 +21,7 @@ export default class Windows {
       this.material,
       this.cells.length,
     );
-    this.#init()
+    this.#init();
   }
   #init() {
     const dummy = new THREE.Object3D();

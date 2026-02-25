@@ -3,7 +3,7 @@ import Floor from './Floor/floor';
 import Obstacle from './Obstacle/obstacle';
 import Wall from './Wall/wall';
 import Doors from './Door/door';
-import Torch from './Torch/torch'
+import Torch from './Torch/Torch'
 import Windows from './Window/window';
 export default class StaticInstancedRenderer {
   constructor({
