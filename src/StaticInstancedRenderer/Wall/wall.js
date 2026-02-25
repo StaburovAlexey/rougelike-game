@@ -10,9 +10,9 @@ export default class Wall {
     this.wallHeight = this.cellSize;
     this.wallY = this.wallHeight / 2;
     this.doorsCount = Math.min(Math.max(doorsCount, 0), 4);
-    this.windowsChance = 0.1;
+    this.windowsChance = 1;
     this.windowsCount = 2;
-    this.torchesChance = 0.1;
+    this.torchesChance = 1;
     this.torchesCount = 2;
     this.doorCells = this.#generateDoorCells();
     this.windowCells = this.#generateWindowCells();

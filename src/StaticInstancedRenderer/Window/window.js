@@ -1,20 +1,20 @@
 import * as THREE from 'three';
 import { textureManager } from '../../core/textureManager';
-export default class Doors {
+export default class Windows {
   constructor({ cells, halfW, halfH, step, cellSize } = {}) {
     this.cells = cells;
     this.halfH = halfH;
     this.halfW = halfW;
     this.step = step;
     this.cellSize = cellSize;
-    this.y = cellSize * 1.5;
+    this.y = cellSize * 2;
     this.geometry = new THREE.BoxGeometry(
       this.cellSize,
       this.y,
-      this.cellSize / 2,
+      this.cellSize,
     );
     this.material = new THREE.MeshLambertMaterial({
-      color: '#5555',
+      color: '#4632ff',
     });
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
