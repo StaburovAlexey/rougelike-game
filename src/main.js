@@ -4,9 +4,11 @@ import Camera from './camera/camera';
 import LevelManager from './levelManager/levelManager';
 import Controls from './control/orbitControl';
 import textureManager from './core/textureManager';
+import modelManager from './core/modelManager';
 
 
 await textureManager.loadAll();
+await modelManager.loadAll();
 
 
 const camera = new Camera(sceneManager.getSize());
