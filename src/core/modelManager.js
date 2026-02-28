@@ -5,7 +5,7 @@ class ModelManager {
     this.loader = new GLTFLoader();
     this.models = new Map();
     this.modelPaths = {
-      door: '/models/door.glb',
+      door: '/models/door3_doorway_handel_new_fin.glb',
     };
   }
 
