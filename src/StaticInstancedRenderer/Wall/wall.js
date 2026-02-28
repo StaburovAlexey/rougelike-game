@@ -1,14 +1,14 @@
 import * as THREE from 'three';
-import { textureManager } from '../../core/textureManager';
+import { modelManager } from '../../core/modelManager';
+
 export default class Wall {
   constructor(options, doorsCount = 1) {
+    this.wallColor = '#6f7c86';
     this.cellSize = options.cellSize;
     this.size = options.size;
     this.step = options.step;
     this.halfW = options.halfW;
     this.halfH = options.halfH;
-    this.wallHeight = this.cellSize;
-    this.wallY = this.wallHeight / 2;
     this.doorsCount = Math.min(Math.max(doorsCount, 0), 4);
     this.windowsChance = 1;
     this.windowsCount = 2;
@@ -18,18 +18,15 @@ export default class Wall {
     this.windowCells = this.#generateWindowCells();
     this.torchCells = this.#generateTorchCells();
     this.wallCells = this.#generateWallCells();
-    this.geometry = new THREE.BoxGeometry(
-      this.cellSize,
-      this.wallHeight,
-      this.cellSize,
-    );
-    const wallDiff = textureManager.get('wallDiff');
-    wallDiff.colorSpace = THREE.SRGBColorSpace;
-    this.material = new THREE.MeshLambertMaterial({
-      normalMap: textureManager.get('wallNormal'),
-      map: wallDiff,
-      aoMap: textureManager.get('wallAo'),
-    });
+
+    const wallMesh = modelManager.get('wall').scene.children.find((child) => child.isMesh);
+    this.geometry = wallMesh.geometry;
+    this.material = new THREE.MeshLambertMaterial({ color: this.wallColor });
+    this.geometry.computeBoundingBox();
+    const size = new THREE.Vector3();
+    this.geometry.boundingBox.getSize(size);
+    this.modelSize = new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1);
+
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
       this.material,
@@ -37,9 +34,11 @@ export default class Wall {
     );
     this.#init();
   }
+
   #toId(row, col) {
     return row * this.size.cols + col;
   }
+
   #generateDoorCells() {
     const sides = ['top', 'right', 'bottom', 'left'];
     const shuffled = sides.sort(() => Math.random() - 0.5);
@@ -54,6 +53,7 @@ export default class Wall {
 
     return result;
   }
+
   #isCorner(row, col) {
     const lastRow = this.size.rows - 1;
     const lastCol = this.size.cols - 1;
@@ -64,9 +64,11 @@ export default class Wall {
       (row === lastRow && col === lastCol)
     );
   }
+
   #isAdjacent(a, b) {
     return Math.abs(a.row - b.row) + Math.abs(a.col - b.col) === 1;
   }
+
   #isValidCandidate(candidate, reserved) {
     if (this.#isCorner(candidate.row, candidate.col)) return false;
     for (let i = 0; i < reserved.length; i++) {
@@ -76,6 +78,7 @@ export default class Wall {
     }
     return true;
   }
+
   #pickCellOnSide(side, reserved = [], avoidCorners = true, type) {
     const rows = this.size.rows;
     const cols = this.size.cols;
@@ -96,33 +99,32 @@ export default class Wall {
     if (side === 'right') {
       for (let r = 0; r < rows; r++) candidates.push({ row: r, col: cols - 1 });
     }
+
     const mapped = candidates.map((c) => ({
       ...c,
       id: this.#toId(c.row, c.col),
       side,
       type,
     }));
+
     const free = mapped.filter((cell) => {
       if (avoidCorners && this.#isCorner(cell.row, cell.col)) return false;
       return this.#isValidCandidate(cell, reserved);
     });
+
     if (!free.length) return null;
     return free[Math.floor(Math.random() * free.length)];
   }
+
   #generateWallCells() {
     const rows = this.size.rows;
     const cols = this.size.cols;
     const perimeter = [];
 
     for (let c = 0; c < cols; c++) {
-      perimeter.push({
-        row: 0,
-        col: c,
-        id: this.#toId(0, c),
-        side: 'top',
-        type: 'wall',
-      });
+      perimeter.push({ row: 0, col: c, id: this.#toId(0, c), side: 'top', type: 'wall' });
     }
+
     if (rows > 1) {
       for (let c = 0; c < cols; c++) {
         perimeter.push({
@@ -134,15 +136,11 @@ export default class Wall {
         });
       }
     }
+
     for (let r = 1; r < rows - 1; r++) {
-      perimeter.push({
-        row: r,
-        col: 0,
-        id: this.#toId(r, 0),
-        side: 'left',
-        type: 'wall',
-      });
+      perimeter.push({ row: r, col: 0, id: this.#toId(r, 0), side: 'left', type: 'wall' });
     }
+
     if (cols > 1) {
       for (let r = 1; r < rows - 1; r++) {
         perimeter.push({
@@ -158,6 +156,7 @@ export default class Wall {
     const doorIds = new Set(this.doorCells.map((cell) => cell.id));
     const windowIds = new Set(this.windowCells.map((cell) => cell.id));
     const torchIds = new Set(this.torchCells.map((cell) => cell.id));
+
     return perimeter.filter(
       (cell) =>
         !doorIds.has(cell.id) &&
@@ -165,6 +164,7 @@ export default class Wall {
         !torchIds.has(cell.id),
     );
   }
+
   #generateWindowCells() {
     if (Math.random() > this.windowsChance) return [];
     const windows = [];
@@ -173,6 +173,7 @@ export default class Wall {
     const uniqueSidesLimit = Math.min(count, 4);
     const usedSides = new Set();
     let attempts = 0;
+
     while (windows.length < count && attempts < 200) {
       attempts++;
       const sidePool =
@@ -185,12 +186,12 @@ export default class Wall {
       const cell = this.#pickCellOnSide(side, reserved, true, 'window');
       if (!cell) continue;
       windows.push(cell);
-      if (windows.length <= uniqueSidesLimit) {
-        usedSides.add(side);
-      }
+      if (windows.length <= uniqueSidesLimit) usedSides.add(side);
     }
+
     return windows;
   }
+
   #generateTorchCells() {
     if (Math.random() > this.torchesChance) return [];
     const torches = [];
@@ -199,6 +200,7 @@ export default class Wall {
     const uniqueSidesLimit = Math.min(count, 4);
     const usedSides = new Set();
     let attempts = 0;
+
     while (torches.length < count && attempts < 200) {
       attempts++;
       const sidePool =
@@ -211,60 +213,58 @@ export default class Wall {
       const cell = this.#pickCellOnSide(side, reserved, true, 'torch');
       if (!cell) continue;
       torches.push(cell);
-      if (torches.length <= uniqueSidesLimit) {
-        usedSides.add(side);
-      }
+      if (torches.length <= uniqueSidesLimit) usedSides.add(side);
     }
+
     return torches;
   }
+
   getInstancedCells() {
-    return [
-      this.doorCells,
-      this.windowCells,
-      this.torchCells,
-      this.wallCells,
-    ].flat();
+    return [this.doorCells, this.windowCells, this.torchCells, this.wallCells].flat();
   }
+
   getDoorCells() {
     return this.doorCells;
   }
+
   getWindowCells() {
     return this.windowCells;
   }
+
   getTorchCells() {
     return this.torchCells;
   }
+
   getWallCells() {
     return this.wallCells;
   }
+
   #init() {
     const dummy = new THREE.Object3D();
+    const defaultHeight = this.cellSize * 0.8;
+    const longSize = this.cellSize;
+    const shortSize = this.cellSize * 0.5;
 
     for (let i = 0; i < this.wallCells.length; i++) {
-      const { row, col } = this.wallCells[i];
+      const { row, col, side } = this.wallCells[i];
+      const isCorner = this.#isCorner(row, col);
+      const isSideWall = side === 'left' || side === 'right';
+      const targetX = isCorner ? this.cellSize : longSize;
+      const targetY = isCorner ? this.cellSize : defaultHeight;
+      const targetZ = isCorner ? this.cellSize : shortSize;
 
-      dummy.rotation.set(0, 0, 0);
+      dummy.rotation.set(0, isSideWall ? Math.PI / 2 : 0, 0);
       dummy.position.set(
         col * this.step - this.halfW,
-        this.wallY + 0.05,
+        targetY / 2 + 0.2,
         row * this.step - this.halfH,
       );
-      if (
-        this.wallCells[i].side === 'right' ||
-        this.wallCells[i].side === 'left'
-      ) {
-        dummy.scale.set(0.5, 0.7, 1);
-      } else {
-        dummy.scale.set(1, 0.7, 0.5);
-      }
-      if (this.#isCorner(this.wallCells[i].row, this.wallCells[i].col)) {
-        dummy.scale.set(1, 1, 1);
-        dummy.position.set(
-          col * this.step - this.halfW,
-          this.wallY + 0.2,
-          row * this.step - this.halfH,
-        );
-      }
+      dummy.scale.set(
+        targetX / this.modelSize.x,
+        targetY / this.modelSize.y,
+        targetZ / this.modelSize.z,
+      );
+
       dummy.updateMatrix();
       this.instanced.setMatrixAt(i, dummy.matrix);
     }

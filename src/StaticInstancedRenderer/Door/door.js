@@ -64,7 +64,11 @@ export default class Doors {
 
       const toLambert = (mat) =>
         new THREE.MeshLambertMaterial({
-          color: mat?.color ? mat.color.clone() : new THREE.Color(0xffffff),
+          color: new THREE.Color(
+            colorByNodeName[node.name] ||
+              mat?.color?.getHexString?.() ||
+              '#ffffff',
+          ),
         });
       const material = Array.isArray(source.material)
         ? source.material.map(toLambert)
@@ -107,3 +111,8 @@ export default class Doors {
     this.#buildInstancedFromModel();
   }
 }
+    const colorByNodeName = {
+      doorway: '#6b7280',
+      door: '#8b5a2b',
+      handle: '#d4af37',
+    };
