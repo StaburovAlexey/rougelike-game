@@ -19,19 +19,44 @@ export default class Wall {
     this.torchCells = this.#generateTorchCells();
     this.wallCells = this.#generateWallCells();
 
-    const wallMesh = modelManager.get('wall').scene.children.find((child) => child.isMesh);
-    this.geometry = wallMesh.geometry;
-    this.material = new THREE.MeshLambertMaterial({ color: this.wallColor });
-    this.geometry.computeBoundingBox();
-    const size = new THREE.Vector3();
-    this.geometry.boundingBox.getSize(size);
-    this.modelSize = new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1);
+    const wallModel = modelManager.get('wall');
+    const wallMeshes = [];
+    wallModel.scene.traverse((child) => {
+      if (child.isMesh) wallMeshes.push(child);
+    });
+    if (!wallMeshes.length) {
+      throw new Error('Wall model has no mesh objects');
+    }
 
-    this.instanced = new THREE.InstancedMesh(
-      this.geometry,
-      this.material,
-      this.wallCells.length,
+    this.material = new THREE.MeshLambertMaterial({ color: this.wallColor });
+    this.variants = wallMeshes.map((wallMesh) => {
+      const geometry = wallMesh.geometry;
+      geometry.computeBoundingBox();
+      const size = new THREE.Vector3();
+      geometry.boundingBox.getSize(size);
+      return {
+        geometry,
+        modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
+      };
+    });
+
+    this.wallVariantByCell = this.wallCells.map(
+      () => Math.floor(Math.random() * this.variants.length),
     );
+    this.wallFacingByCell = this.wallCells.map(() => (Math.random() < 0.5 ? 0 : Math.PI));
+    const variantCounts = new Array(this.variants.length).fill(0);
+    for (let i = 0; i < this.wallVariantByCell.length; i++) {
+      variantCounts[this.wallVariantByCell[i]]++;
+    }
+
+    this.instanced = new THREE.Group();
+    this.variantInstances = this.variants.map((variant, variantIndex) => {
+      const count = variantCounts[variantIndex];
+      if (!count) return null;
+      const mesh = new THREE.InstancedMesh(variant.geometry, this.material, count);
+      this.instanced.add(mesh);
+      return mesh;
+    });
     this.#init();
   }
 
@@ -241,34 +266,46 @@ export default class Wall {
 
   #init() {
     const dummy = new THREE.Object3D();
-    const defaultHeight = this.cellSize * 0.8;
-    const longSize = this.cellSize;
-    const shortSize = this.cellSize * 0.5;
+    const cornerSize = this.cellSize;
+    const writeOffsets = new Array(this.variants.length).fill(0);
 
     for (let i = 0; i < this.wallCells.length; i++) {
       const { row, col, side } = this.wallCells[i];
+      const variantIndex = this.wallVariantByCell[i];
+      const variant = this.variants[variantIndex];
+      const instancedMesh = this.variantInstances[variantIndex];
+      if (!instancedMesh) continue;
       const isCorner = this.#isCorner(row, col);
       const isSideWall = side === 'left' || side === 'right';
-      const targetX = isCorner ? this.cellSize : longSize;
-      const targetY = isCorner ? this.cellSize : defaultHeight;
-      const targetZ = isCorner ? this.cellSize : shortSize;
+      const facingOffset = this.wallFacingByCell[i];
+      const targetY = isCorner ? cornerSize : variant.modelSize.y;
 
-      dummy.rotation.set(0, isSideWall ? Math.PI / 2 : 0, 0);
+      dummy.rotation.set(0, (isSideWall ? Math.PI / 2 : 0) + facingOffset, 0);
       dummy.position.set(
         col * this.step - this.halfW,
         targetY / 2 + 0.2,
         row * this.step - this.halfH,
       );
-      dummy.scale.set(
-        targetX / this.modelSize.x,
-        targetY / this.modelSize.y,
-        targetZ / this.modelSize.z,
-      );
+
+      if (isCorner) {
+        dummy.scale.set(
+          cornerSize / variant.modelSize.x,
+          cornerSize / variant.modelSize.y,
+          cornerSize / variant.modelSize.z,
+        );
+      } else {
+        dummy.scale.set(1, 1, 1);
+      }
 
       dummy.updateMatrix();
-      this.instanced.setMatrixAt(i, dummy.matrix);
+      instancedMesh.setMatrixAt(writeOffsets[variantIndex], dummy.matrix);
+      writeOffsets[variantIndex]++;
     }
 
-    this.instanced.instanceMatrix.needsUpdate = true;
+    for (let i = 0; i < this.variantInstances.length; i++) {
+      const instancedMesh = this.variantInstances[i];
+      if (!instancedMesh) continue;
+      instancedMesh.instanceMatrix.needsUpdate = true;
+    }
   }
 }

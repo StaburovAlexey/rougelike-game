@@ -6,7 +6,8 @@ class ModelManager {
     this.models = new Map();
     this.modelPaths = {
       door: '/models/door3_doorway_handel_new_fin.glb',
-      wall: '/models/wall.glb',
+      wall: '/models/walls_pixel_new.glb',
+      obstacle: '/models/obstacles_new_4.glb',
     };
   }
 

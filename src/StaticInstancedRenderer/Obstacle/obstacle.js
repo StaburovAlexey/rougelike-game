@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { textureManager } from '../../core/textureManager';
+import { modelManager } from '../../core/modelManager';
 
 export default class Obstacle {
   constructor(options, density = 0.12) {
@@ -8,24 +8,59 @@ export default class Obstacle {
     this.step = options.step;
     this.halfW = options.halfW;
     this.halfH = options.halfH;
-    this.height = this.cellSize * 2;
-    this.y = this.height / 2 + 0.05;
     this.density = Math.min(Math.max(density, 0), 1);
     this.obstacleCells = this.#generateObstacleCells();
-    this.obstacleWidth = this.cellSize * 0.7;
-    this.obstacleDepth = this.cellSize * 0.7;
 
-    this.geometry = new THREE.BoxGeometry(
-      this.obstacleWidth,
-      this.height,
-      this.obstacleDepth,
+    const obstacleModel = modelManager.get('obstacle');
+    const obstacleMeshes = [];
+    obstacleModel.scene.traverse((child) => {
+      if (child.isMesh) obstacleMeshes.push(child);
+    });
+    obstacleModel.scene.updateMatrixWorld(true);
+    if (!obstacleMeshes.length) {
+      throw new Error('Obstacle model has no mesh objects');
+    }
+
+    this.material = new THREE.MeshLambertMaterial({ color: '#6f7c86' });
+    this.variants = obstacleMeshes.map((obstacleMesh) => {
+      const geometry = obstacleMesh.geometry;
+      geometry.computeBoundingBox();
+      const basePosition = new THREE.Vector3();
+      const baseQuaternion = new THREE.Quaternion();
+      const baseScale = new THREE.Vector3();
+      obstacleMesh.matrixWorld.decompose(basePosition, baseQuaternion, baseScale);
+      const baseMatrix = new THREE.Matrix4().compose(
+        new THREE.Vector3(0, 0, 0),
+        baseQuaternion,
+        baseScale,
+      );
+      const worldBbox = geometry.boundingBox.clone().applyMatrix4(baseMatrix);
+      return {
+        geometry,
+        baseMatrix,
+        yOffset: -worldBbox.min.y + 0.05,
+      };
+    });
+
+    this.obstacleVariantByCell = this.obstacleCells.map(
+      () => Math.floor(Math.random() * this.variants.length),
     );
-    this.material = this.#createMaterials();
-    this.instanced = new THREE.InstancedMesh(
-      this.geometry,
-      this.material,
-      this.obstacleCells.length,
+    this.obstacleRotationByCell = this.obstacleCells.map(
+      () => Math.random() * Math.PI * 2,
     );
+    const variantCounts = new Array(this.variants.length).fill(0);
+    for (let i = 0; i < this.obstacleVariantByCell.length; i++) {
+      variantCounts[this.obstacleVariantByCell[i]]++;
+    }
+
+    this.instanced = new THREE.Group();
+    this.variantInstances = this.variants.map((variant, variantIndex) => {
+      const count = variantCounts[variantIndex];
+      if (!count) return null;
+      const mesh = new THREE.InstancedMesh(variant.geometry, this.material, count);
+      this.instanced.add(mesh);
+      return mesh;
+    });
     this.#init();
   }
 
@@ -64,73 +99,34 @@ export default class Obstacle {
     return this.obstacleCells;
   }
 
-  #cloneTiledTexture(name, repeatX, repeatY) {
-    const texture = textureManager.get(name).clone();
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(repeatX, repeatY);
-    texture.needsUpdate = true;
-    return texture;
-  }
-
-  #createMaterials() {
-    const tileSize = 0.5;
-    const sideRepeatX = Math.max(1, this.obstacleWidth / tileSize);
-    const sideRepeatY = Math.max(1, this.height / tileSize);
-    const topRepeatX = Math.max(1, this.obstacleWidth / tileSize);
-    const topRepeatY = Math.max(1, this.obstacleDepth / tileSize);
-
-    const sideDiff = this.#cloneTiledTexture('wallDiff', sideRepeatX, sideRepeatY);
-    const sideNormal = this.#cloneTiledTexture(
-      'wallNormal',
-      sideRepeatX,
-      sideRepeatY,
-    );
-    const sideAo = this.#cloneTiledTexture('wallAo', sideRepeatX, sideRepeatY);
-    sideDiff.colorSpace = THREE.SRGBColorSpace;
-
-    const topDiff = this.#cloneTiledTexture('wallDiff', topRepeatX, topRepeatY);
-    const topNormal = this.#cloneTiledTexture('wallNormal', topRepeatX, topRepeatY);
-    const topAo = this.#cloneTiledTexture('wallAo', topRepeatX, topRepeatY);
-    topDiff.colorSpace = THREE.SRGBColorSpace;
-
-    const sideMaterial = new THREE.MeshLambertMaterial({
-      map: sideDiff,
-      normalMap: sideNormal,
-      aoMap: sideAo,
-    });
-    const topMaterial = new THREE.MeshLambertMaterial({
-      map: topDiff,
-      normalMap: topNormal,
-      aoMap: topAo,
-    });
-
-    return [
-      sideMaterial,
-      sideMaterial,
-      topMaterial,
-      topMaterial,
-      sideMaterial,
-      sideMaterial,
-    ];
-  }
-
   #init() {
     const dummy = new THREE.Object3D();
+    const finalMatrix = new THREE.Matrix4();
+    const writeOffsets = new Array(this.variants.length).fill(0);
 
     for (let i = 0; i < this.obstacleCells.length; i++) {
       const { row, col } = this.obstacleCells[i];
+      const variantIndex = this.obstacleVariantByCell[i];
+      const variant = this.variants[variantIndex];
+      const instancedMesh = this.variantInstances[variantIndex];
+      if (!instancedMesh) continue;
       dummy.position.set(
         col * this.step - this.halfW,
-        this.y,
+        variant.yOffset + 0.15,
         row * this.step - this.halfH,
       );
-      // dummy.rotation.set(0, Math.random() * Math.PI, 0);
+      dummy.rotation.set(0, this.obstacleRotationByCell[i], 0);
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
-      this.instanced.setMatrixAt(i, dummy.matrix);
+      finalMatrix.multiplyMatrices(dummy.matrix, variant.baseMatrix);
+      instancedMesh.setMatrixAt(writeOffsets[variantIndex], finalMatrix);
+      writeOffsets[variantIndex]++;
     }
 
-    this.instanced.instanceMatrix.needsUpdate = true;
+    for (let i = 0; i < this.variantInstances.length; i++) {
+      const instancedMesh = this.variantInstances[i];
+      if (!instancedMesh) continue;
+      instancedMesh.instanceMatrix.needsUpdate = true;
+    }
   }
 }
