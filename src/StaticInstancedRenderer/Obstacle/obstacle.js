@@ -3,6 +3,7 @@ import { modelManager } from '../../core/modelManager';
 
 export default class Obstacle {
   constructor(options, density = 0.12) {
+    this.minObstacle3Distance = 3;
     this.cellSize = options.cellSize;
     this.size = options.size;
     this.step = options.step;
@@ -16,6 +17,10 @@ export default class Obstacle {
     obstacleModel.scene.traverse((child) => {
       if (child.isMesh) obstacleMeshes.push(child);
     });
+    console.log(
+      'Obstacle mesh names:',
+      obstacleMeshes.map((mesh) => mesh.name),
+    );
     obstacleModel.scene.updateMatrixWorld(true);
     if (!obstacleMeshes.length) {
       throw new Error('Obstacle model has no mesh objects');
@@ -36,15 +41,14 @@ export default class Obstacle {
       );
       const worldBbox = geometry.boundingBox.clone().applyMatrix4(baseMatrix);
       return {
+        name: obstacleMesh.name,
         geometry,
         baseMatrix,
         yOffset: -worldBbox.min.y + 0.05,
       };
     });
 
-    this.obstacleVariantByCell = this.obstacleCells.map(
-      () => Math.floor(Math.random() * this.variants.length),
-    );
+    this.obstacleVariantByCell = this.#generateObstacleVariants();
     this.obstacleRotationByCell = this.obstacleCells.map(
       () => Math.random() * Math.PI * 2,
     );
@@ -66,6 +70,54 @@ export default class Obstacle {
 
   #toId(row, col) {
     return row * this.size.cols + col;
+  }
+
+  #isObstacle3Variant(variantIndex) {
+    const variant = this.variants[variantIndex];
+    return Boolean(variant?.name && variant.name.toLowerCase().includes('obstacle_3'));
+  }
+
+  #isFarEnoughFromObstacle3(cell, placedCells) {
+    const minDistanceSquared = this.minObstacle3Distance * this.minObstacle3Distance;
+
+    return placedCells.every((placedCell) => {
+      const rowDelta = cell.row - placedCell.row;
+      const colDelta = cell.col - placedCell.col;
+      return rowDelta * rowDelta + colDelta * colDelta >= minDistanceSquared;
+    });
+  }
+
+  #generateObstacleVariants() {
+    const obstacle3VariantIndices = this.variants
+      .map((variant, index) => (this.#isObstacle3Variant(index) ? index : -1))
+      .filter((index) => index !== -1);
+    const fallbackVariantIndices = this.variants
+      .map((_, index) => index)
+      .filter((index) => !obstacle3VariantIndices.includes(index));
+
+    const obstacle3Cells = [];
+
+    return this.obstacleCells.map((cell) => {
+      let variantIndex = Math.floor(Math.random() * this.variants.length);
+
+      if (
+        this.#isObstacle3Variant(variantIndex) &&
+        !this.#isFarEnoughFromObstacle3(cell, obstacle3Cells)
+      ) {
+        if (fallbackVariantIndices.length) {
+          variantIndex =
+            fallbackVariantIndices[
+              Math.floor(Math.random() * fallbackVariantIndices.length)
+            ];
+        }
+      }
+
+      if (this.#isObstacle3Variant(variantIndex)) {
+        obstacle3Cells.push(cell);
+      }
+
+      return variantIndex;
+    });
   }
 
   #generateObstacleCells() {

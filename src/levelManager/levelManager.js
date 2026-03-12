@@ -28,13 +28,13 @@ export default class LevelManager {
       gap: this.gap,
       doorsCount: 4,
     });
-    const staticMesh = new StaticMeshRenderer({
-      cells: staticInstanced.cells,
-      halfH: this.halfH,
-      halfW: this.halfW,
-      step: this.step,
-      cellSize: this.cellSize,
-    });
+    // const staticMesh = new StaticMeshRenderer({
+    //   cells: staticInstanced.cells,
+    //   halfH: this.halfH,
+    //   halfW: this.halfW,
+    //   step: this.step,
+    //   cellSize: this.cellSize,
+    // });
     this.grid.setBlockInstanced(staticInstanced.cells);
   }
 }

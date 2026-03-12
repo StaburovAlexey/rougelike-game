@@ -11,9 +11,9 @@ export default class Wall {
     this.halfH = options.halfH;
     this.doorsCount = Math.min(Math.max(doorsCount, 0), 4);
     this.windowsChance = 1;
-    this.windowsCount = 2;
+    this.windowsCount = 0;
     this.torchesChance = 1;
-    this.torchesCount = 2;
+    this.torchesCount = 4;
     this.doorCells = this.#generateDoorCells();
     this.windowCells = this.#generateWindowCells();
     this.torchCells = this.#generateTorchCells();

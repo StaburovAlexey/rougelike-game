@@ -16,7 +16,7 @@ const control = new Controls(
   camera.getCamera(),
   sceneManager.renderer.domElement,
 );
-const levelManager = new LevelManager(20, 20);
+const levelManager = new LevelManager(12, 12);
 let last = performance.now();
 function loop(now) {
   const delta = (now - last) / 1000;
