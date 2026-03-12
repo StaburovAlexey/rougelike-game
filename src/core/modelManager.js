@@ -8,6 +8,7 @@ class ModelManager {
       door: '/models/door3_doorway_handel_new_fin_1.glb',
       wall: '/models/walls_pixel_new.glb',
       obstacle: '/models/obstacles_new_4.glb',
+      torch: '/models/torch_wall_2.glb',
     };
   }
 
