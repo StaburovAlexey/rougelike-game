@@ -3,6 +3,7 @@ import { modelManager } from '../../core/modelManager';
 import COLORS from '../../static/constants';
 
 const colorByMaterialName = {
+  Bonfire: COLORS.BONFIRE_WOOD_COLOR,
   Border: COLORS.BORDER_COLOR,
   BoxSteel: COLORS.BOX_STEEL,
   BoxWood: COLORS.BOX_WOOD,
@@ -13,6 +14,7 @@ const colorByMaterialName = {
 
 export default class Obstacle {
   constructor(options, density = 0.12) {
+    this.minBonfireDistance = 3;
     this.cellSize = options.cellSize;
     this.size = options.size;
     this.step = options.step;
@@ -39,7 +41,7 @@ export default class Obstacle {
         parts.push({
           geometry: child.geometry,
           material: this.#createMaterial(child.material),
-          localMatrix: child.matrix.clone(),
+          localMatrix: child.matrixWorld.clone(),
         });
       });
 
@@ -51,9 +53,7 @@ export default class Obstacle {
       };
     });
 
-    this.obstacleVariantByCell = this.obstacleCells.map(
-      () => Math.floor(Math.random() * this.variants.length),
-    );
+    this.obstacleVariantByCell = this.#generateObstacleVariants();
     this.obstacleRotationByCell = this.obstacleCells.map(
       () => Math.random() * Math.PI * 2,
     );
@@ -86,6 +86,53 @@ export default class Obstacle {
 
   #toId(row, col) {
     return row * this.size.cols + col;
+  }
+
+  #isBonfireVariant(variantIndex) {
+    return this.variants[variantIndex]?.name === 'bonfire';
+  }
+
+  #isFarEnoughFromBonfires(cell, bonfireCells) {
+    const minDistanceSquared = this.minBonfireDistance * this.minBonfireDistance;
+
+    return bonfireCells.every((bonfireCell) => {
+      const rowDelta = cell.row - bonfireCell.row;
+      const colDelta = cell.col - bonfireCell.col;
+      return rowDelta * rowDelta + colDelta * colDelta >= minDistanceSquared;
+    });
+  }
+
+  #generateObstacleVariants() {
+    const bonfireVariantIndices = this.variants
+      .map((variant, index) => (this.#isBonfireVariant(index) ? index : -1))
+      .filter((index) => index !== -1);
+    const fallbackVariantIndices = this.variants
+      .map((_, index) => index)
+      .filter((index) => !bonfireVariantIndices.includes(index));
+
+    const bonfireCells = [];
+
+    return this.obstacleCells.map((cell) => {
+      let variantIndex = Math.floor(Math.random() * this.variants.length);
+
+      if (
+        this.#isBonfireVariant(variantIndex) &&
+        !this.#isFarEnoughFromBonfires(cell, bonfireCells)
+      ) {
+        if (fallbackVariantIndices.length) {
+          variantIndex =
+            fallbackVariantIndices[
+              Math.floor(Math.random() * fallbackVariantIndices.length)
+            ];
+        }
+      }
+
+      if (this.#isBonfireVariant(variantIndex)) {
+        bonfireCells.push(cell);
+      }
+
+      return variantIndex;
+    });
   }
 
   #generateObstacleCells() {

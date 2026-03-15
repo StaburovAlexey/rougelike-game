@@ -8,4 +8,5 @@ export default {
   SHIELD_STEEL_COLOR: '#6486a8',
   BOX_WOOD: '#8a643b',
   BOX_STEEL: '#62758a',
+  BONFIRE_WOOD_COLOR: '#875a29',
 };
