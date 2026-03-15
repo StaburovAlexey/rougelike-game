@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { modelManager } from '../../core/modelManager';
-
-const WALL_COLOR = '#6f7c86';
+import COLORS from '../../static/constants';
 
 export default class Torch {
   constructor({ cells, halfW, halfH, step, cellSize } = {}) {
@@ -14,39 +13,78 @@ export default class Torch {
     this.#init();
   }
 
-  #buildNodeLocalMatrix(node) {
-    const translation = node.translation || [0, 0, 0];
-    const rotation = node.rotation || [0, 0, 0, 1];
-    const scale = node.scale || [1, 1, 1];
+  #createMaterial(sourceMaterial) {
+    const materialName = sourceMaterial?.name || '';
+    let color = sourceMaterial?.color?.getHex?.() ?? 0xffffff;
 
-    return new THREE.Matrix4().compose(
-      new THREE.Vector3(...translation),
-      new THREE.Quaternion(...rotation),
-      new THREE.Vector3(...scale),
-    );
+    if (materialName === 'RockWall') color = new THREE.Color(COLORS.ROCK_WALL_COLOR).getHex();
+    if (materialName === 'Border') color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
+    if (materialName === 'Torch') color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
+
+    return new THREE.MeshLambertMaterial({ color });
   }
 
   #buildInstancedFromModel() {
     const gltf = modelManager.get('torch');
     gltf.scene.updateMatrixWorld(true);
+    const torchGroups = gltf.scene.children.filter((child) => child.isGroup);
+    if (!torchGroups.length) {
+      throw new Error('Torch model has no grouped torch variants');
+    }
 
-    const bbox = new THREE.Box3().setFromObject(gltf.scene);
-    const bboxCenter = new THREE.Vector3();
-    bbox.getCenter(bboxCenter);
-    const modelOffsetMatrix = new THREE.Matrix4().makeTranslation(
-      -bboxCenter.x,
-      -bbox.min.y,
-      -bboxCenter.z,
-    );
-
-    const nodes = gltf.parser.json.nodes;
-    const meshNodes = nodes.filter((node) => node.mesh !== undefined);
     const yawBySide = {
       top: Math.PI,
       right: Math.PI / 2,
       bottom: 0,
       left: -Math.PI / 2,
     };
+
+    const variants = torchGroups.map((torchGroup) => {
+      const bbox = new THREE.Box3().setFromObject(torchGroup);
+      const bboxCenter = new THREE.Vector3();
+      bbox.getCenter(bboxCenter);
+      const modelOffsetMatrix = new THREE.Matrix4().makeTranslation(
+        -bboxCenter.x,
+        -bbox.min.y,
+        -bboxCenter.z,
+      );
+
+      const parts = [];
+      torchGroup.traverse((child) => {
+        if (!child.isMesh) return;
+        parts.push({
+          geometry: child.geometry,
+          material: this.#createMaterial(child.material),
+          localMatrix: modelOffsetMatrix.clone(),
+        });
+      });
+
+      return { parts };
+    });
+
+    const variantByCell = this.cells.map(
+      () => Math.floor(Math.random() * variants.length),
+    );
+    const variantCounts = new Array(variants.length).fill(0);
+    for (let i = 0; i < variantByCell.length; i++) {
+      variantCounts[variantByCell[i]]++;
+    }
+
+    const variantInstances = variants.map((variant, variantIndex) => {
+      const count = variantCounts[variantIndex];
+      if (!count) return null;
+
+      return variant.parts.map((part) => {
+        const instancedMesh = new THREE.InstancedMesh(
+          part.geometry,
+          part.material,
+          count,
+        );
+        instancedMesh.matrixAutoUpdate = false;
+        this.instanced.add(instancedMesh);
+        return instancedMesh;
+      });
+    });
 
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
@@ -55,43 +93,37 @@ export default class Torch {
     const baseMatrix = new THREE.Matrix4();
     const instanceMatrix = new THREE.Matrix4();
     const finalMatrix = new THREE.Matrix4();
+    const writeOffsets = new Array(variants.length).fill(0);
 
-    for (const node of meshNodes) {
-      const source = gltf.scene.getObjectByName(node.name);
-      if (!source || !source.isMesh) continue;
-      const toLambert = (material) =>
-        new THREE.MeshLambertMaterial({
-          color: WALL_COLOR,
-        });
-      const material = Array.isArray(source.material)
-        ? source.material.map(toLambert)
-        : toLambert(source.material);
+    for (let i = 0; i < this.cells.length; i++) {
+      const cell = this.cells[i];
+      const x = cell.col * this.step - this.halfW;
+      const z = cell.row * this.step - this.halfH;
+      const yaw = yawBySide[cell.side] ?? 0;
+      const variantIndex = variantByCell[i];
+      const variant = variants[variantIndex];
+      const instancedMeshes = variantInstances[variantIndex];
+      if (!instancedMeshes) continue;
 
-      const instancedMesh = new THREE.InstancedMesh(
-        source.geometry,
-        material,
-        this.cells.length,
-      );
-      instancedMesh.matrixAutoUpdate = false;
+      basePosition.set(x, 0, z);
+      baseRotation.setFromAxisAngle(yawAxis, yaw);
+      baseMatrix.compose(basePosition, baseRotation, baseScale);
 
-      const nodeLocalMatrix = this.#buildNodeLocalMatrix(node);
-
-      for (let i = 0; i < this.cells.length; i++) {
-        const cell = this.cells[i];
-        const x = cell.col * this.step - this.halfW;
-        const z = cell.row * this.step - this.halfH;
-        const yaw = yawBySide[cell.side] ?? 0;
-
-        basePosition.set(x, 0, z);
-        baseRotation.setFromAxisAngle(yawAxis, yaw);
-        baseMatrix.compose(basePosition, baseRotation, baseScale);
-        instanceMatrix.multiplyMatrices(modelOffsetMatrix, nodeLocalMatrix);
+      for (let j = 0; j < variant.parts.length; j++) {
+        instanceMatrix.copy(variant.parts[j].localMatrix);
         finalMatrix.multiplyMatrices(baseMatrix, instanceMatrix);
-        instancedMesh.setMatrixAt(i, finalMatrix);
+        instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], finalMatrix);
       }
 
-      instancedMesh.instanceMatrix.needsUpdate = true;
-      this.instanced.add(instancedMesh);
+      writeOffsets[variantIndex]++;
+    }
+
+    for (let i = 0; i < variantInstances.length; i++) {
+      const instancedMeshes = variantInstances[i];
+      if (!instancedMeshes) continue;
+      for (let j = 0; j < instancedMeshes.length; j++) {
+        instancedMeshes[j].instanceMatrix.needsUpdate = true;
+      }
     }
   }
 

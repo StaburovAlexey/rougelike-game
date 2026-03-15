@@ -1,4 +1,5 @@
 import './style.css';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { sceneManager } from './scene/scene';
 import Camera from './camera/camera';
 import LevelManager from './levelManager/levelManager';
@@ -17,11 +18,19 @@ const control = new Controls(
   sceneManager.renderer.domElement,
 );
 const levelManager = new LevelManager(12, 12);
+const stats = new Stats();
+stats.dom.style.position = 'absolute';
+stats.dom.style.top = '0';
+stats.dom.style.left = '0';
+stats.dom.style.zIndex = '10';
+sceneManager.getContainer().appendChild(stats.dom);
+
 let last = performance.now();
 function loop(now) {
   const delta = (now - last) / 1000;
   last = now;
   control.update();
+  stats.update();
   sceneManager.renderer.render(sceneManager.getScene(), camera.getCamera());
   requestAnimationFrame(loop);
 }

@@ -1,5 +1,13 @@
 import * as THREE from 'three';
 import { modelManager } from '../../core/modelManager';
+import constants from '../../static/constants';
+
+const colorByMaterialName = {
+  Border: constants.BORDER_COLOR,
+  Door: constants.DOOR_COLOR,
+  Handle: constants.HANDLE_COLOR,
+  RockWall: constants.ROCK_WALL_COLOR,
+};
 
 export default class Doors {
   constructor({ cells, halfW, halfH, step, cellSize } = {}) {
@@ -12,24 +20,8 @@ export default class Doors {
     this.#init();
   }
 
-  #buildNodeLocalMatrix(node) {
-    const translation = node.translation || [0, 0, 0];
-    const rotation = node.rotation || [0, 0, 0, 1];
-    const scale = node.scale || [1, 1, 1];
-    const localPosition = new THREE.Vector3(...translation);
-    const localQuaternion = new THREE.Quaternion(...rotation);
-    const localScale = new THREE.Vector3(...scale);
-    return new THREE.Matrix4().compose(
-      localPosition,
-      localQuaternion,
-      localScale,
-    );
-  }
-
   #buildInstancedFromModel() {
     const gltf = modelManager.get('door');
-    if (!gltf || !gltf.parser || !Array.isArray(gltf.parser.json?.nodes))
-      return;
     gltf.scene.updateMatrixWorld(true);
     const bbox = new THREE.Box3().setFromObject(gltf.scene);
     const bboxSize = new THREE.Vector3();
@@ -46,29 +38,25 @@ export default class Doors {
     const liftOffset = this.cellSize * 0.18;
     const baseYOffset = -bbox.min.y * scaleY + liftOffset;
 
-    const nodes = gltf.parser.json.nodes;
-    const meshNodes = nodes
-      .map((node) => ({ node }))
-      .filter(({ node }) => node.mesh !== undefined);
+    const meshNodes = [];
+    gltf.scene.traverse((child) => {
+      if (child.isMesh) meshNodes.push(child);
+    });
 
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
     const baseScale = new THREE.Vector3(scaleX, scaleY, scaleZ);
     const yawAxis = new THREE.Vector3(0, 1, 0);
     const baseMatrix = new THREE.Matrix4();
+    const modelMatrix = new THREE.Matrix4();
     const finalMatrix = new THREE.Matrix4();
 
-    for (const { node } of meshNodes) {
-      const source = gltf.scene.getObjectByName(node.name);
-      if (!source || !source.isMesh) continue;
-
+    for (const source of meshNodes) {
+         if(source.material?.name === 'Door') console.log('fff', source)
       const toLambert = (mat) =>
+     
         new THREE.MeshLambertMaterial({
-          color: new THREE.Color(
-            colorByNodeName[node.name] ||
-              mat?.color?.getHexString?.() ||
-              '#ffffff',
-          ),
+          color: colorByMaterialName[mat?.name] || '#ffffff',
         });
       const material = Array.isArray(source.material)
         ? source.material.map(toLambert)
@@ -80,8 +68,7 @@ export default class Doors {
         this.cells.length,
       );
       instancedMesh.matrixAutoUpdate = false;
-
-      const nodeLocalMatrix = this.#buildNodeLocalMatrix(node);
+      modelMatrix.copy(source.matrixWorld);
 
       for (let i = 0; i < this.cells.length; i++) {
         const cell = this.cells[i];
@@ -98,7 +85,7 @@ export default class Doors {
         basePosition.set(x, baseYOffset, z);
         baseRotation.setFromAxisAngle(yawAxis, yaw);
         baseMatrix.compose(basePosition, baseRotation, baseScale);
-        finalMatrix.multiplyMatrices(baseMatrix, nodeLocalMatrix);
+        finalMatrix.multiplyMatrices(baseMatrix, modelMatrix);
         instancedMesh.setMatrixAt(i, finalMatrix);
       }
 
@@ -111,8 +98,3 @@ export default class Doors {
     this.#buildInstancedFromModel();
   }
 }
-    const colorByNodeName = {
-      doorway: '#6b7280',
-      door: '#8b5a2b',
-      handle: '#d4af37',
-    };
