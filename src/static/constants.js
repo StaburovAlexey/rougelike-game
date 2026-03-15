@@ -3,5 +3,9 @@ export default {
   BORDER_COLOR: '#1b1e20',
   TORCH_COLOR: '#4c647c',
   HANDLE_COLOR: '#bbca36',
-  DOOR_COLOR: '#915b1e'
+  DOOR_COLOR: '#915b1e',
+  SHIELD_WOOD_COLOR: '#7b5630',
+  SHIELD_STEEL_COLOR: '#6486a8',
+  BOX_WOOD: '#8a643b',
+  BOX_STEEL: '#62758a',
 };
