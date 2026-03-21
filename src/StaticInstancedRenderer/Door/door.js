@@ -10,11 +10,8 @@ const colorByMaterialName = {
 };
 
 export default class Doors {
-  constructor({ cells, halfW, halfH, step, cellSize } = {}) {
+  constructor({ cells, cellSize } = {}) {
     this.cells = cells;
-    this.halfH = halfH;
-    this.halfW = halfW;
-    this.step = step;
     this.cellSize = cellSize;
     this.instanced = new THREE.Group();
     this.#init();
@@ -52,9 +49,7 @@ export default class Doors {
     const finalMatrix = new THREE.Matrix4();
 
     for (const source of meshNodes) {
-         if(source.material?.name === 'Door') console.log('fff', source)
       const toLambert = (mat) =>
-     
         new THREE.MeshLambertMaterial({
           color: colorByMaterialName[mat?.name] || '#ffffff',
         });
@@ -72,8 +67,6 @@ export default class Doors {
 
       for (let i = 0; i < this.cells.length; i++) {
         const cell = this.cells[i];
-        const x = cell.col * this.step - this.halfW;
-        const z = cell.row * this.step - this.halfH;
         const sideYaw = {
           top: Math.PI,
           right: Math.PI / 2,
@@ -82,7 +75,7 @@ export default class Doors {
         };
         const yaw = sideYaw[cell.side] ?? 0;
 
-        basePosition.set(x, baseYOffset, z);
+        basePosition.set(cell.worldX, baseYOffset, cell.worldZ);
         baseRotation.setFromAxisAngle(yawAxis, yaw);
         baseMatrix.compose(basePosition, baseRotation, baseScale);
         finalMatrix.multiplyMatrices(baseMatrix, modelMatrix);

@@ -3,11 +3,8 @@ import { modelManager } from '../../core/modelManager';
 import COLORS from '../../static/constants';
 
 export default class Torch {
-  constructor({ cells, halfW, halfH, step, cellSize } = {}) {
+  constructor({ cells, cellSize } = {}) {
     this.cells = cells;
-    this.halfH = halfH;
-    this.halfW = halfW;
-    this.step = step;
     this.cellSize = cellSize;
     this.instanced = new THREE.Group();
     this.#init();
@@ -97,15 +94,13 @@ export default class Torch {
 
     for (let i = 0; i < this.cells.length; i++) {
       const cell = this.cells[i];
-      const x = cell.col * this.step - this.halfW;
-      const z = cell.row * this.step - this.halfH;
       const yaw = yawBySide[cell.side] ?? 0;
       const variantIndex = variantByCell[i];
       const variant = variants[variantIndex];
       const instancedMeshes = variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      basePosition.set(x, 0, z);
+      basePosition.set(cell.worldX, 0, cell.worldZ);
       baseRotation.setFromAxisAngle(yawAxis, yaw);
       baseMatrix.compose(basePosition, baseRotation, baseScale);
 

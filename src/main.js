@@ -7,17 +7,15 @@ import Controls from './control/orbitControl';
 import textureManager from './core/textureManager';
 import modelManager from './core/modelManager';
 
-
 await textureManager.loadAll();
 await modelManager.loadAll();
-
 
 const camera = new Camera(sceneManager.getSize());
 const control = new Controls(
   camera.getCamera(),
   sceneManager.renderer.domElement,
 );
-const levelManager = new LevelManager(12, 12);
+new LevelManager(12, 12);
 const stats = new Stats();
 stats.dom.style.position = 'absolute';
 stats.dom.style.top = '0';

@@ -13,15 +13,10 @@ const colorByMaterialName = {
 };
 
 export default class Obstacle {
-  constructor(options, density = 0.12) {
+  constructor(options) {
+    this.grid = options.grid;
     this.minBonfireDistance = 3;
-    this.cellSize = options.cellSize;
-    this.size = options.size;
-    this.step = options.step;
-    this.halfW = options.halfW;
-    this.halfH = options.halfH;
-    this.density = Math.min(Math.max(density, 0), 1);
-    this.obstacleCells = this.#generateObstacleCells();
+    this.obstacleCells = this.grid.getObstacleCells();
 
     const obstacleModel = modelManager.get('obstacle');
     obstacleModel.scene.updateMatrixWorld(true);
@@ -84,10 +79,6 @@ export default class Obstacle {
     });
   }
 
-  #toId(row, col) {
-    return row * this.size.cols + col;
-  }
-
   #isBonfireVariant(variantIndex) {
     return this.variants[variantIndex]?.name === 'bonfire';
   }
@@ -135,54 +126,19 @@ export default class Obstacle {
     });
   }
 
-  #generateObstacleCells() {
-    const rows = this.size.rows;
-    const cols = this.size.cols;
-    const candidates = [];
-
-    for (let row = 2; row < rows - 2; row++) {
-      for (let col = 2; col < cols - 2; col++) {
-        candidates.push({
-          row,
-          col,
-          id: this.#toId(row, col),
-          type: 'obstacle',
-        });
-      }
-    }
-
-    if (!candidates.length) return [];
-
-    for (let i = candidates.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-    }
-
-    const count = Math.max(1, Math.floor(candidates.length * this.density));
-    return candidates.slice(0, count);
-  }
-
-  getInstancedCells() {
-    return this.obstacleCells;
-  }
-
   #init() {
     const dummy = new THREE.Object3D();
     const finalMatrix = new THREE.Matrix4();
     const writeOffsets = new Array(this.variants.length).fill(0);
 
     for (let i = 0; i < this.obstacleCells.length; i++) {
-      const { row, col } = this.obstacleCells[i];
+      const cell = this.obstacleCells[i];
       const variantIndex = this.obstacleVariantByCell[i];
       const variant = this.variants[variantIndex];
       const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      dummy.position.set(
-        col * this.step - this.halfW,
-        variant.yOffset + 0.2,
-        row * this.step - this.halfH,
-      );
+      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
       dummy.rotation.set(0, this.obstacleRotationByCell[i], 0);
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
