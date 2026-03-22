@@ -1,3 +1,5 @@
+import CONSTANTS from '../static/constants';
+
 class Cell {
   constructor(x, z, worldX, worldZ) {
     this.x = x;
@@ -21,22 +23,20 @@ export default class Grid {
     cols,
     rows,
     {
-      step = 1,
       halfW = 0,
       halfH = 0,
       doorsCount = 4,
-      obstaclesDensity = 0.12,
       torchesChance = 1,
       torchesCount = 4,
     } = {},
   ) {
     this.cols = cols;
     this.rows = rows;
-    this.step = step;
+    this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = halfW;
     this.halfH = halfH;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
-    this.obstaclesDensity = Math.min(Math.max(obstaclesDensity, 0), 1);
+    this.obstaclesDensity = Math.min(Math.max(CONSTANTS.OBSTACLES_DENSITY, 0), 1);
     this.torchesChance = torchesChance;
     this.torchesCount = torchesCount;
     this.cells = new Array(cols * rows);

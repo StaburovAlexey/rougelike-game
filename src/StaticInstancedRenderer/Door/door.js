@@ -10,9 +10,8 @@ const colorByMaterialName = {
 };
 
 export default class Doors {
-  constructor({ cells, cellSize } = {}) {
+  constructor({ cells } = {}) {
     this.cells = cells;
-    this.cellSize = cellSize;
     this.instanced = new THREE.Group();
     this.#init();
   }
@@ -26,13 +25,13 @@ export default class Doors {
     const sizeX = bboxSize.x || 1;
     const sizeY = bboxSize.y || 1;
     const sizeZ = bboxSize.z || 1;
-    const targetX = this.cellSize;
-    const targetY = this.cellSize * 1.4;
-    const targetZ = this.cellSize * 0.5;
+    const targetX = constants.CELL_SIZE;
+    const targetY = constants.CELL_SIZE * 1.4;
+    const targetZ = constants.CELL_SIZE * 0.5;
     const scaleX = targetX / sizeX;
     const scaleY = targetY / sizeY;
     const scaleZ = targetZ / sizeZ;
-    const liftOffset = this.cellSize * 0.18;
+    const liftOffset = constants.CELL_SIZE * 0.18;
     const baseYOffset = -bbox.min.y * scaleY + liftOffset;
 
     const meshNodes = [];

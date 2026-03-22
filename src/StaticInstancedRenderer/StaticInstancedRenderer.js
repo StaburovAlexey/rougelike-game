@@ -6,12 +6,10 @@ import Doors from './Door/door';
 import Torch from './Torch/Torch';
 import { Group } from 'three';
 export default class StaticInstancedRenderer {
-  constructor({ grid, cellSize } = {}) {
+  constructor(grid) {
     this.grid = grid;
-    this.cellSize = cellSize;
     this.options = {
       grid: this.grid,
-      cellSize: this.cellSize,
     };
     this.cells = [];
     this.group = new Group();

@@ -5,7 +5,6 @@ import COLORS from '../../static/constants';
 export default class Wall {
   constructor(options) {
     this.grid = options.grid;
-    this.cellSize = options.cellSize;
     this.wallCells = this.grid.getWallCells();
 
     const wallModel = modelManager.get('wall');
@@ -85,7 +84,7 @@ export default class Wall {
 
   #init() {
     const dummy = new THREE.Object3D();
-    const cornerSize = this.cellSize;
+    const cornerSize = COLORS.CELL_SIZE;
     const scale = new THREE.Vector3();
     const writeOffsets = new Array(this.variants.length).fill(0);
 

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { textureManager } from '../../core/textureManager';
+import CONSTANTS from '../../static/constants';
 export default class Floor {
   constructor(options) {
     this.grid = options.grid;
-    this.cellSize = options.cellSize;
     this.colorMoveCell = new THREE.Color('#f5cb12');
     this.colorAttackCell = new THREE.Color('#f51212');
     this.colorLootCell = new THREE.Color('#14ff4e');
@@ -13,7 +13,7 @@ export default class Floor {
     const floorDiff = textureManager.get('floorDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
-    this.geometry = new THREE.BoxGeometry(this.cellSize, this.y, this.cellSize);
+    this.geometry = new THREE.BoxGeometry(CONSTANTS.CELL_SIZE, this.y, CONSTANTS.CELL_SIZE);
     this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshLambertMaterial({
       normalMap: textureManager.get('floorNormal'),

@@ -1,12 +1,12 @@
 import { sceneManager } from '../scene/scene';
 import * as THREE from 'three';
+import CONSTANTS from '../static/constants';
 export default class StaticMeshRenderer {
-  constructor({ cells, halfW, halfH, step, cellSize } = {}) {
+  constructor({ cells, halfW, halfH, step } = {}) {
     this.cells = cells;
     this.halfH = halfH;
     this.halfW = halfW;
-    this.step = step;
-    this.cellSize = cellSize;
+    this.step = step ?? CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.doorCells = [];
     this.torchCells = [];
     this.windowCells = [];
@@ -35,7 +35,7 @@ export default class StaticMeshRenderer {
       const material = new THREE.MeshLambertMaterial({
         color: '#5555',
       });
-      const geometry = new THREE.BoxGeometry(this.cellSize, 1.5, this.cellSize);
+      const geometry = new THREE.BoxGeometry(CONSTANTS.CELL_SIZE, 1.5, CONSTANTS.CELL_SIZE);
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.set(x, 1.5 / 2 + 0.2, z);
 

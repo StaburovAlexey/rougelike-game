@@ -3,9 +3,8 @@ import { modelManager } from '../../core/modelManager';
 import COLORS from '../../static/constants';
 
 export default class Torch {
-  constructor({ cells, cellSize } = {}) {
+  constructor({ cells } = {}) {
     this.cells = cells;
-    this.cellSize = cellSize;
     this.instanced = new THREE.Group();
     this.#init();
   }

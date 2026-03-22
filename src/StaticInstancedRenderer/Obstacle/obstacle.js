@@ -5,8 +5,8 @@ import COLORS from '../../static/constants';
 const colorByMaterialName = {
   Bonfire: COLORS.BONFIRE_WOOD_COLOR,
   Border: COLORS.BORDER_COLOR,
-  BoxSteel: COLORS.BOX_STEEL,
-  BoxWood: COLORS.BOX_WOOD,
+  BoxSteel: COLORS.BOX_STEEL_COLOR,
+  BoxWood: COLORS.BOX_WOOD_COLOR,
   RockWall: COLORS.ROCK_WALL_COLOR,
   ShieldSteel: COLORS.SHIELD_STEEL_COLOR,
   ShieldWood: COLORS.SHIELD_WOOD_COLOR,
