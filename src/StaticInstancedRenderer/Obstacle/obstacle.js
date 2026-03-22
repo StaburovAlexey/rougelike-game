@@ -74,9 +74,11 @@ export default class Obstacle {
 
   #createMaterial(sourceMaterial) {
     const materialName = sourceMaterial?.name || '';
-    return new THREE.MeshLambertMaterial({
+    const material = new THREE.MeshLambertMaterial({
       color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
     });
+    material.userData.disposeOnRemove = true;
+    return material;
   }
 
   #isBonfireVariant(variantIndex) {

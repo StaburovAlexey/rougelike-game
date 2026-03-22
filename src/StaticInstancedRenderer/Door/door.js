@@ -50,9 +50,13 @@ export default class Doors {
 
     for (const source of meshNodes) {
       const toLambert = (mat) =>
-        new THREE.MeshLambertMaterial({
-          color: colorByMaterialName[mat?.name] || '#ffffff',
-        });
+        {
+          const material = new THREE.MeshLambertMaterial({
+            color: colorByMaterialName[mat?.name] || '#ffffff',
+          });
+          material.userData.disposeOnRemove = true;
+          return material;
+        };
       const material = Array.isArray(source.material)
         ? source.material.map(toLambert)
         : toLambert(source.material);

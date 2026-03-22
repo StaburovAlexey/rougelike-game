@@ -14,11 +14,13 @@ export default class Floor {
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
     this.geometry = new THREE.BoxGeometry(this.cellSize, this.y, this.cellSize);
+    this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshLambertMaterial({
       normalMap: textureManager.get('floorNormal'),
       map: floorDiff,
       aoMap: textureManager.get('floorAo'),
     });
+    this.material.userData.disposeOnRemove = true;
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
       this.material,

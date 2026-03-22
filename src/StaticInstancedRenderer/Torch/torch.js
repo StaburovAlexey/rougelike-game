@@ -18,7 +18,9 @@ export default class Torch {
     if (materialName === 'Border') color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
     if (materialName === 'Torch') color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
 
-    return new THREE.MeshLambertMaterial({ color });
+    const material = new THREE.MeshLambertMaterial({ color });
+    material.userData.disposeOnRemove = true;
+    return material;
   }
 
   #buildInstancedFromModel() {

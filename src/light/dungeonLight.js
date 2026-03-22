@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { sceneManager } from '../scene/scene';
-
+import { Group } from 'three';
 export default class DungeonLight {
   constructor() {
     this.scene = sceneManager.getScene();
@@ -10,6 +10,7 @@ export default class DungeonLight {
     this.keyLight = null;
     this.fillLight = null;
     this.rimLight = null;
+    this.lightGroup = new Group();
     this.#init();
   }
 
@@ -38,13 +39,25 @@ export default class DungeonLight {
 
     this.rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
     this.rimLight.position.set(1, 4, -8);
-
-    this.scene.add(
+    this.lightGroup.add(
       this.hemisphere,
       this.ambient,
       this.keyLight,
       this.fillLight,
       this.rimLight,
     );
+    this.scene.add(this.lightGroup);
+  }
+
+  dispose() {
+    if (!this.lightGroup) return;
+    this.scene.remove(this.lightGroup);
+    this.lightGroup.clear();
+    this.hemisphere = null;
+    this.ambient = null;
+    this.keyLight = null;
+    this.fillLight = null;
+    this.rimLight = null;
+    this.lightGroup = null;
   }
 }

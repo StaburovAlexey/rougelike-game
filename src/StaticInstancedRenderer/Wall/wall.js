@@ -67,7 +67,9 @@ export default class Wall {
         ? COLORS.BORDER_COLOR
         : COLORS.ROCK_WALL_COLOR;
 
-    return new THREE.MeshLambertMaterial({ color });
+    const material = new THREE.MeshLambertMaterial({ color });
+    material.userData.disposeOnRemove = true;
+    return material;
   }
 
   #isCorner(row, col) {
