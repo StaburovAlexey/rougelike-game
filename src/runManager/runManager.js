@@ -43,6 +43,6 @@ export default class RunManager {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
   getRandomDoorsQuantity() {
-    return Math.floor(Math.random() * (4 - 1 + 1)) + 1;
+    return Math.floor(Math.random() * (4 - 2 + 1)) + 2;
   }
 }

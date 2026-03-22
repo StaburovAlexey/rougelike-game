@@ -7,7 +7,7 @@ class ModelManager {
     this.modelPaths = {
       door: '/models/door_finish_13.03.glb',
       wall: '/models/walls_finish_13.03.glb',
-      obstacle: '/models/obstacles_finish_pre.glb',
+      obstacle: '/models/obstacle.glb',
       torch: '/models/torches_finish_13.03.glb',
     };
   }
