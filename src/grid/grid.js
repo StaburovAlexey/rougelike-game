@@ -36,7 +36,10 @@ export default class Grid {
     this.halfW = halfW;
     this.halfH = halfH;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
-    this.obstaclesDensity = Math.min(Math.max(CONSTANTS.OBSTACLES_DENSITY, 0), 1);
+    this.obstaclesDensity = Math.min(
+      Math.max(CONSTANTS.OBSTACLES_DENSITY, 0),
+      1,
+    );
     this.torchesChance = torchesChance;
     this.torchesCount = torchesCount;
     this.cells = new Array(cols * rows);
@@ -58,7 +61,6 @@ export default class Grid {
     this.wallCells = [];
     this.#generateStaticCells();
   }
-
 
   index(x, z) {
     return z * this.cols + x;
@@ -118,7 +120,12 @@ export default class Grid {
   }
 
   getStaticCells() {
-    return [this.doorCells, this.torchCells, this.wallCells, this.obstacleCells].flat();
+    return [
+      this.doorCells,
+      this.torchCells,
+      this.wallCells,
+      this.obstacleCells,
+    ].flat();
   }
 
   #generateStaticCells() {
@@ -126,6 +133,24 @@ export default class Grid {
     this.torchCells = this.#generateTorchCells();
     this.wallCells = this.#generateWallCells();
     this.obstacleCells = this.#generateObstacleCells();
+    this.#setStartLevelCell();
+  }
+  #setStartLevelCell() {
+    const doorIn = this.cells.find((cell) => cell.doorRole === 'in');
+    let startLevelCell = null;
+    if (doorIn.side === 'top') {
+      startLevelCell = this.get(doorIn.col, doorIn.row + 1);
+    }
+    if (doorIn.side === 'bottom') {
+      startLevelCell = this.get(doorIn.col, doorIn.row - 1);
+    }
+    if (doorIn.side === 'left') {
+      startLevelCell = this.get(doorIn.col + 1, doorIn.row);
+    }
+    if (doorIn.side === 'right') {
+      startLevelCell = this.get(doorIn.col - 1, doorIn.row);
+    }
+    startLevelCell.player = true
   }
 
   #toId(row, col) {
@@ -161,6 +186,10 @@ export default class Grid {
 
   #decorateStaticCell(row, col, side, type) {
     const cell = this.get(col, row);
+    cell.side = side;
+    cell.type = type;
+    cell.blocked = type === 'wall' || type === 'obstacle' || type === 'door';
+
     return {
       id: this.index(col, row),
       row,
@@ -179,7 +208,8 @@ export default class Grid {
     const candidates = [];
 
     if (side === 'top') {
-      for (let col = 0; col < this.cols; col++) candidates.push({ row: 0, col });
+      for (let col = 0; col < this.cols; col++)
+        candidates.push({ row: 0, col });
     }
 
     if (side === 'bottom') {
@@ -189,7 +219,8 @@ export default class Grid {
     }
 
     if (side === 'left') {
-      for (let row = 0; row < this.rows; row++) candidates.push({ row, col: 0 });
+      for (let row = 0; row < this.rows; row++)
+        candidates.push({ row, col: 0 });
     }
 
     if (side === 'right') {
@@ -213,7 +244,12 @@ export default class Grid {
 
     if (!free.length) return null;
     const selected = free[Math.floor(Math.random() * free.length)];
-    return this.#decorateStaticCell(selected.row, selected.col, selected.side, selected.type);
+    return this.#decorateStaticCell(
+      selected.row,
+      selected.col,
+      selected.side,
+      selected.type,
+    );
   }
 
   #generateDoorCells() {
@@ -230,8 +266,11 @@ export default class Grid {
 
     if (result.length > 0) {
       result[0].doorRole = 'in';
+      this.get(result[0].col, result[0].row).doorRole = 'in';
+
       for (let i = 1; i < result.length; i++) {
         result[i].doorRole = 'out';
+        this.get(result[i].col, result[i].row).doorRole = 'out';
       }
     }
 
@@ -277,7 +316,9 @@ export default class Grid {
 
     if (this.rows > 1) {
       for (let col = 0; col < this.cols; col++) {
-        perimeter.push(this.#decorateStaticCell(this.rows - 1, col, 'bottom', 'wall'));
+        perimeter.push(
+          this.#decorateStaticCell(this.rows - 1, col, 'bottom', 'wall'),
+        );
       }
     }
 
@@ -287,7 +328,9 @@ export default class Grid {
 
     if (this.cols > 1) {
       for (let row = 1; row < this.rows - 1; row++) {
-        perimeter.push(this.#decorateStaticCell(row, this.cols - 1, 'right', 'wall'));
+        perimeter.push(
+          this.#decorateStaticCell(row, this.cols - 1, 'right', 'wall'),
+        );
       }
     }
 
@@ -314,7 +357,10 @@ export default class Grid {
       [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
     }
 
-    const count = Math.max(1, Math.floor(candidates.length * this.obstaclesDensity));
+    const count = Math.max(
+      1,
+      Math.floor(candidates.length * this.obstaclesDensity),
+    );
     return candidates.slice(0, count);
   }
 }

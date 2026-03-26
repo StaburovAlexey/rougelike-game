@@ -16,7 +16,9 @@ export default class LevelManager {
       halfH: this.halfH,
       doorsCount: this.doorsCount,
     });
+    console.log('grid', this.grid.cells)
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
+    console.log('grid', this.grid.cells)
     this.light = new DungeonLight();
   }
   clearLevel() {
