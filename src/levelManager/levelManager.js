@@ -20,6 +20,7 @@ export default class LevelManager {
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     console.log('grid', this.grid.cells)
     this.light = new DungeonLight();
+    this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell())
   }
   clearLevel() {
     this.staticInstancedRenderer.dispose();

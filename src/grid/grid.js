@@ -1,7 +1,8 @@
 import CONSTANTS from '../static/constants';
 
 class Cell {
-  constructor(x, z, worldX, worldZ) {
+  constructor(id, x, z, worldX, worldZ) {
+    this.id = id;
     this.x = x;
     this.z = z;
     this.col = x;
@@ -16,6 +17,7 @@ class Cell {
     this.loot = null;
     this.meta = {};
     this.visible = false;
+    this.expand = false;
   }
 }
 
@@ -47,7 +49,9 @@ export default class Grid {
 
     for (let z = 0; z < rows; z++) {
       for (let x = 0; x < cols; x++) {
-        this.cells[this.index(x, z)] = new Cell(
+        const id = this.index(x, z);
+        this.cells[id] = new Cell(
+          id,
           x,
           z,
           x * this.step - this.halfW,
@@ -67,16 +71,8 @@ export default class Grid {
     return z * this.cols + x;
   }
 
-  coordsCell(id) {
-    return { x: id % this.cols, z: Math.floor(id / this.cols) };
-  }
-
   inBounds(x, z) {
     return x >= 0 && z >= 0 && x < this.cols && z < this.rows;
-  }
-
-  getId(id) {
-    return this.cells[id];
   }
 
   get(x, z) {
@@ -105,11 +101,11 @@ export default class Grid {
         const manhattan =
           Math.abs(cellPlayer.row - row) + Math.abs(cellPlayer.col - col);
 
-        if (manhattan === 0 || manhattan > distance) continue;
+        if (manhattan > distance) continue;
         result.push(this.get(col, row));
       }
     }
-   
+
     return result;
   }
   setVisibleCell() {
@@ -119,6 +115,9 @@ export default class Grid {
       cell.visible = true;
     });
   }
+  getDontExpandCell() {
+    return this.cells.filter((cell) => cell.visible && !cell.expand);
+  }
   getWorldPosition(x, z) {
     const cell = this.get(x, z);
     if (!cell) return null;
@@ -126,7 +125,7 @@ export default class Grid {
   }
 
   getWorldPositionById(id) {
-    const cell = this.getId(id);
+    const cell = this.cells[id];
     if (!cell) return null;
     return { x: cell.worldX, z: cell.worldZ };
   }
@@ -193,10 +192,6 @@ export default class Grid {
     startLevelCell.player = true;
   }
 
-  #toId(row, col) {
-    return row * this.cols + col;
-  }
-
   #isCorner(row, col) {
     const lastRow = this.rows - 1;
     const lastCol = this.cols - 1;
@@ -231,7 +226,7 @@ export default class Grid {
     cell.blocked = type === 'wall' || type === 'obstacle' || type === 'door';
 
     return {
-      id: this.index(col, row),
+      id: cell.id,
       row,
       col,
       x: cell.x,
@@ -269,13 +264,16 @@ export default class Grid {
       }
     }
 
-    const mapped = candidates.map((candidate) => ({
-      row: candidate.row,
-      col: candidate.col,
-      id: this.#toId(candidate.row, candidate.col),
-      side,
-      type,
-    }));
+    const mapped = candidates.map((candidate) => {
+      const cell = this.get(candidate.col, candidate.row);
+      return {
+        row: candidate.row,
+        col: candidate.col,
+        id: cell.id,
+        side,
+        type,
+      };
+    });
 
     const free = mapped.filter((cell) => {
       if (avoidCorners && this.#isCorner(cell.row, cell.col)) return false;

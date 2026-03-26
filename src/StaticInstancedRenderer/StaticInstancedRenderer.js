@@ -13,10 +13,11 @@ export default class StaticInstancedRenderer {
     };
     this.cells = [];
     this.group = new Group();
+    this.floor = null;
     this.#init();
   }
   #init() {
-    const floor = new Floor(this.options);
+    this.floor = new Floor(this.options);
     const wall = new Wall(this.options);
     const obstacle = new Obstacle(this.options);
     const doors = new Doors({
@@ -28,12 +29,19 @@ export default class StaticInstancedRenderer {
       cells: this.grid.getTorchCells(),
     });
     this.cells = this.grid.getStaticCells();
-    this.group.add(floor.instanced);
+    this.group.add(this.floor.instanced);
     this.group.add(wall.instanced);
     this.group.add(obstacle.instanced);
     this.group.add(doors.instanced);
     this.group.add(torch.instanced);
     sceneManager.add(this.group);
+  }
+  updateVisible(cells = []) {
+    this.floor.updateVisible(cells);
+
+    cells.forEach((cell) => {
+      cell.expand = true;
+    });
   }
   #disposeMaterial(material) {
     if (!material) return;

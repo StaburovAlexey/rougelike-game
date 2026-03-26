@@ -13,7 +13,11 @@ export default class Floor {
     const floorDiff = textureManager.get('floorDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
-    this.geometry = new THREE.BoxGeometry(CONSTANTS.CELL_SIZE, this.y, CONSTANTS.CELL_SIZE);
+    this.geometry = new THREE.BoxGeometry(
+      CONSTANTS.CELL_SIZE,
+      this.y,
+      CONSTANTS.CELL_SIZE,
+    );
     this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshLambertMaterial({
       normalMap: textureManager.get('floorNormal'),
@@ -26,21 +30,33 @@ export default class Floor {
       this.material,
       this.grid.cols * this.grid.rows,
     );
+    this.dummy = new THREE.Object3D();
     this.#init();
   }
   #init() {
-    const dummy = new THREE.Object3D();
-
     for (let i = 0; i < this.grid.cells.length; i++) {
-      const cell = this.grid.getId(i);
-      dummy.position.set(cell.worldX, this.y / 2, cell.worldZ);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(1, 1, 1);
-      dummy.updateMatrix();
-      this.instanced.setMatrixAt(i, dummy.matrix);
+      const cell = this.grid.cells[i];
+      this.dummy.position.set(cell.worldX, this.y / 2, cell.worldZ);
+      this.dummy.rotation.set(0, 0, 0);
+      this.dummy.scale.set(0.001, 0.001, 0.001);
+      this.dummy.updateMatrix();
+      this.instanced.setMatrixAt(i, this.dummy.matrix);
     }
+    this.instanced.instanceMatrix.needsUpdate = true;
+    console.log('пол инициализирован');
+  }
+  updateVisible(cells) {
+    cells.forEach((cell) => {
+      
+      this.dummy.position.set(cell.worldX, this.y / 2, cell.worldZ);
+      this.dummy.rotation.set(0, 0, 0);
+      this.dummy.scale.set(1, 1, 1);
+      this.dummy.updateMatrix();
+      this.instanced.setMatrixAt(cell.id, this.dummy.matrix);
+    });
 
     this.instanced.instanceMatrix.needsUpdate = true;
+    console.log(cells);
   }
   hightLightMove(ids) {
     if (this.highlightCells.length > 0) {
