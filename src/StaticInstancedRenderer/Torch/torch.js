@@ -71,10 +71,6 @@ export default class Torch {
       return { parts };
     });
 
-    for (let i = 0; i < this.cells.length; i++) {
-      this.cellIndexById.set(this.cells[i].id, i);
-    }
-
     this.variantByCell = this.cells.map(
       () => Math.floor(Math.random() * this.variants.length),
     );
@@ -175,8 +171,9 @@ export default class Torch {
 
   #init() {
     for (let i = 0; i < this.cells.length; i++) {
-      this.cellById.set(this.cells[i].id, this.cells[i]);
-      this.cellIndexById.set(this.cells[i].id, i);
+      const cell = this.cells[i];
+      this.cellById.set(cell.id, cell);
+      this.cellIndexById.set(cell.id, i);
     }
 
     this.#buildInstancedFromModel();

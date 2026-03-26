@@ -57,10 +57,6 @@ export default class Doors {
       if (child.isMesh) meshNodes.push(child);
     });
 
-    for (let i = 0; i < this.cells.length; i++) {
-      this.cellIndexById.set(this.cells[i].id, i);
-    }
-
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
     const yawAxis = new THREE.Vector3(0, 1, 0);
@@ -130,8 +126,9 @@ export default class Doors {
 
   #init() {
     for (let i = 0; i < this.cells.length; i++) {
-      this.cellById.set(this.cells[i].id, this.cells[i]);
-      this.cellIndexById.set(this.cells[i].id, i);
+      const cell = this.cells[i];
+      this.cellById.set(cell.id, cell);
+      this.cellIndexById.set(cell.id, i);
     }
 
     this.#buildInstancedFromModel();
