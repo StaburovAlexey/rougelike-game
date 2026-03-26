@@ -6,6 +6,24 @@ export default class Torch {
   constructor({ cells } = {}) {
     this.cells = cells;
     this.instanced = new THREE.Group();
+    this.hiddenScale = new THREE.Vector3(
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+    );
+    this.variantByCell = [];
+    this.variantInstances = [];
+    this.variants = [];
+    this.cellById = new Map();
+    this.cellIndexById = new Map();
+    this.instanceIndexByCellId = new Map();
+    this.sideYaw = {
+      top: Math.PI,
+      right: Math.PI / 2,
+      bottom: 0,
+      left: -Math.PI / 2,
+    };
+    this.visibleScale = new THREE.Vector3(1, 1, 1);
     this.#init();
   }
 
@@ -30,14 +48,7 @@ export default class Torch {
       throw new Error('Torch model has no grouped torch variants');
     }
 
-    const yawBySide = {
-      top: Math.PI,
-      right: Math.PI / 2,
-      bottom: 0,
-      left: -Math.PI / 2,
-    };
-
-    const variants = torchGroups.map((torchGroup) => {
+    this.variants = torchGroups.map((torchGroup) => {
       const bbox = new THREE.Box3().setFromObject(torchGroup);
       const bboxCenter = new THREE.Vector3();
       bbox.getCenter(bboxCenter);
@@ -60,15 +71,19 @@ export default class Torch {
       return { parts };
     });
 
-    const variantByCell = this.cells.map(
-      () => Math.floor(Math.random() * variants.length),
-    );
-    const variantCounts = new Array(variants.length).fill(0);
-    for (let i = 0; i < variantByCell.length; i++) {
-      variantCounts[variantByCell[i]]++;
+    for (let i = 0; i < this.cells.length; i++) {
+      this.cellIndexById.set(this.cells[i].id, i);
     }
 
-    const variantInstances = variants.map((variant, variantIndex) => {
+    this.variantByCell = this.cells.map(
+      () => Math.floor(Math.random() * this.variants.length),
+    );
+    const variantCounts = new Array(this.variants.length).fill(0);
+    for (let i = 0; i < this.variantByCell.length; i++) {
+      variantCounts[this.variantByCell[i]]++;
+    }
+
+    this.variantInstances = this.variants.map((variant, variantIndex) => {
       const count = variantCounts[variantIndex];
       if (!count) return null;
 
@@ -91,19 +106,20 @@ export default class Torch {
     const baseMatrix = new THREE.Matrix4();
     const instanceMatrix = new THREE.Matrix4();
     const finalMatrix = new THREE.Matrix4();
-    const writeOffsets = new Array(variants.length).fill(0);
+    const writeOffsets = new Array(this.variants.length).fill(0);
 
     for (let i = 0; i < this.cells.length; i++) {
       const cell = this.cells[i];
-      const yaw = yawBySide[cell.side] ?? 0;
-      const variantIndex = variantByCell[i];
-      const variant = variants[variantIndex];
-      const instancedMeshes = variantInstances[variantIndex];
+      const yaw = this.sideYaw[cell.side] ?? 0;
+      const variantIndex = this.variantByCell[i];
+      const variant = this.variants[variantIndex];
+      const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
+      this.instanceIndexByCellId.set(cell.id, writeOffsets[variantIndex]);
 
       basePosition.set(cell.worldX, 0, cell.worldZ);
       baseRotation.setFromAxisAngle(yawAxis, yaw);
-      baseMatrix.compose(basePosition, baseRotation, baseScale);
+      baseMatrix.compose(basePosition, baseRotation, this.hiddenScale);
 
       for (let j = 0; j < variant.parts.length; j++) {
         instanceMatrix.copy(variant.parts[j].localMatrix);
@@ -114,8 +130,8 @@ export default class Torch {
       writeOffsets[variantIndex]++;
     }
 
-    for (let i = 0; i < variantInstances.length; i++) {
-      const instancedMeshes = variantInstances[i];
+    for (let i = 0; i < this.variantInstances.length; i++) {
+      const instancedMeshes = this.variantInstances[i];
       if (!instancedMeshes) continue;
       for (let j = 0; j < instancedMeshes.length; j++) {
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
@@ -123,7 +139,46 @@ export default class Torch {
     }
   }
 
+  updateVisible(cells = []) {
+    const basePosition = new THREE.Vector3();
+    const baseRotation = new THREE.Quaternion();
+    const yawAxis = new THREE.Vector3(0, 1, 0);
+    const baseMatrix = new THREE.Matrix4();
+    const instanceMatrix = new THREE.Matrix4();
+    const finalMatrix = new THREE.Matrix4();
+
+    for (const cell of cells) {
+      const sourceCell = this.cellById.get(cell.id);
+      const sourceIndex = this.cellIndexById.get(cell.id);
+      const instanceIndex = this.instanceIndexByCellId.get(cell.id);
+      if (!sourceCell || sourceIndex === undefined || instanceIndex === undefined) {
+        continue;
+      }
+
+      const variantIndex = this.variantByCell[sourceIndex];
+      const variant = this.variants[variantIndex];
+      const instancedMeshes = this.variantInstances[variantIndex];
+      if (!instancedMeshes) continue;
+
+      basePosition.set(sourceCell.worldX, 0, sourceCell.worldZ);
+      baseRotation.setFromAxisAngle(yawAxis, this.sideYaw[sourceCell.side] ?? 0);
+      baseMatrix.compose(basePosition, baseRotation, this.visibleScale);
+
+      for (let j = 0; j < variant.parts.length; j++) {
+        instanceMatrix.copy(variant.parts[j].localMatrix);
+        finalMatrix.multiplyMatrices(baseMatrix, instanceMatrix);
+        instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
+        instancedMeshes[j].instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+
   #init() {
+    for (let i = 0; i < this.cells.length; i++) {
+      this.cellById.set(this.cells[i].id, this.cells[i]);
+      this.cellIndexById.set(this.cells[i].id, i);
+    }
+
     this.#buildInstancedFromModel();
   }
 }

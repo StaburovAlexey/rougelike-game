@@ -6,6 +6,15 @@ export default class Wall {
   constructor(options) {
     this.grid = options.grid;
     this.wallCells = this.grid.getWallCells();
+    this.hiddenScale = new THREE.Vector3(
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+    );
+    this.cellById = new Map();
+    this.variantIndexByCellId = new Map();
+    this.instanceIndexByCellId = new Map();
+    this.facingOffsetByCellId = new Map();
 
     const wallModel = modelManager.get('wall');
     wallModel.scene.updateMatrixWorld(true);
@@ -43,6 +52,8 @@ export default class Wall {
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.wallVariantByCell.length; i++) {
       variantCounts[this.wallVariantByCell[i]]++;
+      this.cellById.set(this.wallCells[i].id, this.wallCells[i]);
+      this.facingOffsetByCellId.set(this.wallCells[i].id, this.wallFacingByCell[i]);
     }
 
     this.instanced = new THREE.Group();
@@ -109,15 +120,20 @@ export default class Wall {
           cornerSize / variant.modelSize.z,
         );
       } else {
-        scale.set(1, 1, 1);
+        scale.copy(this.hiddenScale);
       }
 
+      if (isCorner) {
+        scale.multiply(this.hiddenScale);
+      }
       dummy.scale.copy(scale);
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
         instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], dummy.matrix);
       }
+      this.variantIndexByCellId.set(cell.id, variantIndex);
+      this.instanceIndexByCellId.set(cell.id, writeOffsets[variantIndex]);
 
       writeOffsets[variantIndex]++;
     }
@@ -126,6 +142,54 @@ export default class Wall {
       const instancedMeshes = this.variantInstances[i];
       if (!instancedMeshes) continue;
       for (let j = 0; j < instancedMeshes.length; j++) {
+        instancedMeshes[j].instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+
+  updateVisible(cells = []) {
+    const dummy = new THREE.Object3D();
+    const cornerSize = COLORS.CELL_SIZE;
+    const scale = new THREE.Vector3();
+
+    for (const sourceCell of cells) {
+      const cell = this.cellById.get(sourceCell.id);
+      const variantIndex = this.variantIndexByCellId.get(sourceCell.id);
+      const instanceIndex = this.instanceIndexByCellId.get(sourceCell.id);
+      if (
+        !cell ||
+        variantIndex === undefined ||
+        instanceIndex === undefined
+      ) {
+        continue;
+      }
+
+      const variant = this.variants[variantIndex];
+      const instancedMeshes = this.variantInstances[variantIndex];
+      if (!instancedMeshes) continue;
+
+      const isCorner = this.#isCorner(cell.row, cell.col);
+      const isSideWall = cell.side === 'left' || cell.side === 'right';
+      const facingOffset = this.facingOffsetByCellId.get(cell.id) ?? 0;
+
+      dummy.rotation.set(0, (isSideWall ? Math.PI / 2 : 0) + facingOffset, 0);
+      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+
+      if (isCorner) {
+        scale.set(
+          cornerSize / variant.modelSize.x,
+          cornerSize / variant.modelSize.y,
+          cornerSize / variant.modelSize.z,
+        );
+      } else {
+        scale.set(1, 1, 1);
+      }
+
+      dummy.scale.copy(scale);
+      dummy.updateMatrix();
+
+      for (let j = 0; j < instancedMeshes.length; j++) {
+        instancedMeshes[j].setMatrixAt(instanceIndex, dummy.matrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
     }

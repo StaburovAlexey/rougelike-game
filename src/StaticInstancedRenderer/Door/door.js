@@ -13,6 +13,23 @@ export default class Doors {
   constructor({ cells } = {}) {
     this.cells = cells;
     this.instanced = new THREE.Group();
+    this.hiddenScale = new THREE.Vector3(
+      constants.HIDDEN_SCALE,
+      constants.HIDDEN_SCALE,
+      constants.HIDDEN_SCALE,
+    );
+    this.baseScale = null;
+    this.baseYOffset = 0;
+    this.modelMatrices = [];
+    this.meshes = [];
+    this.cellById = new Map();
+    this.cellIndexById = new Map();
+    this.sideYaw = {
+      top: Math.PI,
+      right: Math.PI / 2,
+      bottom: 0,
+      left: -Math.PI / 2,
+    };
     this.#init();
   }
 
@@ -32,30 +49,32 @@ export default class Doors {
     const scaleY = targetY / sizeY;
     const scaleZ = targetZ / sizeZ;
     const liftOffset = constants.CELL_SIZE * 0.18;
-    const baseYOffset = -bbox.min.y * scaleY + liftOffset;
+    this.baseYOffset = -bbox.min.y * scaleY + liftOffset;
+    this.baseScale = new THREE.Vector3(scaleX, scaleY, scaleZ);
 
     const meshNodes = [];
     gltf.scene.traverse((child) => {
       if (child.isMesh) meshNodes.push(child);
     });
 
+    for (let i = 0; i < this.cells.length; i++) {
+      this.cellIndexById.set(this.cells[i].id, i);
+    }
+
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
-    const baseScale = new THREE.Vector3(scaleX, scaleY, scaleZ);
     const yawAxis = new THREE.Vector3(0, 1, 0);
     const baseMatrix = new THREE.Matrix4();
-    const modelMatrix = new THREE.Matrix4();
     const finalMatrix = new THREE.Matrix4();
 
     for (const source of meshNodes) {
-      const toLambert = (mat) =>
-        {
-          const material = new THREE.MeshLambertMaterial({
-            color: colorByMaterialName[mat?.name] || '#ffffff',
-          });
-          material.userData.disposeOnRemove = true;
-          return material;
-        };
+      const toLambert = (mat) => {
+        const material = new THREE.MeshLambertMaterial({
+          color: colorByMaterialName[mat?.name] || '#ffffff',
+        });
+        material.userData.disposeOnRemove = true;
+        return material;
+      };
       const material = Array.isArray(source.material)
         ? source.material.map(toLambert)
         : toLambert(source.material);
@@ -66,31 +85,55 @@ export default class Doors {
         this.cells.length,
       );
       instancedMesh.matrixAutoUpdate = false;
-      modelMatrix.copy(source.matrixWorld);
+      this.modelMatrices.push(source.matrixWorld.clone());
 
       for (let i = 0; i < this.cells.length; i++) {
         const cell = this.cells[i];
-        const sideYaw = {
-          top: Math.PI,
-          right: Math.PI / 2,
-          bottom: 0,
-          left: -Math.PI / 2,
-        };
-        const yaw = sideYaw[cell.side] ?? 0;
+        const yaw = this.sideYaw[cell.side] ?? 0;
 
-        basePosition.set(cell.worldX, baseYOffset, cell.worldZ);
+        basePosition.set(cell.worldX, this.baseYOffset, cell.worldZ);
         baseRotation.setFromAxisAngle(yawAxis, yaw);
-        baseMatrix.compose(basePosition, baseRotation, baseScale);
-        finalMatrix.multiplyMatrices(baseMatrix, modelMatrix);
+        baseMatrix.compose(basePosition, baseRotation, this.hiddenScale);
+        finalMatrix.multiplyMatrices(baseMatrix, source.matrixWorld);
         instancedMesh.setMatrixAt(i, finalMatrix);
       }
 
       instancedMesh.instanceMatrix.needsUpdate = true;
       this.instanced.add(instancedMesh);
+      this.meshes.push(instancedMesh);
+    }
+  }
+
+  updateVisible(cells = []) {
+    const basePosition = new THREE.Vector3();
+    const baseRotation = new THREE.Quaternion();
+    const yawAxis = new THREE.Vector3(0, 1, 0);
+    const baseMatrix = new THREE.Matrix4();
+    const finalMatrix = new THREE.Matrix4();
+
+    for (const cell of cells) {
+      const sourceCell = this.cellById.get(cell.id);
+      const index = this.cellIndexById.get(cell.id);
+      if (!sourceCell || index === undefined) continue;
+
+      basePosition.set(sourceCell.worldX, this.baseYOffset, sourceCell.worldZ);
+      baseRotation.setFromAxisAngle(yawAxis, this.sideYaw[sourceCell.side] ?? 0);
+      baseMatrix.compose(basePosition, baseRotation, this.baseScale);
+
+      for (let meshIndex = 0; meshIndex < this.meshes.length; meshIndex++) {
+        finalMatrix.multiplyMatrices(baseMatrix, this.modelMatrices[meshIndex]);
+        this.meshes[meshIndex].setMatrixAt(index, finalMatrix);
+        this.meshes[meshIndex].instanceMatrix.needsUpdate = true;
+      }
     }
   }
 
   #init() {
+    for (let i = 0; i < this.cells.length; i++) {
+      this.cellById.set(this.cells[i].id, this.cells[i]);
+      this.cellIndexById.set(this.cells[i].id, i);
+    }
+
     this.#buildInstancedFromModel();
   }
 }

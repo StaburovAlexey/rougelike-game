@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { textureManager } from '../../core/textureManager';
 import CONSTANTS from '../../static/constants';
+
 export default class Floor {
   constructor(options) {
     this.grid = options.grid;
@@ -33,21 +34,26 @@ export default class Floor {
     this.dummy = new THREE.Object3D();
     this.#init();
   }
+
   #init() {
     for (let i = 0; i < this.grid.cells.length; i++) {
       const cell = this.grid.cells[i];
       this.dummy.position.set(cell.worldX, this.y / 2, cell.worldZ);
       this.dummy.rotation.set(0, 0, 0);
-      this.dummy.scale.set(0.001, 0.001, 0.001);
+      this.dummy.scale.set(
+        CONSTANTS.HIDDEN_SCALE,
+        CONSTANTS.HIDDEN_SCALE,
+        CONSTANTS.HIDDEN_SCALE,
+      );
       this.dummy.updateMatrix();
       this.instanced.setMatrixAt(i, this.dummy.matrix);
     }
+
     this.instanced.instanceMatrix.needsUpdate = true;
-    console.log('пол инициализирован');
   }
+
   updateVisible(cells) {
     cells.forEach((cell) => {
-      
       this.dummy.position.set(cell.worldX, this.y / 2, cell.worldZ);
       this.dummy.rotation.set(0, 0, 0);
       this.dummy.scale.set(1, 1, 1);
@@ -56,8 +62,8 @@ export default class Floor {
     });
 
     this.instanced.instanceMatrix.needsUpdate = true;
-    console.log(cells);
   }
+
   hightLightMove(ids) {
     if (this.highlightCells.length > 0) {
       for (const id of this.highlightCells) {
@@ -65,10 +71,12 @@ export default class Floor {
       }
       this.highlightCells.length = 0;
     }
+
     for (const id of ids) {
       this.instanced.setColorAt(id, this.colorMoveCell);
       this.highlightCells.push(id);
     }
+
     this.instanced.instanceColor.needsUpdate = true;
   }
 }

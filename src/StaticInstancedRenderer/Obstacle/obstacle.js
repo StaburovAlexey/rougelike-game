@@ -17,6 +17,15 @@ export default class Obstacle {
     this.grid = options.grid;
     this.minBonfireDistance = 3;
     this.obstacleCells = this.grid.getObstacleCells();
+    this.hiddenScale = new THREE.Vector3(
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+      COLORS.HIDDEN_SCALE,
+    );
+    this.cellById = new Map();
+    this.variantIndexByCellId = new Map();
+    this.instanceIndexByCellId = new Map();
+    this.rotationByCellId = new Map();
 
     const obstacleModel = modelManager.get('obstacle');
     obstacleModel.scene.updateMatrixWorld(true);
@@ -56,6 +65,8 @@ export default class Obstacle {
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.obstacleVariantByCell.length; i++) {
       variantCounts[this.obstacleVariantByCell[i]]++;
+      this.cellById.set(this.obstacleCells[i].id, this.obstacleCells[i]);
+      this.rotationByCellId.set(this.obstacleCells[i].id, this.obstacleRotationByCell[i]);
     }
 
     this.instanced = new THREE.Group();
@@ -142,13 +153,15 @@ export default class Obstacle {
 
       dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
       dummy.rotation.set(0, this.obstacleRotationByCell[i], 0);
-      dummy.scale.set(1, 1, 1);
+      dummy.scale.copy(this.hiddenScale);
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
         finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
         instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], finalMatrix);
       }
+      this.variantIndexByCellId.set(cell.id, variantIndex);
+      this.instanceIndexByCellId.set(cell.id, writeOffsets[variantIndex]);
 
       writeOffsets[variantIndex]++;
     }
@@ -157,6 +170,39 @@ export default class Obstacle {
       const instancedMeshes = this.variantInstances[i];
       if (!instancedMeshes) continue;
       for (let j = 0; j < instancedMeshes.length; j++) {
+        instancedMeshes[j].instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+
+  updateVisible(cells = []) {
+    const dummy = new THREE.Object3D();
+    const finalMatrix = new THREE.Matrix4();
+
+    for (const sourceCell of cells) {
+      const cell = this.cellById.get(sourceCell.id);
+      const variantIndex = this.variantIndexByCellId.get(sourceCell.id);
+      const instanceIndex = this.instanceIndexByCellId.get(sourceCell.id);
+      if (
+        !cell ||
+        variantIndex === undefined ||
+        instanceIndex === undefined
+      ) {
+        continue;
+      }
+
+      const variant = this.variants[variantIndex];
+      const instancedMeshes = this.variantInstances[variantIndex];
+      if (!instancedMeshes) continue;
+
+      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+      dummy.rotation.set(0, this.rotationByCellId.get(cell.id) ?? 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+
+      for (let j = 0; j < instancedMeshes.length; j++) {
+        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
     }

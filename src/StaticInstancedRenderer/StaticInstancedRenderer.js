@@ -14,30 +14,40 @@ export default class StaticInstancedRenderer {
     this.cells = [];
     this.group = new Group();
     this.floor = null;
+    this.wall = null;
+    this.obstacle = null;
+    this.doors = null;
+    this.torch = null;
     this.#init();
   }
   #init() {
     this.floor = new Floor(this.options);
-    const wall = new Wall(this.options);
-    const obstacle = new Obstacle(this.options);
-    const doors = new Doors({
+    this.wall = new Wall(this.options);
+    this.obstacle = new Obstacle(this.options);
+    this.doors = new Doors({
       ...this.options,
       cells: this.grid.getDoorCells(),
     });
-    const torch = new Torch({
+    this.torch = new Torch({
       ...this.options,
       cells: this.grid.getTorchCells(),
     });
     this.cells = this.grid.getStaticCells();
     this.group.add(this.floor.instanced);
-    this.group.add(wall.instanced);
-    this.group.add(obstacle.instanced);
-    this.group.add(doors.instanced);
-    this.group.add(torch.instanced);
+    this.group.add(this.wall.instanced);
+    this.group.add(this.obstacle.instanced);
+    this.group.add(this.doors.instanced);
+    this.group.add(this.torch.instanced);
     sceneManager.add(this.group);
   }
   updateVisible(cells = []) {
+    if (!cells.length) return;
+
     this.floor.updateVisible(cells);
+    this.wall.updateVisible(cells);
+    this.obstacle.updateVisible(cells);
+    this.doors.updateVisible(cells);
+    this.torch.updateVisible(cells);
 
     cells.forEach((cell) => {
       cell.expand = true;
