@@ -15,6 +15,7 @@ class Cell {
     this.enemy = null;
     this.loot = null;
     this.meta = {};
+    this.visible = false;
   }
 }
 
@@ -83,6 +84,41 @@ export default class Grid {
     return this.cells[this.index(x, z)];
   }
 
+  getCellsAroundPlayer(distance = 2) {
+    const cellPlayer = this.getCellPlayer();
+    if (!cellPlayer) return [];
+
+    const result = [];
+
+    for (
+      let row = cellPlayer.row - distance;
+      row <= cellPlayer.row + distance;
+      row++
+    ) {
+      for (
+        let col = cellPlayer.col - distance;
+        col <= cellPlayer.col + distance;
+        col++
+      ) {
+        if (!this.inBounds(col, row)) continue;
+
+        const manhattan =
+          Math.abs(cellPlayer.row - row) + Math.abs(cellPlayer.col - col);
+
+        if (manhattan === 0 || manhattan > distance) continue;
+        result.push(this.get(col, row));
+      }
+    }
+   
+    return result;
+  }
+  setVisibleCell() {
+    const cells = this.getCellsAroundPlayer();
+    const invisibleCells = cells.filter((cell) => !cell.visible);
+    invisibleCells.forEach((cell) => {
+      cell.visible = true;
+    });
+  }
   getWorldPosition(x, z) {
     const cell = this.get(x, z);
     if (!cell) return null;
@@ -128,12 +164,16 @@ export default class Grid {
     ].flat();
   }
 
+  getCellPlayer() {
+    return this.cells.find((cell) => cell.player);
+  }
   #generateStaticCells() {
     this.doorCells = this.#generateDoorCells();
     this.torchCells = this.#generateTorchCells();
     this.wallCells = this.#generateWallCells();
     this.obstacleCells = this.#generateObstacleCells();
     this.#setStartLevelCell();
+    this.setVisibleCell();
   }
   #setStartLevelCell() {
     const doorIn = this.cells.find((cell) => cell.doorRole === 'in');
@@ -150,7 +190,7 @@ export default class Grid {
     if (doorIn.side === 'right') {
       startLevelCell = this.get(doorIn.col - 1, doorIn.row);
     }
-    startLevelCell.player = true
+    startLevelCell.player = true;
   }
 
   #toId(row, col) {
