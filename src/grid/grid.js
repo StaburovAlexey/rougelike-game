@@ -182,10 +182,19 @@ export default class Grid {
   getCellPlayer() {
     return this.cells.find((cell) => cell.player);
   }
-  setCellPlayer(cell) {
+  movePlayerTo(cell) {
+    const isMooveCell = this.getMoveCellsAroundPlayer().find((c)=>c.id === cell.id)
+    if(!isMooveCell) return
+    if (!cell || cell.blocked) return [];
+
     const cellPlayer = this.getCellPlayer();
+    if (!cellPlayer || cellPlayer.id === cell.id) return [];
+
     cellPlayer.player = false;
     cell.player = true;
+    this.setVisibleCell();
+
+    return this.getDontExpandCell();
   }
   #generateStaticCells() {
     this.doorCells = this.#generateDoorCells();
@@ -267,7 +276,8 @@ export default class Grid {
     cell.blocked =
       staticCell.type === 'wall' ||
       staticCell.type === 'obstacle' ||
-      staticCell.type === 'door';
+      staticCell.type === 'door' ||
+      staticCell.type === 'torch';
 
     if (staticCell.doorRole !== null) {
       cell.doorRole = staticCell.doorRole;

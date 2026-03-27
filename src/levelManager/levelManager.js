@@ -28,15 +28,15 @@ export default class LevelManager {
       grid: this.grid,
       renderer: this.staticInstancedRenderer,
       onHoverChange: (cell) => {
-        console.log('hover cell', cell);
+       
       },
       onCellClick: (cell) => {
-        this.grid.setCellPlayer(cell);
+        const nextVisibleCells = this.grid.movePlayerTo(cell);
+        this.staticInstancedRenderer.updateVisible(nextVisibleCells);
         console.log('click cell', cell);
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
         );
-        
       },
     });
     this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());
