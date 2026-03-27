@@ -108,6 +108,22 @@ export default class Grid {
 
     return result;
   }
+  getMoveCellsAroundPlayer() {
+    const cellPlayer = this.getCellPlayer();
+    if (!cellPlayer) return [];
+
+    const directions = [
+      { col: 1, row: 0 },
+      { col: -1, row: 0 },
+      { col: 0, row: 1 },
+      { col: 0, row: -1 },
+    ];
+    return directions
+      .map(({ col, row }) =>
+        this.get(cellPlayer.col + col, cellPlayer.row + row),
+      )
+      .filter((cell) => cell && !cell.blocked);
+  }
   setVisibleCell() {
     const cells = this.getCellsAroundPlayer();
     const invisibleCells = cells.filter((cell) => !cell.visible);
@@ -219,11 +235,9 @@ export default class Grid {
     return true;
   }
 
-  #decorateStaticCell(row, col, side, type) {
+  #createStaticCellData(row, col, side, type) {
     const cell = this.get(col, row);
-    cell.side = side;
-    cell.type = type;
-    cell.blocked = type === 'wall' || type === 'obstacle' || type === 'door';
+    if (!cell) return null;
 
     return {
       id: cell.id,
@@ -237,6 +251,24 @@ export default class Grid {
       type,
       doorRole: null,
     };
+  }
+
+  #applyStaticCellData(staticCell) {
+    const cell = this.get(staticCell.col, staticCell.row);
+    if (!cell) return null;
+
+    cell.side = staticCell.side;
+    cell.type = staticCell.type;
+    cell.blocked =
+      staticCell.type === 'wall' ||
+      staticCell.type === 'obstacle' ||
+      staticCell.type === 'door';
+
+    if (staticCell.doorRole !== null) {
+      cell.doorRole = staticCell.doorRole;
+    }
+
+    return { ...staticCell };
   }
 
   #pickCellOnSide(side, reserved = [], avoidCorners = true, type) {
@@ -265,15 +297,8 @@ export default class Grid {
     }
 
     const mapped = candidates.map((candidate) => {
-      const cell = this.get(candidate.col, candidate.row);
-      return {
-        row: candidate.row,
-        col: candidate.col,
-        id: cell.id,
-        side,
-        type,
-      };
-    });
+      return this.#createStaticCellData(candidate.row, candidate.col, side, type);
+    }).filter(Boolean);
 
     const free = mapped.filter((cell) => {
       if (avoidCorners && this.#isCorner(cell.row, cell.col)) return false;
@@ -281,13 +306,7 @@ export default class Grid {
     });
 
     if (!free.length) return null;
-    const selected = free[Math.floor(Math.random() * free.length)];
-    return this.#decorateStaticCell(
-      selected.row,
-      selected.col,
-      selected.side,
-      selected.type,
-    );
+    return free[Math.floor(Math.random() * free.length)];
   }
 
   #generateDoorCells() {
@@ -304,15 +323,13 @@ export default class Grid {
 
     if (result.length > 0) {
       result[0].doorRole = 'in';
-      this.get(result[0].col, result[0].row).doorRole = 'in';
 
       for (let i = 1; i < result.length; i++) {
         result[i].doorRole = 'out';
-        this.get(result[i].col, result[i].row).doorRole = 'out';
       }
     }
 
-    return result;
+    return result.map((cell) => this.#applyStaticCellData(cell));
   }
 
   #generateTorchCells() {
@@ -342,41 +359,41 @@ export default class Grid {
       if (torches.length <= uniqueSidesLimit) usedSides.add(side);
     }
 
-    return torches;
+    return torches.map((cell) => this.#applyStaticCellData(cell));
   }
 
   #generateWallCells() {
+    const excludedIds = new Set(
+      [...this.doorCells, ...this.torchCells].map((cell) => cell.id),
+    );
     const perimeter = [];
+    const tryAddWall = (row, col, side) => {
+      const cell = this.get(col, row);
+      if (!cell || excludedIds.has(cell.id)) return;
+      perimeter.push(this.#createStaticCellData(row, col, side, 'wall'));
+    };
 
     for (let col = 0; col < this.cols; col++) {
-      perimeter.push(this.#decorateStaticCell(0, col, 'top', 'wall'));
+      tryAddWall(0, col, 'top');
     }
 
     if (this.rows > 1) {
       for (let col = 0; col < this.cols; col++) {
-        perimeter.push(
-          this.#decorateStaticCell(this.rows - 1, col, 'bottom', 'wall'),
-        );
+        tryAddWall(this.rows - 1, col, 'bottom');
       }
     }
 
     for (let row = 1; row < this.rows - 1; row++) {
-      perimeter.push(this.#decorateStaticCell(row, 0, 'left', 'wall'));
+      tryAddWall(row, 0, 'left');
     }
 
     if (this.cols > 1) {
       for (let row = 1; row < this.rows - 1; row++) {
-        perimeter.push(
-          this.#decorateStaticCell(row, this.cols - 1, 'right', 'wall'),
-        );
+        tryAddWall(row, this.cols - 1, 'right');
       }
     }
 
-    const excludedIds = new Set(
-      [...this.doorCells, ...this.torchCells].map((cell) => cell.id),
-    );
-
-    return perimeter.filter((cell) => !excludedIds.has(cell.id));
+    return perimeter.map((cell) => this.#applyStaticCellData(cell));
   }
 
   #generateObstacleCells() {
@@ -384,7 +401,9 @@ export default class Grid {
 
     for (let row = 2; row < this.rows - 2; row++) {
       for (let col = 2; col < this.cols - 2; col++) {
-        candidates.push(this.#decorateStaticCell(row, col, null, 'obstacle'));
+        const cell = this.#createStaticCellData(row, col, null, 'obstacle');
+        if (!cell) continue;
+        candidates.push(cell);
       }
     }
 
@@ -399,6 +418,8 @@ export default class Grid {
       1,
       Math.floor(candidates.length * this.obstaclesDensity),
     );
-    return candidates.slice(0, count);
+    const selected = candidates.slice(0, count);
+
+    return selected.map((cell) => this.#applyStaticCellData(cell));
   }
 }

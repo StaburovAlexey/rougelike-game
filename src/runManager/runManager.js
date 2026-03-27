@@ -1,10 +1,12 @@
 import LevelManager from '../levelManager/levelManager';
 
 export default class RunManager {
-  constructor({ difficulty, typeRun, classHero }) {
+  constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
     this.typeRun = typeRun;
     this.classHero = classHero;
+    this.camera = camera;
+    this.domElement = domElement;
     this.length = null;
     this.runMap = [];
     this.activeIndex = 0;
@@ -31,7 +33,11 @@ export default class RunManager {
     if (this.aciveLevel) {
       this.aciveLevel.clearLevel();
     }
-    this.aciveLevel = new LevelManager(options);
+    this.aciveLevel = new LevelManager({
+      ...options,
+      camera: this.camera,
+      domElement: this.domElement,
+    });
   }
   nextLevel() {
     if (this.activeIndex === this.length - 1) return;

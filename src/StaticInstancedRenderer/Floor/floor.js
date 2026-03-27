@@ -5,12 +5,14 @@ import CONSTANTS from '../../static/constants';
 export default class Floor {
   constructor(options) {
     this.grid = options.grid;
-    this.colorMoveCell = new THREE.Color('#f5cb12');
+    this.colorMoveCell = new THREE.Color('#14ff4e');
     this.colorAttackCell = new THREE.Color('#f51212');
     this.colorLootCell = new THREE.Color('#14ff4e');
+    this.colorHoverCell = new THREE.Color('#7bdff2');
     this.basicColorCell = new THREE.Color('#ffffff');
     this.y = 0.2;
-    this.highlightCells = [];
+    this.moveHighlightCells = new Set();
+    this.hoveredCellId = null;
     const floorDiff = textureManager.get('floorDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
@@ -64,19 +66,55 @@ export default class Floor {
     this.instanced.instanceMatrix.needsUpdate = true;
   }
 
+  setHoveredCell(id = null) {
+    if (this.hoveredCellId === id) return;
+
+    const previousId = this.hoveredCellId;
+    this.hoveredCellId = id;
+
+    if (previousId !== null) {
+      this.#applyCellColor(previousId);
+    }
+
+    if (this.hoveredCellId !== null) {
+      this.#applyCellColor(this.hoveredCellId);
+    }
+
+    this.#markInstanceColorDirty();
+  }
+
   hightLightMove(ids) {
-    if (this.highlightCells.length > 0) {
-      for (const id of this.highlightCells) {
-        this.instanced.setColorAt(id, this.basicColorCell);
-      }
-      this.highlightCells.length = 0;
+    const previousIds = [...this.moveHighlightCells];
+    this.moveHighlightCells.clear();
+
+    for (const id of previousIds) {
+      this.#applyCellColor(id);
     }
 
     for (const id of ids) {
-      this.instanced.setColorAt(id, this.colorMoveCell);
-      this.highlightCells.push(id);
+      this.moveHighlightCells.add(id);
+      this.#applyCellColor(id);
     }
 
+    this.#markInstanceColorDirty();
+  }
+
+  #applyCellColor(id) {
+    let color = this.basicColorCell;
+
+    if (this.moveHighlightCells.has(id)) {
+      color = this.colorMoveCell;
+    }
+
+    if (this.hoveredCellId === id) {
+      color = this.colorHoverCell;
+    }
+
+    this.instanced.setColorAt(id, color);
+  }
+
+  #markInstanceColorDirty() {
+    if (!this.instanced.instanceColor) return;
     this.instanced.instanceColor.needsUpdate = true;
   }
 }

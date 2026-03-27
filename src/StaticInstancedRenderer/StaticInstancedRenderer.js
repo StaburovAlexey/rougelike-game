@@ -53,6 +53,16 @@ export default class StaticInstancedRenderer {
       cell.expand = true;
     });
   }
+  hightLightMoveCells(cells = []) {
+    const ids = cells.map((cell) => cell.id);
+    this.floor?.hightLightMove(ids);
+  }
+  setHoveredCell(id = null) {
+    this.floor?.setHoveredCell(id);
+  }
+  getFloorMesh() {
+    return this.floor?.instanced ?? null;
+  }
   #disposeMaterial(material) {
     if (!material) return;
     if (Array.isArray(material)) {

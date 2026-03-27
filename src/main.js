@@ -15,7 +15,11 @@ const control = new Controls(
   camera.getCamera(),
   sceneManager.renderer.domElement,
 );
-const run = new RunManager({ typeRun: 'classic' });
+const run = new RunManager({
+  typeRun: 'classic',
+  camera: camera.getCamera(),
+  domElement: sceneManager.renderer.domElement,
+});
 const gui = new GUI();
 const runControls = {
   nextLevel: () => run.nextLevel(),
