@@ -182,6 +182,11 @@ export default class Grid {
   getCellPlayer() {
     return this.cells.find((cell) => cell.player);
   }
+  setCellPlayer(cell) {
+    const cellPlayer = this.getCellPlayer();
+    cellPlayer.player = false;
+    cell.player = true;
+  }
   #generateStaticCells() {
     this.doorCells = this.#generateDoorCells();
     this.torchCells = this.#generateTorchCells();
@@ -296,9 +301,16 @@ export default class Grid {
       }
     }
 
-    const mapped = candidates.map((candidate) => {
-      return this.#createStaticCellData(candidate.row, candidate.col, side, type);
-    }).filter(Boolean);
+    const mapped = candidates
+      .map((candidate) => {
+        return this.#createStaticCellData(
+          candidate.row,
+          candidate.col,
+          side,
+          type,
+        );
+      })
+      .filter(Boolean);
 
     const free = mapped.filter((cell) => {
       if (avoidCorners && this.#isCorner(cell.row, cell.col)) return false;

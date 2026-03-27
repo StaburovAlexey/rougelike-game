@@ -2,7 +2,7 @@ import Grid from '../grid/grid';
 import StaticInstancedRenderer from '../StaticInstancedRenderer/StaticInstancedRenderer';
 import DungeonLight from '../light/dungeonLight';
 import CONSTANTS from '../static/constants';
-import CellHoverController from '../interaction/cellHoverController';
+import CellInteractionController from '../interaction/cellInteractionController';
 
 export default class LevelManager {
   constructor(options) {
@@ -14,7 +14,7 @@ export default class LevelManager {
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
-    this.hoverController = null;
+    this.cellInteractionController = null;
     this.grid = new Grid(this.cols, this.rows, {
       halfW: this.halfW,
       halfH: this.halfH,
@@ -22,23 +22,34 @@ export default class LevelManager {
     });
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
-    this.hoverController = new CellHoverController({
+    this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,
       grid: this.grid,
       renderer: this.staticInstancedRenderer,
+      onHoverChange: (cell) => {
+        console.log('hover cell', cell);
+      },
+      onCellClick: (cell) => {
+        this.grid.setCellPlayer(cell);
+        console.log('click cell', cell);
+        this.staticInstancedRenderer.hightLightMoveCells(
+          this.grid.getMoveCellsAroundPlayer(),
+        );
+        
+      },
     });
     this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());
     this.staticInstancedRenderer.hightLightMoveCells(
       this.grid.getMoveCellsAroundPlayer(),
     );
   }
-  
+
   clearLevel() {
-    this.hoverController?.dispose();
+    this.cellInteractionController?.dispose();
     this.staticInstancedRenderer.dispose();
     this.light.dispose();
-    this.hoverController = null;
+    this.cellInteractionController = null;
     this.staticInstancedRenderer = null;
     this.light = null;
     this.grid = null;
