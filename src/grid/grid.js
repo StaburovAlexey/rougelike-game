@@ -80,7 +80,7 @@ export default class Grid {
     return this.cells[this.index(x, z)];
   }
 
-  getCellsAroundPlayer(distance = 2) {
+  getCellsAroundPlayer(distance = 3) {
     const cellPlayer = this.getCellPlayer();
     if (!cellPlayer) return [];
 
