@@ -130,6 +130,7 @@ export default class Grid {
     invisibleCells.forEach((cell) => {
       cell.visible = true;
     });
+    return this.getDontExpandCell();
   }
   getDontExpandCell() {
     return this.cells.filter((cell) => cell.visible && !cell.expand);
@@ -182,9 +183,10 @@ export default class Grid {
   getCellPlayer() {
     return this.cells.find((cell) => cell.player);
   }
+  isEventCell(cell){
+    return this.getMoveCellsAroundPlayer().find((c)=>c.id === cell.id)
+  }
   movePlayerTo(cell) {
-    const isMooveCell = this.getMoveCellsAroundPlayer().find((c)=>c.id === cell.id)
-    if(!isMooveCell) return
     if (!cell || cell.blocked) return [];
 
     const cellPlayer = this.getCellPlayer();
@@ -192,9 +194,6 @@ export default class Grid {
 
     cellPlayer.player = false;
     cell.player = true;
-    this.setVisibleCell();
-
-    return this.getDontExpandCell();
   }
   #generateStaticCells() {
     this.doorCells = this.#generateDoorCells();
@@ -276,7 +275,7 @@ export default class Grid {
     cell.blocked =
       staticCell.type === 'wall' ||
       staticCell.type === 'obstacle' ||
-      staticCell.type === 'door' ||
+      staticCell.doorRole === 'in' ||
       staticCell.type === 'torch';
 
     if (staticCell.doorRole !== null) {

@@ -3,9 +3,10 @@ import StaticInstancedRenderer from '../StaticInstancedRenderer/StaticInstancedR
 import DungeonLight from '../light/dungeonLight';
 import CONSTANTS from '../static/constants';
 import CellInteractionController from '../interaction/cellInteractionController';
+import Entity from '../entity/Entity';
 
 export default class LevelManager {
-  constructor(options) {
+  constructor(options, nextLevel = null) {
     this.cols = options.size.cols;
     this.rows = options.size.rows;
     this.doorsCount = options.doorsQuantity;
@@ -15,28 +16,36 @@ export default class LevelManager {
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
     this.cellInteractionController = null;
+    this.player = null;
     this.grid = new Grid(this.cols, this.rows, {
       halfW: this.halfW,
       halfH: this.halfH,
       doorsCount: this.doorsCount,
     });
+    this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
+    this.player = new Entity(this.grid.getCellPlayer());
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,
       grid: this.grid,
       renderer: this.staticInstancedRenderer,
-      onHoverChange: (cell) => {
-       
-      },
+      onHoverChange: (cell) => {},
       onCellClick: (cell) => {
-        const nextVisibleCells = this.grid.movePlayerTo(cell);
-        this.staticInstancedRenderer.updateVisible(nextVisibleCells);
-        console.log('click cell', cell);
-        this.staticInstancedRenderer.hightLightMoveCells(
-          this.grid.getMoveCellsAroundPlayer(),
-        );
+        if (!this.grid.isEventCell(cell)) return;
+        if (cell.type === 'door' && cell.doorRole === 'out') {
+          this.nextLevel?.();
+        } else if (!cell.enemy) {
+          this.grid.movePlayerTo(cell);
+          this.player.syncMeshToCell(cell);
+          this.staticInstancedRenderer.updateVisible(
+            this.grid.setVisibleCell(),
+          );
+          this.staticInstancedRenderer.hightLightMoveCells(
+            this.grid.getMoveCellsAroundPlayer(),
+          );
+        }
       },
     });
     this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());
@@ -49,9 +58,11 @@ export default class LevelManager {
     this.cellInteractionController?.dispose();
     this.staticInstancedRenderer.dispose();
     this.light.dispose();
+    this.player?.dispose();
     this.cellInteractionController = null;
     this.staticInstancedRenderer = null;
     this.light = null;
+    this.player = null;
     this.grid = null;
   }
 }

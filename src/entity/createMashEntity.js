@@ -1,19 +1,19 @@
-import { SpriteMaterial, Sprite } from 'three';
+import { SpriteMaterial, Sprite, SRGBColorSpace } from 'three';
 import { textureManager } from '../core/textureManager';
 export default class MashEntity {
-  constructor() {
-    this.size = 1;
-    this.height = 1.4;
+  constructor(typeTexture) {
+    this.size = 1.2;
+    this.height = 1.5;
+    const texture = textureManager.get(typeTexture);
+    texture.colorSpace = SRGBColorSpace;
     this.material = new SpriteMaterial({
-      color,
+      map: texture,
+      color: 0xffffff,
+      toneMapped: false,
       transparent: true,
       alphaTest: 0.05,
     });
     this.mesh = new Sprite(this.material);
     this.mesh.scale.set(this.size, this.height, 1);
-    const texture = textureManager.get('player');
-    this.mesh.material.map = texture;
-    this.mesh.material.color.setHex(0xffffff);
-    this.mesh.material.needsUpdate = true;
   }
 }

@@ -37,6 +37,9 @@ export default class RunManager {
       ...options,
       camera: this.camera,
       domElement: this.domElement,
+      nextLevel: () => {
+        this.nextLevel();
+      },
     });
   }
   nextLevel() {
