@@ -31,6 +31,7 @@ export default class Grid {
       doorsCount = 4,
       torchesChance = 1,
       torchesCount = 4,
+      enemies = [],
     } = {},
   ) {
     this.cols = cols;
@@ -45,6 +46,7 @@ export default class Grid {
     );
     this.torchesChance = torchesChance;
     this.torchesCount = torchesCount;
+    this.enemies = enemies
     this.cells = new Array(cols * rows);
 
     for (let z = 0; z < rows; z++) {
@@ -64,7 +66,7 @@ export default class Grid {
     this.obstacleCells = [];
     this.torchCells = [];
     this.wallCells = [];
-    this.#generateStaticCells();
+    this.#generateCells();
   }
 
   index(x, z) {
@@ -183,8 +185,8 @@ export default class Grid {
   getCellPlayer() {
     return this.cells.find((cell) => cell.player);
   }
-  isEventCell(cell){
-    return this.getMoveCellsAroundPlayer().find((c)=>c.id === cell.id)
+  isEventCell(cell) {
+    return this.getMoveCellsAroundPlayer().find((c) => c.id === cell.id);
   }
   movePlayerTo(cell) {
     if (!cell || cell.blocked) return [];
@@ -195,7 +197,7 @@ export default class Grid {
     cellPlayer.player = false;
     cell.player = true;
   }
-  #generateStaticCells() {
+  #generateCells() {
     this.doorCells = this.#generateDoorCells();
     this.torchCells = this.#generateTorchCells();
     this.wallCells = this.#generateWallCells();

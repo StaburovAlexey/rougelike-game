@@ -12,6 +12,7 @@ export default class LevelManager {
     this.doorsCount = options.doorsQuantity;
     this.camera = options.camera;
     this.domElement = options.domElement;
+    this.enemies = options.enemies;
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
@@ -21,6 +22,7 @@ export default class LevelManager {
       halfW: this.halfW,
       halfH: this.halfH,
       doorsCount: this.doorsCount,
+      enemies: this.enemies,
     });
     this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);

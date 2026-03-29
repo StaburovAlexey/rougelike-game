@@ -93,6 +93,60 @@ export const ENEMY_SPAWN_RULES = {
   },
 };
 
+export const ENEMY_PROGRESS_RULES = {
+  chaser: {
+    hpGrowth: 0.15,
+    atkGrowth: 0.12,
+    hpBonusCap: 3,
+    atkBonusCap: 3,
+  },
+  skirmisher: {
+    hpGrowth: 0.14,
+    atkGrowth: 0.13,
+    hpBonusCap: 3,
+    atkBonusCap: 3,
+  },
+  bruiser: {
+    hpGrowth: 0.22,
+    atkGrowth: 0.18,
+    hpBonusCap: 5,
+    atkBonusCap: 5,
+  },
+  guard: {
+    hpGrowth: 0.26,
+    atkGrowth: 0.14,
+    hpBonusCap: 6,
+    atkBonusCap: 4,
+  },
+  ambusher: {
+    hpGrowth: 0.18,
+    atkGrowth: 0.2,
+    hpBonusCap: 4,
+    atkBonusCap: 5,
+  },
+  berserker: {
+    hpGrowth: 0.24,
+    atkGrowth: 0.24,
+    hpBonusCap: 5,
+    atkBonusCap: 6,
+  },
+};
+
+function getProgressRule(type) {
+  return ENEMY_PROGRESS_RULES[type] ?? ENEMY_PROGRESS_RULES.chaser;
+}
+
+export function getEnemyProgressStats(type, progress) {
+  const rule = getProgressRule(type);
+  const baseStats = ENEMY_TYPE_RULES[type] ?? ENEMY_TYPE_RULES.chaser;
+  const hpBonus = Math.min(rule.hpBonusCap, Math.floor(progress * rule.hpGrowth));
+  const atkBonus = Math.min(rule.atkBonusCap, Math.floor(progress * rule.atkGrowth));
+  return {
+    hp: baseStats.hp + hpBonus,
+    atk: baseStats.atk + atkBonus,
+  };
+}
+
 export function getEnemySpawnWeights(progress) {
   return Object.fromEntries(
     Object.entries(ENEMY_SPAWN_RULES).map(([type, rule]) => {
@@ -141,10 +195,10 @@ export const ENEMY_LEVEL_SCALING = {
 
     return Math.min(Math.max(randomCount, minAllowedCount), maxAllowedCount);
   },
-  getProtection(progress) {
-    return 1 + Math.floor(progress * 2.5);
+  getHp(progress, type = 'chaser') {
+    return getEnemyProgressStats(type, progress).hp;
   },
-  getStrength(progress) {
-    return 1 + Math.floor(progress * 1.9);
+  getAtk(progress, type = 'chaser') {
+    return getEnemyProgressStats(type, progress).atk;
   },
 };

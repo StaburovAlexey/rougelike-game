@@ -2,6 +2,7 @@ import {
   ENEMY_LEVEL_SCALING,
   ENEMY_TYPE_RULES,
   getEnemySpawnWeights,
+  getEnemyProgressStats,
   pickWeightedEnemyType,
 } from '../static/enemy';
 
@@ -12,7 +13,7 @@ export default class GenerateEnemy {
     this.countEnemy = ENEMY_LEVEL_SCALING.getEnemyCount(this.cells, levelIdex);
     this.spawnWeights = getEnemySpawnWeights(levelIdex);
     this.enemies = this.#generateEnemies();
-    console.log('cells',this.cells,'count',this.countEnemy,'spawnWeights',this.spawnWeights,'enemies',  this.enemies)
+    
   }
 
   #generateEnemies() {
@@ -20,9 +21,11 @@ export default class GenerateEnemy {
 
     for (let i = 0; i < this.countEnemy; i++) {
       const type = pickWeightedEnemyType(this.spawnWeights);
+      const progressStats = getEnemyProgressStats(type, this.levelIdex);
       enemies.push({
         type,
         ...ENEMY_TYPE_RULES[type],
+        ...progressStats,
       });
     }
 
