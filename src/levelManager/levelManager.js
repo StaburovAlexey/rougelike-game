@@ -54,7 +54,8 @@ export default class LevelManager {
           this.staticInstancedRenderer.hightLightMoveCells(
             this.grid.getMoveCellsAroundPlayer(),
           );
-          this.enemies.syncVisible()
+          this.enemies.syncVisible();
+          this.enemies.tryMove();
         }
       },
     });

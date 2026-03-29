@@ -6,8 +6,10 @@ export default class Entity {
     this.hp = type.hp;
     this.atk = type.atk;
     this.def = type.def;
+    this.name = type.type || type.name;
     this.cellPosition = position;
-    this.mesh = new MashEntity(type.name).mesh;
+    console.log(type);
+    this.mesh = new MashEntity(this.name).mesh;
     this.syncMeshToCell(this.cellPosition);
     sceneManager.add(this.mesh);
   }
