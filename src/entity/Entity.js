@@ -28,5 +28,7 @@ export default class Entity {
     this.mesh.material?.dispose?.();
     this.mesh = null;
   }
-  attak() {}
+  tryAttack(entity) {
+    entity.hp = entity.hp - this.atk;
+  }
 }

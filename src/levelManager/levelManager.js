@@ -51,12 +51,21 @@ export default class LevelManager {
           this.staticInstancedRenderer.updateVisible(
             this.grid.setVisibleCell(),
           );
-          this.enemies.syncVisible();
           this.enemies.tryMove();
-          this.staticInstancedRenderer.hightLightMoveCells(
-            this.grid.getMoveCellsAroundPlayer(),
-          );
+          this.enemies.syncVisible();
+        } else if (cell.enemy) {
+          const enemy = this.enemies.getEnemy(cell);
+          this.player.tryAttack(enemy);
+          if (enemy.hp > 1) {
+            enemy.tryAttack(this.player);
+          } else {
+            this.enemies.enemyDie(enemy);
+          }
+          console.log('player hp', this.player.hp, 'enemy hp', enemy.hp);
         }
+        this.staticInstancedRenderer.hightLightMoveCells(
+          this.grid.getMoveCellsAroundPlayer(),
+        );
       },
     });
     this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());
@@ -64,18 +73,18 @@ export default class LevelManager {
       this.grid.getMoveCellsAroundPlayer(),
     );
   }
- 
+
   clearLevel() {
     this.cellInteractionController?.dispose();
     this.staticInstancedRenderer.dispose();
     this.light.dispose();
     this.player?.dispose();
-    this.enemies.dispose()
+    this.enemies.dispose();
     this.cellInteractionController = null;
     this.staticInstancedRenderer = null;
     this.light = null;
     this.player = null;
     this.grid = null;
-    this.enemies = null
+    this.enemies = null;
   }
 }

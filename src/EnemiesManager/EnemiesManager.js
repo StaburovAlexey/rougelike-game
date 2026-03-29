@@ -5,7 +5,17 @@ export default class EnemiesManager {
     this.grid = grid;
     this.enemies = this.#renderEnemies(enemies);
   }
-
+  getEnemy(cell) {
+    if (!cell) return null;
+    return this.enemies.find((enemy) => enemy.cellPosition?.id === cell.id) ?? null;
+  }
+  enemyDie(enemy) {
+    if (enemy.cellPosition) {
+      enemy.cellPosition.enemy = false;
+    }
+    enemy.dispose();
+    this.enemies = this.enemies.filter((currentEnemy) => currentEnemy !== enemy);
+  }
   #shuffle(list) {
     const items = [...list];
     for (let i = items.length - 1; i > 0; i--) {
