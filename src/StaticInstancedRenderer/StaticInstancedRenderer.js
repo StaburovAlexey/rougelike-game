@@ -54,8 +54,11 @@ export default class StaticInstancedRenderer {
     });
   }
   hightLightMoveCells(cells = []) {
-    const ids = cells.map((cell) => cell.id);
-    this.floor?.hightLightMove(ids);
+    // const idsMove = cells.map((cell) => cell.id);
+    const idsMove = cells.filter((cell) => !cell.enemy).map((cell) => cell.id);
+    const idsAttak = cells.filter((cell) => cell.enemy).map((cell) => cell.id);
+    this.floor?.hightLightAttak(idsAttak);
+    this.floor?.hightLightMove(idsMove);
   }
   setHoveredCell(id = null) {
     this.floor?.setHoveredCell(id);

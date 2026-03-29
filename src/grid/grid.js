@@ -273,7 +273,7 @@ export default class Grid {
     if (!this.#isFreeEnemyCell(cell)) return false;
 
     cell.enemy = true;
-    cell.blocked = true;
+    // cell.blocked = true;
     this.enemyCells.push(cell);
     return true;
   }

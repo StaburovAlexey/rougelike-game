@@ -12,6 +12,7 @@ export default class Floor {
     this.basicColorCell = new THREE.Color('#ffffff');
     this.y = 0.2;
     this.moveHighlightCells = new Set();
+    this.attackHighlightCells = new Set();
     this.hoveredCellId = null;
     const floorDiff = textureManager.get('floorDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
@@ -82,7 +83,21 @@ export default class Floor {
 
     this.#markInstanceColorDirty();
   }
+  hightLightAttak(ids = []) {
+    const previousIds = [...this.attackHighlightCells];
+    this.attackHighlightCells.clear();
 
+    for (const id of previousIds) {
+      this.#applyCellColor(id);
+    }
+
+    for (const id of ids) {
+      this.attackHighlightCells.add(id);
+      this.#applyCellColor(id);
+    }
+
+    this.#markInstanceColorDirty();
+  }
   hightLightMove(ids) {
     const previousIds = [...this.moveHighlightCells];
     this.moveHighlightCells.clear();
@@ -104,6 +119,10 @@ export default class Floor {
 
     if (this.moveHighlightCells.has(id)) {
       color = this.colorMoveCell;
+    }
+
+    if (this.attackHighlightCells.has(id)) {
+      color = this.colorAttackCell;
     }
 
     if (this.hoveredCellId === id) {
