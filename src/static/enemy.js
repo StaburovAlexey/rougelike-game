@@ -31,7 +31,7 @@ export const ENEMY_TYPE_RULES = {
     atk: 3,
     aggroRange: 4,
     lootDropChance: 0.05,
-    guardRange: 4,
+    aggroRange: 4,
     speed: 0,
     windUpTurns: 0,
     hitAndRun: false,
@@ -60,13 +60,86 @@ export const ENEMY_TYPE_RULES = {
   },
 };
 
+export const ENEMY_SPAWN_RULES = {
+  chaser: {
+    baseWeight: 50,
+    unlockAt: 0,
+    growth: 0,
+  },
+  skirmisher: {
+    baseWeight: 22,
+    unlockAt: 0,
+    growth: 1,
+  },
+  bruiser: {
+    baseWeight: 12,
+    unlockAt: 3,
+    growth: 2,
+  },
+  guard: {
+    baseWeight: 8,
+    unlockAt: 5,
+    growth: 2,
+  },
+  ambusher: {
+    baseWeight: 7,
+    unlockAt: 7,
+    growth: 3,
+  },
+  berserker: {
+    baseWeight: 3,
+    unlockAt: 10,
+    growth: 4,
+  },
+};
+
+export function getEnemySpawnWeights(progress) {
+  return Object.fromEntries(
+    Object.entries(ENEMY_SPAWN_RULES).map(([type, rule]) => {
+      if (progress < rule.unlockAt) {
+        return [type, 0];
+      }
+
+      const weight =
+        rule.baseWeight + Math.floor((progress - rule.unlockAt) * rule.growth);
+      return [type, Math.max(0, weight)];
+    }),
+  );
+}
+
+export function pickWeightedEnemyType(weights) {
+  const entries = Object.entries(weights).filter(([, weight]) => weight > 0);
+  const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
+
+  if (!entries.length || totalWeight <= 0) {
+    return 'chaser';
+  }
+
+  let roll = Math.random() * totalWeight;
+  for (const [type, weight] of entries) {
+    roll -= weight;
+    if (roll <= 0) return type;
+  }
+
+  return entries[entries.length - 1][0];
+}
+
 export const ENEMY_LEVEL_SCALING = {
   getEnemyCount(cells, progress) {
-    const baseCount = Math.max(1, Math.floor(cells * 0.02));
-    const progressBonus = Math.floor(progress * 4);
-    const randomBonusChance = 0.45 + progress * 0.3;
-    const randomBonus = Math.random() < randomBonusChance ? 1 : 0;
-    return baseCount + progressBonus + randomBonus;
+    const baseCount = Math.max(1, Math.floor(cells * 0.025));
+    const progressBonus = Math.floor(progress * 0.25);
+    const expectedCount = baseCount + progressBonus;
+
+    const spread = Math.max(1, Math.round(expectedCount * 0.2));
+    const randomCount =
+      expectedCount +
+      Math.floor(Math.random() * (spread * 2 + 1)) -
+      spread;
+
+    const minAllowedCount = 1;
+    const maxAllowedCount = Math.max(2, Math.floor(cells * 0.1));
+
+    return Math.min(Math.max(randomCount, minAllowedCount), maxAllowedCount);
   },
   getProtection(progress) {
     return 1 + Math.floor(progress * 2.5);

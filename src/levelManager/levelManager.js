@@ -6,7 +6,7 @@ import CellInteractionController from '../interaction/cellInteractionController'
 import Entity from '../entity/Entity';
 
 export default class LevelManager {
-  constructor(options, nextLevel = null) {
+  constructor(options) {
     this.cols = options.size.cols;
     this.rows = options.size.rows;
     this.doorsCount = options.doorsQuantity;

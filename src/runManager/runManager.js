@@ -1,5 +1,5 @@
 import LevelManager from '../levelManager/levelManager';
-
+import GenerateEnemy from './generateEnemy';
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
@@ -25,6 +25,7 @@ export default class RunManager {
         cols: this.getRandomGrid(7, 15),
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
+      level.enemys = new GenerateEnemy(i, level.size);
       this.runMap.push(level);
     }
     this.renderLevel(this.runMap[0]);
