@@ -31,7 +31,7 @@ export default class Grid {
       doorsCount = 4,
       torchesChance = 1,
       torchesCount = 4,
-      enemies = [],
+      enemiesCount = 0,
     } = {},
   ) {
     this.cols = cols;
@@ -40,13 +40,13 @@ export default class Grid {
     this.halfW = halfW;
     this.halfH = halfH;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
+    this.enemiesCount = Math.max(0, enemiesCount);
     this.obstaclesDensity = Math.min(
       Math.max(CONSTANTS.OBSTACLES_DENSITY, 0),
       1,
     );
     this.torchesChance = torchesChance;
     this.torchesCount = torchesCount;
-    this.enemies = enemies
     this.cells = new Array(cols * rows);
 
     for (let z = 0; z < rows; z++) {
@@ -66,6 +66,7 @@ export default class Grid {
     this.obstacleCells = [];
     this.torchCells = [];
     this.wallCells = [];
+    this.enemyCells = [];
     this.#generateCells();
   }
 
@@ -173,6 +174,10 @@ export default class Grid {
     return this.wallCells;
   }
 
+  getEnemyCells() {
+    return this.enemyCells;
+  }
+
   getStaticCells() {
     return [
       this.doorCells,
@@ -203,6 +208,7 @@ export default class Grid {
     this.wallCells = this.#generateWallCells();
     this.obstacleCells = this.#generateObstacleCells();
     this.#setStartLevelCell();
+    this.#generateEnemyCells();
     this.setVisibleCell();
   }
   #setStartLevelCell() {
@@ -236,6 +242,48 @@ export default class Grid {
 
   #isAdjacent(a, b) {
     return Math.abs(a.row - b.row) + Math.abs(a.col - b.col) === 1;
+  }
+
+  #getCellBeforeDoor(doorCell) {
+    if (!doorCell) return null;
+
+    if (doorCell.side === 'top') {
+      return this.get(doorCell.col, doorCell.row + 1);
+    }
+    if (doorCell.side === 'bottom') {
+      return this.get(doorCell.col, doorCell.row - 1);
+    }
+    if (doorCell.side === 'left') {
+      return this.get(doorCell.col + 1, doorCell.row);
+    }
+    if (doorCell.side === 'right') {
+      return this.get(doorCell.col - 1, doorCell.row);
+    }
+
+    return null;
+  }
+
+  #isFreeEnemyCell(cell) {
+    return Boolean(
+      cell && !cell.blocked && !cell.player && !cell.enemy && cell.type === 'floor',
+    );
+  }
+
+  #placeEnemyCell(cell) {
+    if (!this.#isFreeEnemyCell(cell)) return false;
+
+    cell.enemy = true;
+    cell.blocked = true;
+    this.enemyCells.push(cell);
+    return true;
+  }
+
+  #shuffleCells(cells) {
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+    return cells;
   }
 
   #isValidCandidate(candidate, reserved) {
@@ -444,5 +492,36 @@ export default class Grid {
     const selected = candidates.slice(0, count);
 
     return selected.map((cell) => this.#applyStaticCellData(cell));
+  }
+
+  #generateEnemyCells() {
+    this.enemyCells = [];
+    if (!this.enemiesCount) return [];
+
+    const outDoors = this.getOutDoorCells();
+    const reservedIds = new Set();
+
+    if (outDoors.length > 1) {
+      const shuffledOutDoors = this.#shuffleCells([...outDoors]);
+
+      for (const outDoor of shuffledOutDoors) {
+        const mandatoryCell = this.#getCellBeforeDoor(outDoor);
+        if (!this.#placeEnemyCell(mandatoryCell)) continue;
+        reservedIds.add(mandatoryCell.id);
+        break;
+      }
+    }
+
+    const freeCells = this.cells.filter(
+      (cell) => this.#isFreeEnemyCell(cell) && !reservedIds.has(cell.id),
+    );
+    this.#shuffleCells(freeCells);
+
+    const remainingSlots = Math.max(0, this.enemiesCount - this.enemyCells.length);
+    for (let i = 0; i < Math.min(remainingSlots, freeCells.length); i++) {
+      this.#placeEnemyCell(freeCells[i]);
+    }
+
+    return this.enemyCells;
   }
 }

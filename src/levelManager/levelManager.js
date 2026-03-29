@@ -12,7 +12,7 @@ export default class LevelManager {
     this.doorsCount = options.doorsQuantity;
     this.camera = options.camera;
     this.domElement = options.domElement;
-    this.enemies = options.enemies;
+
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
@@ -22,12 +22,13 @@ export default class LevelManager {
       halfW: this.halfW,
       halfH: this.halfH,
       doorsCount: this.doorsCount,
-      enemies: this.enemies,
+      enemiesCount: options.enemies.length,
     });
     this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
     this.player = new Entity(this.grid.getCellPlayer());
+    this.enemies = this.#renderEnemies(options.enemies);
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,
@@ -55,7 +56,9 @@ export default class LevelManager {
       this.grid.getMoveCellsAroundPlayer(),
     );
   }
-
+  #renderEnemies(enemies) {
+    console.log('enemies', enemies);
+  }
   clearLevel() {
     this.cellInteractionController?.dispose();
     this.staticInstancedRenderer.dispose();
