@@ -2,12 +2,12 @@ import MashEntity from './createMashEntity';
 import { sceneManager } from '../scene/scene';
 
 export default class Entity {
-  constructor(position) {
-    this.hp = 10;
-    this.attak = 3;
-    this.defence = 0;
+  constructor(position, type) {
+    this.hp = type.hp;
+    this.atk = type.atk;
+    this.def = type.def;
     this.cellPosition = position;
-    this.mesh = new MashEntity('player').mesh;
+    this.mesh = new MashEntity(type.name).mesh;
     this.syncMeshToCell(this.cellPosition);
     sceneManager.add(this.mesh);
   }

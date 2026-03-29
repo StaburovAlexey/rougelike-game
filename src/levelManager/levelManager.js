@@ -3,8 +3,8 @@ import StaticInstancedRenderer from '../StaticInstancedRenderer/StaticInstancedR
 import DungeonLight from '../light/dungeonLight';
 import CONSTANTS from '../static/constants';
 import CellInteractionController from '../interaction/cellInteractionController';
-import Entity from '../entity/Entity';
-
+import Player from '../entity/Player';
+import EnemiesManager from '../EnemiesManager/EnemiesManager';
 export default class LevelManager {
   constructor(options) {
     this.cols = options.size.cols;
@@ -27,8 +27,14 @@ export default class LevelManager {
     this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
-    this.player = new Entity(this.grid.getCellPlayer());
-    this.enemies = this.#renderEnemies(options.enemies);
+    this.player = new Player(this.grid.getCellPlayer(), {
+      name: 'player',
+      hp: 2,
+      atk: 2,
+      def: 2,
+    });
+    console.log('player', this.player);
+    this.enemies = new EnemiesManager(options.enemies, this.grid);
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,
@@ -48,6 +54,7 @@ export default class LevelManager {
           this.staticInstancedRenderer.hightLightMoveCells(
             this.grid.getMoveCellsAroundPlayer(),
           );
+          this.enemies.syncVisible()
         }
       },
     });
@@ -56,18 +63,18 @@ export default class LevelManager {
       this.grid.getMoveCellsAroundPlayer(),
     );
   }
-  #renderEnemies(enemies) {
-    console.log('enemies', enemies);
-  }
+ 
   clearLevel() {
     this.cellInteractionController?.dispose();
     this.staticInstancedRenderer.dispose();
     this.light.dispose();
     this.player?.dispose();
+    this.enemies.dispose()
     this.cellInteractionController = null;
     this.staticInstancedRenderer = null;
     this.light = null;
     this.player = null;
     this.grid = null;
+    this.enemies = null
   }
 }

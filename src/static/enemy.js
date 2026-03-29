@@ -2,6 +2,7 @@ export const ENEMY_TYPE_RULES = {
   chaser: {
     hp: 2,
     atk: 2,
+    def:0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -11,6 +12,7 @@ export const ENEMY_TYPE_RULES = {
   bruiser: {
     hp: 6,
     atk: 4,
+    def:0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -20,6 +22,7 @@ export const ENEMY_TYPE_RULES = {
   skirmisher: {
     hp: 2,
     atk: 2,
+    def:0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -29,6 +32,7 @@ export const ENEMY_TYPE_RULES = {
   guard: {
     hp: 5,
     atk: 3,
+    def:0,
     aggroRange: 4,
     lootDropChance: 0.05,
     aggroRange: 4,
@@ -39,6 +43,7 @@ export const ENEMY_TYPE_RULES = {
   ambusher: {
     hp: 6,
     atk: 3,
+    def:0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -48,6 +53,7 @@ export const ENEMY_TYPE_RULES = {
   berserker: {
     hp: 6,
     atk: 4,
+    def:0,
     aggroRange: 2,
     lootDropChance: 0.05,
     speed: 1,

@@ -11,7 +11,14 @@ class TextureManager {
       floorNormal: '/floor/cobblestone_floor_04_nor_gl_1k.jpg',
       floorRough: '/floor/cobblestone_floor_04_rough_1k.jpg',
       player: '/player/player.png',
+      chaser: '/enemies/chaser.png',
+      skirmisher: '/enemies/skirmisher.png',
+      bruiser: '/enemies/bruiser.png',
+      guard: '/enemies/guard.png',
+      ambusher: '/enemies/ambusher.png',
+      berserker: '/enemies/berserk.png',
     };
+    
   }
 
   loadAll() {
