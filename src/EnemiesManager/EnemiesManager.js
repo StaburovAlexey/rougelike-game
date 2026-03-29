@@ -27,38 +27,61 @@ export default class EnemiesManager {
     });
   }
 
-  getNextCellCloserToTarget(fromCell, targetCell) {
-    if (!fromCell || !targetCell) return null;
-    if (fromCell.id === targetCell.id) return fromCell;
+  #getAdjacentCells(cell) {
+    if (!cell) return [];
 
-    const candidates = [
-      this.grid.get(fromCell.col + 1, fromCell.row),
-      this.grid.get(fromCell.col - 1, fromCell.row),
-      this.grid.get(fromCell.col, fromCell.row + 1),
-      this.grid.get(fromCell.col, fromCell.row - 1),
-    ].filter((cell) => {
-      if (!cell) return false;
-      if (cell.id === targetCell.id) return false;
-      return !cell.blocked && !cell.enemy;
-    });
+    return [
+      this.grid.get(cell.col + 1, cell.row),
+      this.grid.get(cell.col - 1, cell.row),
+      this.grid.get(cell.col, cell.row + 1),
+      this.grid.get(cell.col, cell.row - 1),
+    ].filter(Boolean);
+  }
 
-    if (!candidates.length) return null;
+  #getRingCellsAroundPlayer(playerCell) {
+    return this.#getAdjacentCells(playerCell).filter(
+      (cell) => !cell.blocked && !cell.enemy,
+    );
+  }
 
-    let bestCell = null;
-    let bestDistance = Infinity;
+  #getManhattanDistance(a, b) {
+    return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+  }
 
-    for (const cell of candidates) {
-      const distance =
-        Math.abs(cell.col - targetCell.col) +
-        Math.abs(cell.row - targetCell.row);
+  #isAdjacent(a, b) {
+    return this.#getManhattanDistance(a, b) === 1;
+  }
 
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestCell = cell;
+  #getStepTowardTargets(fromCell, targetCells) {
+    if (!fromCell || !targetCells.length) return null;
+
+    const targetIds = new Set(targetCells.map((cell) => cell.id));
+    if (targetIds.has(fromCell.id)) return fromCell;
+
+    const playerCell = this.grid.getCellPlayer();
+    const visited = new Set([fromCell.id]);
+    const queue = [{ cell: fromCell, firstStep: null }];
+
+    while (queue.length) {
+      const { cell, firstStep } = queue.shift();
+
+      for (const nextCell of this.#getAdjacentCells(cell)) {
+        if (visited.has(nextCell.id)) continue;
+        if (nextCell.blocked) continue;
+        if (nextCell.enemy && !targetIds.has(nextCell.id)) continue;
+        if (playerCell && nextCell.id === playerCell.id) continue;
+
+        const nextStep = firstStep ?? nextCell;
+        if (targetIds.has(nextCell.id)) {
+          return nextStep;
+        }
+
+        visited.add(nextCell.id);
+        queue.push({ cell: nextCell, firstStep: nextStep });
       }
     }
 
-    return bestCell;
+    return null;
   }
 
   syncVisible() {
@@ -72,16 +95,30 @@ export default class EnemiesManager {
     if (!playerCell) return;
 
     this.enemies.forEach((enemy) => {
-      if (this.isAggroRange(playerCell, enemy.cellPosition, enemy.aggroRange)) {
-        const moveCell = this.getNextCellCloserToTarget(enemy.cellPosition, playerCell);
-        if (!moveCell) return;
-        if (enemy.cellPosition) {
-          enemy.cellPosition.enemy = false;
-        }
-        moveCell.enemy = true;
-        enemy.syncMeshToCell(moveCell);
-        console.log(`Игрок с агрил ${enemy.name}`);
+      if (!this.isAggroRange(playerCell, enemy.cellPosition, enemy.aggroRange))
+        return;
+
+      if (this.#isAdjacent(enemy.cellPosition, playerCell)) {
+        console.log(`Enemy ${enemy.name} is in attack range`);
+        return;
       }
+
+      const targetCells = this.#getRingCellsAroundPlayer(playerCell);
+      const moveCell = this.#getStepTowardTargets(
+        enemy.cellPosition,
+        targetCells,
+      );
+
+      if (!moveCell || moveCell.id === enemy.cellPosition?.id) return;
+
+      if (enemy.cellPosition) {
+        enemy.cellPosition.enemy = false;
+      }
+
+      moveCell.enemy = true;
+      enemy.syncMeshToCell(moveCell);
+      enemy.syncVisible();
+      console.log(`Enemy ${enemy.name} is moving toward the player`);
     });
   }
 
