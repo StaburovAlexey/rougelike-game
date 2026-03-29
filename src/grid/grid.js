@@ -194,11 +194,7 @@ export default class Grid {
     return this.getMoveCellsAroundPlayer().find((c) => c.id === cell.id);
   }
   movePlayerTo(cell) {
-    if (!cell || cell.blocked) return [];
-
     const cellPlayer = this.getCellPlayer();
-    if (!cellPlayer || cellPlayer.id === cell.id) return [];
-
     cellPlayer.player = false;
     cell.player = true;
   }
