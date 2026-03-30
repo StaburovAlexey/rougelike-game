@@ -56,11 +56,10 @@ export default class LevelManager {
         } else if (cell.enemy) {
           const enemy = this.enemies.getEnemy(cell);
           this.player.tryAttack(enemy);
-          if (enemy.hp > 1) {
-            enemy.tryAttack(this.player);
-          } else {
+          if (enemy.hp < 1) {
             this.enemies.enemyDie(enemy);
           }
+          this.enemies.tryAttack(this.player);
           console.log('player hp', this.player.hp, 'enemy hp', enemy.hp);
         }
         this.staticInstancedRenderer.hightLightMoveCells(

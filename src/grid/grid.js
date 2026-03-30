@@ -111,9 +111,8 @@ export default class Grid {
 
     return result;
   }
-  getMoveCellsAroundPlayer() {
-    const cellPlayer = this.getCellPlayer();
-    if (!cellPlayer) return [];
+  getCellAround(cell) {
+    if (!cell) return [];
 
     const directions = [
       { col: 1, row: 0 },
@@ -121,11 +120,16 @@ export default class Grid {
       { col: 0, row: 1 },
       { col: 0, row: -1 },
     ];
+
     return directions
-      .map(({ col, row }) =>
-        this.get(cellPlayer.col + col, cellPlayer.row + row),
-      )
-      .filter((cell) => cell && !cell.blocked);
+      .map(({ col, row }) => this.get(cell.col + col, cell.row + row))
+      .filter((nextCell) => nextCell && !nextCell.blocked);
+  }
+  getMoveCellsAroundPlayer() {
+    const cellPlayer = this.getCellPlayer();
+    if (!cellPlayer) return [];
+
+    return this.getCellAround(cellPlayer);
   }
   setVisibleCell() {
     const cells = this.getCellsAroundPlayer();

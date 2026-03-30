@@ -5,17 +5,38 @@ export default class EnemiesManager {
     this.grid = grid;
     this.enemies = this.#renderEnemies(enemies);
   }
+
   getEnemy(cell) {
     if (!cell) return null;
-    return this.enemies.find((enemy) => enemy.cellPosition?.id === cell.id) ?? null;
+    return (
+      this.enemies.find((enemy) => enemy.cellPosition?.id === cell.id) ?? null
+    );
   }
+
+  tryAttack(player) {
+    for (const enemy of this.enemies) {
+      const cellsAround = this.grid.getCellAround(enemy.cellPosition);
+      const isPlayer = cellsAround.find(
+        (cell) => cell.id === player.cellPosition.id,
+      );
+
+      if (isPlayer) {
+        enemy.tryAttack(player);
+        console.log('Игрок атакован', enemy.name);
+      }
+    }
+  }
+
   enemyDie(enemy) {
     if (enemy.cellPosition) {
       enemy.cellPosition.enemy = false;
     }
     enemy.dispose();
-    this.enemies = this.enemies.filter((currentEnemy) => currentEnemy !== enemy);
+    this.enemies = this.enemies.filter(
+      (currentEnemy) => currentEnemy !== enemy,
+    );
   }
+
   #shuffle(list) {
     const items = [...list];
     for (let i = items.length - 1; i > 0; i--) {
@@ -113,22 +134,34 @@ export default class EnemiesManager {
         return;
       }
 
-      const targetCells = this.#getRingCellsAroundPlayer(playerCell);
-      const moveCell = this.#getStepTowardTargets(
-        enemy.cellPosition,
-        targetCells,
-      );
+      const speed = enemy.speed;
+      if (speed <= 0) return;
 
-      if (!moveCell || moveCell.id === enemy.cellPosition?.id) return;
+      let currentCell = enemy.cellPosition;
+      let moved = false;
 
-      if (enemy.cellPosition) {
-        enemy.cellPosition.enemy = false;
+      for (let step = 0; step < speed; step += 1) {
+        const targetCells = this.#getRingCellsAroundPlayer(playerCell);
+        const moveCell = this.#getStepTowardTargets(currentCell, targetCells);
+
+        if (!moveCell || moveCell.id === currentCell?.id) break;
+
+        if (currentCell) {
+          currentCell.enemy = false;
+        }
+
+        moveCell.enemy = true;
+        enemy.syncMeshToCell(moveCell);
+        currentCell = moveCell;
+        moved = true;
+
+        if (this.#isAdjacent(currentCell, playerCell)) break;
       }
 
-      moveCell.enemy = true;
-      enemy.syncMeshToCell(moveCell);
-      enemy.syncVisible();
-      console.log(`Enemy ${enemy.name} is moving toward the player`);
+      if (moved) {
+        enemy.syncVisible();
+        console.log(`Enemy ${enemy.name} is moving toward the player`);
+      }
     });
   }
 
