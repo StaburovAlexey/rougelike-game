@@ -45,6 +45,7 @@ export default class LevelManager {
         if (!this.grid.isEventCell(cell)) return;
         if (cell.type === 'door' && cell.doorRole === 'out') {
           this.nextLevel?.();
+          return;
         } else if (!cell.enemy) {
           this.grid.movePlayerTo(cell);
           this.player.syncMeshToCell(cell);
