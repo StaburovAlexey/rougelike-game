@@ -23,6 +23,7 @@ export default class GenerateEnemy {
       const type = pickWeightedEnemyType(this.spawnWeights);
       const progressStats = getEnemyProgressStats(type, this.levelIdex);
       enemies.push({
+        id: i,
         type,
         ...ENEMY_TYPE_RULES[type],
         ...progressStats,

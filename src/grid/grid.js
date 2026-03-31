@@ -32,6 +32,7 @@ export default class Grid {
       torchesChance = 1,
       torchesCount = 4,
       enemiesCount = 0,
+      lootGroundCount = 0,
     } = {},
   ) {
     this.cols = cols;
@@ -41,6 +42,7 @@ export default class Grid {
     this.halfH = halfH;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
     this.enemiesCount = Math.max(0, enemiesCount);
+    this.lootGroundCount = Math.max(0, lootGroundCount);
     this.obstaclesDensity = Math.min(
       Math.max(CONSTANTS.OBSTACLES_DENSITY, 0),
       1,
@@ -67,6 +69,7 @@ export default class Grid {
     this.torchCells = [];
     this.wallCells = [];
     this.enemyCells = [];
+    this.loot = [];
     this.#generateCells();
   }
 
@@ -182,6 +185,10 @@ export default class Grid {
     return this.enemyCells;
   }
 
+  getLootCells() {
+    return this.loot;
+  }
+
   getStaticCells() {
     return [
       this.doorCells,
@@ -209,6 +216,7 @@ export default class Grid {
     this.obstacleCells = this.#generateObstacleCells();
     this.#setStartLevelCell();
     this.#generateEnemyCells();
+    this.#generateLootGroundCells();
     this.setVisibleCell();
   }
   #setStartLevelCell() {
@@ -269,12 +277,30 @@ export default class Grid {
     );
   }
 
+  #isFreeLootCell(cell) {
+    return Boolean(
+      cell &&
+        !cell.blocked &&
+        !cell.player &&
+        !cell.enemy &&
+        !cell.loot &&
+        cell.type === 'floor',
+    );
+  }
+
   #placeEnemyCell(cell) {
     if (!this.#isFreeEnemyCell(cell)) return false;
 
     cell.enemy = true;
     // cell.blocked = true;
     this.enemyCells.push(cell);
+    return true;
+  }
+
+  #placeLootGroundCell(cell) {
+    if (!this.#isFreeLootCell(cell)) return false;
+
+    this.loot.push(cell);
     return true;
   }
 
@@ -523,5 +549,25 @@ export default class Grid {
     }
 
     return this.enemyCells;
+  }
+
+  #generateLootGroundCells() {
+    this.loot = [];
+    if (!this.lootGroundCount) return [];
+
+    const reservedIds = new Set(
+      [...this.doorCells, ...this.enemyCells].map((cell) => cell.id),
+    );
+    const freeCells = this.cells.filter(
+      (cell) => this.#isFreeLootCell(cell) && !reservedIds.has(cell.id),
+    );
+    this.#shuffleCells(freeCells);
+
+    const count = Math.min(this.lootGroundCount, freeCells.length);
+    for (let i = 0; i < count; i++) {
+      this.#placeLootGroundCell(freeCells[i]);
+    }
+
+    return this.loot;
   }
 }

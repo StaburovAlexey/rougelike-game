@@ -1,5 +1,6 @@
 import LevelManager from '../levelManager/levelManager';
 import GenerateEnemy from './generateEnemy';
+import GenerateLoot from './generateLoot';
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
@@ -25,7 +26,15 @@ export default class RunManager {
         cols: this.getRandomGrid(7, 15),
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
-      level.enemies = new GenerateEnemy(i, level.size).enemies;
+      const enemyGenerator = new GenerateEnemy(i, level.size);
+      const lootGenerator = new GenerateLoot(
+        i,
+        level.size,
+        enemyGenerator.enemies,
+        this.difficulty,
+      );
+      level.enemies = enemyGenerator.enemies;
+      level.loot = lootGenerator.loot;
       this.runMap.push(level);
     }
     this.renderLevel(this.runMap[0]);
@@ -34,6 +43,7 @@ export default class RunManager {
     if (this.aciveLevel) {
       this.aciveLevel.clearLevel();
     }
+    console.log('data level', options)
     this.aciveLevel = new LevelManager({
       ...options,
       camera: this.camera,

@@ -5,6 +5,7 @@ import CONSTANTS from '../static/constants';
 import CellInteractionController from '../interaction/cellInteractionController';
 import Player from '../entity/Player';
 import EnemiesManager from '../EnemiesManager/EnemiesManager';
+import LootManager from '../LootManager/lootManager';
 export default class LevelManager {
   constructor(options) {
     this.cols = options.size.cols;
@@ -23,6 +24,7 @@ export default class LevelManager {
       halfH: this.halfH,
       doorsCount: this.doorsCount,
       enemiesCount: options.enemies.length,
+      lootGroundCount: options.loot.groundLoot.length
     });
     this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
@@ -34,6 +36,7 @@ export default class LevelManager {
       def: 2,
     });
     console.log('player', this.player);
+    this.loot = new LootManager(options.loot, this.grid);
     this.enemies = new EnemiesManager(options.enemies, this.grid);
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,

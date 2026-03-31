@@ -33,7 +33,7 @@ export default class EnemiesManager {
     }
     enemy.dispose();
     this.enemies = this.enemies.filter(
-      (currentEnemy) => currentEnemy !== enemy,
+      (currentEnemy) => currentEnemy.id !== enemy.id,
     );
   }
 
