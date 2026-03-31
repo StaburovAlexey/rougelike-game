@@ -1,13 +1,15 @@
 import Loot from './loot';
+
 export default class LootManager {
   constructor(loot, grid) {
     console.log('лут пришел', loot);
     this.grid = grid;
     this.groundLoot = this.#renderLoot(loot.groundLoot);
     this.enemyDrops = loot.enemyDrops;
-    console.log('клетки для лута', this.grid.getLootCells());
+
     this.syncVisible();
   }
+
   #shuffle(list) {
     const items = [...list];
     for (let i = items.length - 1; i > 0; i--) {
@@ -29,25 +31,60 @@ export default class LootManager {
     });
   }
 
+  #findDropCell(enemyCell) {
+    if (!enemyCell) return null;
+
+    if (!enemyCell.loot) {
+      return enemyCell;
+    }
+
+    const visited = new Set([enemyCell.id]);
+    const queue = [enemyCell];
+
+    while (queue.length) {
+      const currentCell = queue.shift();
+      const nextCells = this.grid.getCellAround(currentCell);
+
+      for (const cell of nextCells) {
+        if (visited.has(cell.id)) continue;
+        visited.add(cell.id);
+
+        if (!cell.blocked && !cell.enemy && !cell.player && !cell.loot) {
+          return cell;
+        }
+
+        queue.push(cell);
+      }
+    }
+
+    return null;
+  }
+
   renderLootAfterDieEnemy(enemies) {
-    console.log('мертвые', enemies);
+
+
     enemies.forEach((enemy) => {
       const isDrop = this.enemyDrops.find((loot) => loot.enemyId === enemy.id);
-      if (isDrop) {
-        const loot = new Loot(enemy.cellPosition, {
-          ...isDrop.loot,
-        });
-        this.groundLoot.push(loot);
-        this.grid.cells[enemy.cellPosition.id].loot = true;
-      }
+      const dropCell = this.#findDropCell(enemy.cellPosition);
+
+      if (!isDrop || !dropCell) return;
+
+      dropCell.loot = true;
+      const loot = new Loot(dropCell, {
+        ...isDrop.loot,
+      });
+      this.groundLoot.push(loot);
     });
+
     this.syncVisible();
   }
+
   syncVisible() {
     this.groundLoot.forEach((loot) => {
       loot.syncVisible();
     });
   }
+
   dispose() {
     this.groundLoot.forEach((loot) => {
       loot.dispose();
