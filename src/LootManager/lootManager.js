@@ -31,7 +31,6 @@ export default class LootManager {
 
   renderLootAfterDieEnemy(enemies) {
     console.log('мертвые', enemies);
-    console.log('loot', loot);
     enemies.forEach((enemy) => {
       const isDrop = this.enemyDrops.find((loot) => loot.enemyId === enemy.id);
       if (isDrop) {
@@ -39,6 +38,7 @@ export default class LootManager {
           ...isDrop.loot,
         });
         this.groundLoot.push(loot);
+        this.grid.cells[enemy.cellPosition.id].loot = true;
       }
     });
     this.syncVisible();
