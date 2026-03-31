@@ -30,5 +30,6 @@ export default class Entity {
   }
   tryAttack(entity) {
     entity.hp = entity.hp - this.atk;
+    console.log(this.name, 'атаковал', entity.name)
   }
 }

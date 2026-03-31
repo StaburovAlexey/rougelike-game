@@ -4,8 +4,9 @@ export default class LootManager {
     console.log('лут пришел', loot);
     this.grid = grid;
     this.groundLoot = this.#renderLoot(loot.groundLoot);
+    this.enemyDrops = loot.enemyDrops;
     console.log('клетки для лута', this.grid.getLootCells());
-    this.syncVisible()
+    this.syncVisible();
   }
   #shuffle(list) {
     const items = [...list];
@@ -26,6 +27,21 @@ export default class LootManager {
         ...loot,
       });
     });
+  }
+
+  renderLootAfterDieEnemy(enemies) {
+    console.log('мертвые', enemies);
+    console.log('loot', loot);
+    enemies.forEach((enemy) => {
+      const isDrop = this.enemyDrops.find((loot) => loot.enemyId === enemy.id);
+      if (isDrop) {
+        const loot = new Loot(enemy.cellPosition, {
+          ...isDrop.loot,
+        });
+        this.groundLoot.push(loot);
+      }
+    });
+    this.syncVisible();
   }
   syncVisible() {
     this.groundLoot.forEach((loot) => {

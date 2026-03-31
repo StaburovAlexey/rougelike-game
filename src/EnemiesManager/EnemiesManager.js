@@ -14,7 +14,13 @@ export default class EnemiesManager {
   }
 
   tryAttack(player) {
+    const dieEnemies = []
     for (const enemy of this.enemies) {
+      if(enemy.hp < 1){
+        dieEnemies.push({...enemy})
+        this.enemyDie(enemy)
+        continue
+      }
       const cellsAround = this.grid.getCellAround(enemy.cellPosition);
       const isPlayer = cellsAround.find(
         (cell) => cell.id === player.cellPosition.id,
@@ -22,9 +28,9 @@ export default class EnemiesManager {
 
       if (isPlayer) {
         enemy.tryAttack(player);
-        console.log('Игрок атакован', enemy.name);
       }
     }
+    return dieEnemies
   }
 
   enemyDie(enemy) {

@@ -35,7 +35,6 @@ export default class LevelManager {
       atk: 2,
       def: 2,
     });
-    console.log('player', this.player);
     this.loot = new LootManager(options.loot, this.grid);
     this.enemies = new EnemiesManager(options.enemies, this.grid);
     this.cellInteractionController = new CellInteractionController({
@@ -49,7 +48,8 @@ export default class LevelManager {
         if (cell.type === 'door' && cell.doorRole === 'out') {
           this.nextLevel?.();
           return;
-        } else if (!cell.enemy) {
+        }
+        if (!cell.enemy) {
           this.grid.movePlayerTo(cell);
           this.player.syncMeshToCell(cell);
           this.staticInstancedRenderer.updateVisible(
@@ -61,11 +61,9 @@ export default class LevelManager {
         } else if (cell.enemy) {
           const enemy = this.enemies.getEnemy(cell);
           this.player.tryAttack(enemy);
-          if (enemy.hp < 1) {
-            this.enemies.enemyDie(enemy);
-          }
-          this.enemies.tryAttack(this.player);
-          console.log('player hp', this.player.hp, 'enemy hp', enemy.hp);
+          const dieEnemies = this.enemies.tryAttack(this.player);
+          
+          this.loot.renderLootAfterDieEnemy(dieEnemies)
         }
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
