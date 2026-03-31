@@ -17,10 +17,10 @@ class TextureManager {
       guard: '/enemies/guard.png',
       ambusher: '/enemies/ambusher.png',
       berserker: '/enemies/berserk.png',
-      lootChest: '/loot/chest.png',
-      lootGold: '/loot/gold.png',
-      lootHpPotion: '/loot/hp_potion.png',
-      lootSword: '/loot/sword.png',
+      armor: '/loot/chest.png',
+      gold: '/loot/gold.png',
+      heal: '/loot/hp_potion.png',
+      weapon: '/loot/sword.png',
     };
     
   }

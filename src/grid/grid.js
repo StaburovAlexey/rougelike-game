@@ -299,7 +299,7 @@ export default class Grid {
 
   #placeLootGroundCell(cell) {
     if (!this.#isFreeLootCell(cell)) return false;
-
+    cell.loot = true
     this.loot.push(cell);
     return true;
   }

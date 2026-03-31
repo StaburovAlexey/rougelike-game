@@ -24,7 +24,7 @@ export default class LevelManager {
       halfH: this.halfH,
       doorsCount: this.doorsCount,
       enemiesCount: options.enemies.length,
-      lootGroundCount: options.loot.groundLoot.length
+      lootGroundCount: options.loot.groundLoot.length,
     });
     this.nextLevel = options.nextLevel;
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
@@ -57,6 +57,7 @@ export default class LevelManager {
           );
           this.enemies.tryMove();
           this.enemies.syncVisible();
+          this.loot.syncVisible();
         } else if (cell.enemy) {
           const enemy = this.enemies.getEnemy(cell);
           this.player.tryAttack(enemy);
@@ -83,11 +84,13 @@ export default class LevelManager {
     this.light.dispose();
     this.player?.dispose();
     this.enemies.dispose();
+    this.loot?.dispose();
     this.cellInteractionController = null;
     this.staticInstancedRenderer = null;
     this.light = null;
     this.player = null;
     this.grid = null;
     this.enemies = null;
+    this.loot = null;
   }
 }
