@@ -2,8 +2,8 @@ import { SpriteMaterial, Sprite, SRGBColorSpace } from 'three';
 import { textureManager } from '../core/textureManager';
 export default class MashLoot {
   constructor(typeTexture) {
-    this.size = 1.2;
-    this.height = 1.5;
+    this.size = 1;
+    this.height = 1;
     const texture = textureManager.get(typeTexture);
     texture.colorSpace = SRGBColorSpace;
     this.material = new SpriteMaterial({

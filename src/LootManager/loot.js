@@ -8,7 +8,7 @@ export default class Loot {
     this.mesh = new MashLoot(this.type).mesh;
     this.mesh.position.set(
       this.cellPosition.worldX,
-      0.9,
+      0.6,
       this.cellPosition.worldZ,
     );
     sceneManager.add(this.mesh);

@@ -57,8 +57,10 @@ export default class StaticInstancedRenderer {
     // const idsMove = cells.map((cell) => cell.id);
     const idsMove = cells.filter((cell) => !cell.enemy).map((cell) => cell.id);
     const idsAttak = cells.filter((cell) => cell.enemy).map((cell) => cell.id);
+    const idsLoot = cells.filter((cell) => cell.loot).map((cell) => cell.id);
     this.floor?.hightLightAttak(idsAttak);
     this.floor?.hightLightMove(idsMove);
+    this.floor?.hightLightLoot(idsLoot);
   }
   setHoveredCell(id = null) {
     this.floor?.setHoveredCell(id);

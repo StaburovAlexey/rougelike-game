@@ -7,12 +7,13 @@ export default class Floor {
     this.grid = options.grid;
     this.colorMoveCell = new THREE.Color('#14ff4e');
     this.colorAttackCell = new THREE.Color('#f51212');
-    this.colorLootCell = new THREE.Color('#14ff4e');
+    this.colorLootCell = new THREE.Color('#ffd24a');
     this.colorHoverCell = new THREE.Color('#7bdff2');
     this.basicColorCell = new THREE.Color('#ffffff');
     this.y = 0.2;
     this.moveHighlightCells = new Set();
     this.attackHighlightCells = new Set();
+    this.lootHighlightCells = new Set();
     this.hoveredCellId = null;
     const floorDiff = textureManager.get('floorDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
@@ -114,6 +115,22 @@ export default class Floor {
     this.#markInstanceColorDirty();
   }
 
+  hightLightLoot(ids = []) {
+    const previousIds = [...this.lootHighlightCells];
+    this.lootHighlightCells.clear();
+
+    for (const id of previousIds) {
+      this.#applyCellColor(id);
+    }
+
+    for (const id of ids) {
+      this.lootHighlightCells.add(id);
+      this.#applyCellColor(id);
+    }
+
+    this.#markInstanceColorDirty();
+  }
+
   #applyCellColor(id) {
     let color = this.basicColorCell;
 
@@ -123,6 +140,10 @@ export default class Floor {
 
     if (this.attackHighlightCells.has(id)) {
       color = this.colorAttackCell;
+    }
+
+    if (this.lootHighlightCells.has(id)) {
+      color = this.colorLootCell;
     }
 
     if (this.hoveredCellId === id) {
