@@ -6,7 +6,7 @@ export default class LootManager {
     this.grid = grid;
     this.groundLoot = this.#renderLoot(loot.groundLoot);
     this.enemyDrops = loot.enemyDrops;
-
+    console.log('рендер лут', this.groundLoot);
     this.syncVisible();
   }
 
@@ -30,7 +30,19 @@ export default class LootManager {
       });
     });
   }
-
+  delLoot(loot) {
+    this.groundLoot = this.groundLoot.filter((lootIn) => loot.id === lootIn.id);
+    loot.dispose();
+  }
+  findLoot(cell) {
+    console.log('groud loot',this.groundLoot)
+    const loot = this.groundLoot.find(
+      (loot) => cell.id === loot.cellPosition.id,
+    );
+    this.delLoot(loot);
+    cell.loot = false;
+    return loot;
+  }
   #findDropCell(enemyCell) {
     if (!enemyCell) return null;
 
@@ -61,8 +73,6 @@ export default class LootManager {
   }
 
   renderLootAfterDieEnemy(enemies) {
-
-
     enemies.forEach((enemy) => {
       const isDrop = this.enemyDrops.find((loot) => loot.enemyId === enemy.id);
       const dropCell = this.#findDropCell(enemy.cellPosition);

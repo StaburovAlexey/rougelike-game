@@ -45,12 +45,25 @@ export default class LevelManager {
       renderer: this.staticInstancedRenderer,
       onHoverChange: (cell) => {},
       onCellClick: (cell) => {
+        console.log(cell);
         if (!this.grid.isEventCell(cell)) return;
         if (cell.type === 'door' && cell.doorRole === 'out') {
           this.nextLevel?.();
           return;
         }
-        if (!cell.enemy) {
+        if (cell.enemy) {
+          const enemy = this.enemies.getEnemy(cell);
+          this.player.tryAttack(enemy);
+          const dieEnemies = this.enemies.tryAttack(this.player);
+          this.loot.renderLootAfterDieEnemy(dieEnemies);
+        } else {
+          if (cell.loot) {
+            console.log('выбрана клетка с лутом');
+            const loot = this.loot.findLoot(cell);
+            console.log('лут подобран', loot);
+            this.player.getLoot(loot);
+            console.log('итвентарь', this.player.inventory);
+          }
           this.grid.movePlayerTo(cell);
           this.player.syncMeshToCell(cell);
           this.staticInstancedRenderer.updateVisible(
@@ -59,14 +72,19 @@ export default class LevelManager {
           this.enemies.tryMove();
           this.enemies.syncVisible();
           this.loot.syncVisible();
-        } else if (cell.enemy) {
-          const enemy = this.enemies.getEnemy(cell);
-          this.player.tryAttack(enemy);
-          const dieEnemies = this.enemies.tryAttack(this.player);
-          this.loot.renderLootAfterDieEnemy(dieEnemies);
-        }else if (cell.loot){
-          this.player.getLoot()
         }
+        // if (!cell.enemy) {
+        // } else if (cell.enemy) {
+        //   const enemy = this.enemies.getEnemy(cell);
+        //   this.player.tryAttack(enemy);
+        //   const dieEnemies = this.enemies.tryAttack(this.player);
+        //   this.loot.renderLootAfterDieEnemy(dieEnemies);
+        // } else if (cell.loot) {
+        //   console.log('выбрана клетка с лутом');
+        //   const loot = this.loot.findLoot(cell);
+        //   console.log('лут подобран', loot);
+        //   // this.player.getLoot()
+        // }
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
         );

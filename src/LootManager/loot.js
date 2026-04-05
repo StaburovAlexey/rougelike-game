@@ -4,6 +4,7 @@ export default class Loot {
   constructor(position, loot) {
     this.loot = loot;
     this.type = loot.type;
+    this.value = loot.value
     this.cellPosition = position;
     this.mesh = new MashLoot(this.type).mesh;
     this.mesh.position.set(
@@ -14,6 +15,7 @@ export default class Loot {
     sceneManager.add(this.mesh);
   }
   syncVisible() {
+    if (!this.mesh) return
     this.mesh.visible = this.cellPosition.visible;
   }
   dispose() {
