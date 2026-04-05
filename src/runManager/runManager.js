@@ -1,6 +1,7 @@
 import LevelManager from '../levelManager/levelManager';
 import GenerateEnemy from './generateEnemy';
 import GenerateLoot from './generateLoot';
+import Player from '../entity/Player';
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
@@ -12,6 +13,12 @@ export default class RunManager {
     this.runMap = [];
     this.activeIndex = 0;
     this.aciveLevel = null;
+    this.player = new Player(null,{
+      name: 'player',
+      hp: 2,
+      atk: 2,
+      def: 2,
+    });
     this.#init();
   }
   #init() {
@@ -43,7 +50,7 @@ export default class RunManager {
     if (this.aciveLevel) {
       this.aciveLevel.clearLevel();
     }
-    console.log('data level', options)
+    console.log('data level', options);
     this.aciveLevel = new LevelManager({
       ...options,
       camera: this.camera,
@@ -51,7 +58,7 @@ export default class RunManager {
       nextLevel: () => {
         this.nextLevel();
       },
-    });
+    },this.player);
   }
   nextLevel() {
     if (this.activeIndex === this.length - 1) return;
