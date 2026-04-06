@@ -35,10 +35,12 @@ export default class InventoryManager {
       }
       case 'weapon': {
         this.weapon = [loot.loot];
+        this.weaponAtk = this.weapon[0]?.value;
         return true;
       }
       case 'armor': {
         this.armor = [loot.loot];
+        this.def =  this.armor[0]?.value;
         return true;
       }
     }

@@ -31,18 +31,22 @@ export default class Entity {
   }
   tryAttack(entity) {
     const entityDef = entity.inventory.def;
-    console.log(entityDef)
     const atk = this.atk + this.inventory.weaponAtk;
-    console.log('atk', this.atk, 'weaponAtk',this.inventory.weaponAtk)
     if (entityDef > atk) {
       entity.hp = entity.hp - 1;
-    }else{
-      entity.hp = entity.hp - atk
+    } else {
+      entity.hp = entity.hp - atk;
     }
+
     entity.inventory.useArmor();
     this.inventory.useWeapon();
-    console.log(this.name, 'атаковал', entity.name);
-    console.log(`HP ${this.name}: ${this.hp}`);
-    console.log(`HP ${entity.name}: ${entity.hp}`);
+    if (this.name == 'player') {
+      console.log(this.inventory.weapon[0])
+      console.log('weaponAtk',this.inventory.weaponAtk )
+    }
+    if (entity.name == 'player') {
+      console.log('DEF равен', entityDef);
+      console.log('Игрок получил урон:', atk);
+    }
   }
 }
