@@ -224,6 +224,35 @@ export default class EnemiesManager {
     return true;
   }
 
+  #getAdjacentEnemies(enemy) {
+    if (!enemy?.cellPosition) return [];
+
+    return this.#getAdjacentCells(enemy.cellPosition)
+      .map((cell) => this.getEnemy(cell))
+      .filter((targetEnemy) => targetEnemy && targetEnemy.id !== enemy.id);
+  }
+
+  #tryFriendlyFire(enemy) {
+    if (!enemy?.frendlyFire) return false;
+
+    const adjacentEnemies = this.#shuffle(this.#getAdjacentEnemies(enemy));
+    if (!adjacentEnemies.length) return false;
+
+    const allyHitChance =
+      typeof enemy.allyHitChance === 'number' ? enemy.allyHitChance : 0;
+    if (allyHitChance <= 0 || Math.random() > allyHitChance) return false;
+
+    const targetEnemy = adjacentEnemies[0];
+    enemy.tryAttack(targetEnemy);
+    console.log(`Enemy ${enemy.name} hit ally ${targetEnemy.name}`);
+
+    if (targetEnemy.hp < 1) {
+      this.enemyDie(targetEnemy);
+    }
+
+    return true;
+  }
+
   syncVisible() {
     this.enemies.forEach((enemy) => {
       enemy.syncVisible();
@@ -237,6 +266,9 @@ export default class EnemiesManager {
     this.enemies.forEach((enemy) => {
       const destroyedLoot = this.#tryDestroyAdjacentLoot(enemy);
       if (destroyedLoot) return;
+
+      const didFriendlyFire = this.#tryFriendlyFire(enemy);
+      if (didFriendlyFire) return;
 
       const inAggroRange = this.isAggroRange(
         playerCell,

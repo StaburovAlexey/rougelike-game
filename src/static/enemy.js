@@ -10,7 +10,7 @@ export const ENEMY_TYPE_RULES = {
     hitAndRun: false,
     randomMove: true,
     lootDestroy: true,
-    frendlyFire: true,
+    friendlyFire: true,
     allyHitChance: 0.35,
     lootDestroyChance: 0.6,
   },

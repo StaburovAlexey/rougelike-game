@@ -10,7 +10,7 @@ export default class Enemy extends Entity {
     this.speed = typeof type.speed === 'number' ? type.speed : 1;
     this.randomMove = type.randomMove;
     this.lootDestroy = type.lootDestroy;
-    this.frendlyFire = type.frendlyFire
+    this.friendlyFire = type.friendlyFire;
     this.allyHitChance = type.allyHitChance;
     this.lootDestroyChance = type.lootDestroyChance;
     this.syncVisible();
