@@ -7,12 +7,7 @@ export const ENEMY_TYPE_RULES = {
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
-    hitAndRun: false,
-    randomMove: true,
-    lootDestroy: true,
-    friendlyFire: true,
-    allyHitChance: 0.35,
-    lootDestroyChance: 0.6,
+    hitAndRun: true,
   },
   bruiser: {
     hp: 6,

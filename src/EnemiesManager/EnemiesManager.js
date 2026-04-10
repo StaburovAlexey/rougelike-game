@@ -29,6 +29,7 @@ export default class EnemiesManager {
 
       if (isPlayer) {
         enemy.tryAttack(player);
+        this.#tryHitAndRun(enemy, player.cellPosition);
       }
     }
     return dieEnemies;
@@ -162,6 +163,50 @@ export default class EnemiesManager {
     return true;
   }
 
+  #getHitAndRunCell(enemy, targetCell) {
+    if (!enemy?.cellPosition || !targetCell) return null;
+
+    const startCell = enemy.cellPosition;
+    const maxRetreatSteps = 2;
+    const visited = new Set([startCell.id]);
+    const queue = [{ cell: startCell, steps: 0 }];
+    const candidates = [];
+
+    while (queue.length) {
+      const { cell, steps } = queue.shift();
+      if (steps >= maxRetreatSteps) continue;
+
+      const nextCells = this.#shuffle(this.#getAdjacentCells(cell));
+      for (const nextCell of nextCells) {
+        if (visited.has(nextCell.id)) continue;
+        if (nextCell.blocked || nextCell.enemy || nextCell.player) continue;
+
+        visited.add(nextCell.id);
+        const nextSteps = steps + 1;
+
+        if (this.#getManhattanDistance(nextCell, targetCell) === 3) {
+          candidates.push(nextCell);
+        }
+
+        queue.push({ cell: nextCell, steps: nextSteps });
+      }
+    }
+
+    return candidates[0] ?? null;
+  }
+
+  #tryHitAndRun(enemy, targetCell) {
+    if (!enemy?.hitAndRun) return false;
+
+    const retreatCell = this.#getHitAndRunCell(enemy, targetCell);
+    if (!retreatCell) return false;
+
+    this.#moveEnemyToCell(enemy, retreatCell);
+    enemy.syncVisible();
+    console.log(`Enemy ${enemy.name} hit and ran`);
+    return true;
+  }
+
   #isMoveReady(enemy) {
     if (enemy.move !== 0) {
       enemy.move -= 1;
@@ -233,7 +278,7 @@ export default class EnemiesManager {
   }
 
   #tryFriendlyFire(enemy) {
-    if (!enemy?.frendlyFire) return false;
+    if (!enemy?.friendlyFire) return false;
 
     const adjacentEnemies = this.#shuffle(this.#getAdjacentEnemies(enemy));
     if (!adjacentEnemies.length) return false;
@@ -244,6 +289,7 @@ export default class EnemiesManager {
 
     const targetEnemy = adjacentEnemies[0];
     enemy.tryAttack(targetEnemy);
+    this.#tryHitAndRun(enemy, targetEnemy.cellPosition);
     console.log(`Enemy ${enemy.name} hit ally ${targetEnemy.name}`);
 
     if (targetEnemy.hp < 1) {
