@@ -1,8 +1,9 @@
 import Enemy from './Enemy';
 
 export default class EnemiesManager {
-  constructor(enemies, grid) {
+  constructor(enemies, grid, lootManager = null) {
     this.grid = grid;
+    this.lootManager = lootManager;
     this.enemies = this.#renderEnemies(enemies);
   }
 
@@ -14,12 +15,12 @@ export default class EnemiesManager {
   }
 
   tryAttack(player) {
-    const dieEnemies = []
+    const dieEnemies = [];
     for (const enemy of this.enemies) {
-      if(enemy.hp < 1){
-        dieEnemies.push({...enemy})
-        this.enemyDie(enemy)
-        continue
+      if (enemy.hp < 1) {
+        dieEnemies.push({ ...enemy });
+        this.enemyDie(enemy);
+        continue;
       }
       const cellsAround = this.grid.getCellAround(enemy.cellPosition);
       const isPlayer = cellsAround.find(
@@ -30,7 +31,7 @@ export default class EnemiesManager {
         enemy.tryAttack(player);
       }
     }
-    return dieEnemies
+    return dieEnemies;
   }
 
   enemyDie(enemy) {
@@ -121,6 +122,108 @@ export default class EnemiesManager {
     return null;
   }
 
+  #getRandomFreeAdjacentCell(cell, blockedCell = null) {
+    if (!cell) return null;
+
+    const candidates = this.#shuffle(this.#getAdjacentCells(cell)).filter(
+      (nextCell) =>
+        !nextCell.blocked &&
+        !nextCell.enemy &&
+        (!blockedCell || nextCell.id !== blockedCell.id),
+    );
+
+    return candidates[0] ?? null;
+  }
+
+  #isInAttackRange(enemy, playerCell) {
+    return this.#isAdjacent(enemy.cellPosition, playerCell);
+  }
+
+  #moveEnemyToCell(enemy, nextCell) {
+    if (!enemy || !nextCell) return;
+
+    if (enemy.cellPosition) {
+      enemy.cellPosition.enemy = false;
+    }
+
+    nextCell.enemy = true;
+    enemy.syncMeshToCell(nextCell);
+  }
+
+  #tryRandomMove(enemy, playerCell) {
+    const randomMoveCell = this.#getRandomFreeAdjacentCell(
+      enemy.cellPosition,
+      playerCell,
+    );
+    if (!randomMoveCell) return false;
+
+    this.#moveEnemyToCell(enemy, randomMoveCell);
+    enemy.syncVisible();
+    return true;
+  }
+
+  #isMoveReady(enemy) {
+    if (enemy.move !== 0) {
+      enemy.move -= 1;
+      return false;
+    }
+
+    enemy.move = enemy.windUpTurns;
+    return true;
+  }
+
+  #tryMoveTowardPlayer(enemy, playerCell) {
+    const speed = enemy.speed;
+    if (speed <= 0) return false;
+
+    let currentCell = enemy.cellPosition;
+    let moved = false;
+
+    for (let step = 0; step < speed; step += 1) {
+      const targetCells = this.#getRingCellsAroundPlayer(playerCell);
+      const moveCell = this.#getStepTowardTargets(currentCell, targetCells);
+
+      if (!moveCell || moveCell.id === currentCell?.id) break;
+
+      this.#moveEnemyToCell(enemy, moveCell);
+      currentCell = moveCell;
+      moved = true;
+
+      if (this.#isAdjacent(currentCell, playerCell)) break;
+    }
+
+    if (moved) {
+      enemy.syncVisible();
+      console.log(`Enemy ${enemy.name} is moving toward the player`);
+    }
+
+    return moved;
+  }
+
+  #tryDestroyAdjacentLoot(enemy) {
+    if (!enemy?.lootDestroy || !enemy?.cellPosition || !this.lootManager)
+      return false;
+
+    const lootDestroyChance =
+      typeof enemy.lootDestroyChance === 'number' ? enemy.lootDestroyChance : 0;
+
+    if (lootDestroyChance <= 0 || Math.random() > lootDestroyChance)
+      return false;
+
+    const adjacentLootCells = this.#shuffle(
+      this.#getAdjacentCells(enemy.cellPosition).filter((cell) => cell.loot),
+    );
+
+    if (!adjacentLootCells.length) return false;
+
+    const destroyedCell = adjacentLootCells[0];
+    const destroyedLoot = this.lootManager.removeLootAtCell(destroyedCell);
+    if (!destroyedLoot) return false;
+
+    console.log(`Enemy ${enemy.name} destroyed nearby loot`);
+    return true;
+  }
+
   syncVisible() {
     this.enemies.forEach((enemy) => {
       enemy.syncVisible();
@@ -132,42 +235,29 @@ export default class EnemiesManager {
     if (!playerCell) return;
 
     this.enemies.forEach((enemy) => {
-      if (!this.isAggroRange(playerCell, enemy.cellPosition, enemy.aggroRange))
-        return;
+      const destroyedLoot = this.#tryDestroyAdjacentLoot(enemy);
+      if (destroyedLoot) return;
 
-      if (this.#isAdjacent(enemy.cellPosition, playerCell)) {
+      const inAggroRange = this.isAggroRange(
+        playerCell,
+        enemy.cellPosition,
+        enemy.aggroRange,
+      );
+
+      if (enemy.randomMove && !inAggroRange) {
+        this.#tryRandomMove(enemy, playerCell);
+        return;
+      }
+
+      if (!inAggroRange) return;
+
+      if (this.#isInAttackRange(enemy, playerCell)) {
         console.log(`Enemy ${enemy.name} is in attack range`);
         return;
       }
 
-      const speed = enemy.speed;
-      if (speed <= 0) return;
-
-      let currentCell = enemy.cellPosition;
-      let moved = false;
-
-      for (let step = 0; step < speed; step += 1) {
-        const targetCells = this.#getRingCellsAroundPlayer(playerCell);
-        const moveCell = this.#getStepTowardTargets(currentCell, targetCells);
-
-        if (!moveCell || moveCell.id === currentCell?.id) break;
-
-        if (currentCell) {
-          currentCell.enemy = false;
-        }
-
-        moveCell.enemy = true;
-        enemy.syncMeshToCell(moveCell);
-        currentCell = moveCell;
-        moved = true;
-
-        if (this.#isAdjacent(currentCell, playerCell)) break;
-      }
-
-      if (moved) {
-        enemy.syncVisible();
-        console.log(`Enemy ${enemy.name} is moving toward the player`);
-      }
+      if (!this.#isMoveReady(enemy)) return;
+      this.#tryMoveTowardPlayer(enemy, playerCell);
     });
   }
 

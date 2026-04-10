@@ -3,13 +3,20 @@ import Entity from '../entity/Entity';
 export default class Enemy extends Entity {
   constructor(position, type) {
     super(position, type);
-    this.id = type.id
+    this.id = type.id;
     this.aggroRange = type.aggroRange;
+    this.windUpTurns = type.windUpTurns;
+    this.move = type.windUpTurns;
     this.speed = typeof type.speed === 'number' ? type.speed : 1;
+    this.randomMove = type.randomMove;
+    this.lootDestroy = type.lootDestroy;
+    this.frendlyFire = type.frendlyFire
+    this.allyHitChance = type.allyHitChance;
+    this.lootDestroyChance = type.lootDestroyChance;
     this.syncVisible();
-    console.log('id врага', this.id)
   }
   syncVisible() {
     this.mesh.visible = this.cellPosition.visible;
   }
+  tryMove() {}
 }

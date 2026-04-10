@@ -7,7 +7,6 @@ export default class Entity {
     this.atk = type.atk;
     this.name = type.type || type.name;
     this.cellPosition = position;
-    console.log(type);
     this.mesh = new MashEntity(this.name).mesh;
     this.syncMeshToCell(this.cellPosition);
     this.inventory = new InventoryManager();

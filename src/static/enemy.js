@@ -2,17 +2,22 @@ export const ENEMY_TYPE_RULES = {
   chaser: {
     hp: 2,
     atk: 2,
-    def:0,
+    def: 0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
     hitAndRun: false,
+    randomMove: true,
+    lootDestroy: true,
+    frendlyFire: true,
+    allyHitChance: 0.35,
+    lootDestroyChance: 0.6,
   },
   bruiser: {
     hp: 6,
     atk: 4,
-    def:0,
+    def: 0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -22,7 +27,7 @@ export const ENEMY_TYPE_RULES = {
   skirmisher: {
     hp: 2,
     atk: 2,
-    def:0,
+    def: 0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -32,7 +37,7 @@ export const ENEMY_TYPE_RULES = {
   guard: {
     hp: 5,
     atk: 3,
-    def:0,
+    def: 0,
     aggroRange: 4,
     lootDropChance: 0.05,
     aggroRange: 4,
@@ -43,7 +48,7 @@ export const ENEMY_TYPE_RULES = {
   ambusher: {
     hp: 6,
     atk: 3,
-    def:0,
+    def: 0,
     aggroRange: 4,
     lootDropChance: 0.05,
     speed: 1,
@@ -53,14 +58,15 @@ export const ENEMY_TYPE_RULES = {
   berserker: {
     hp: 6,
     atk: 4,
-    def:0,
+    def: 0,
     aggroRange: 2,
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
     hitAndRun: false,
     randomMove: true,
-    windUpTurns: 1,
+    lootDestroy: true,
+    frendlyFire: true,
     allyHitChance: 0.35,
     lootDestroyChance: 0.6,
   },
@@ -145,8 +151,14 @@ function getProgressRule(type) {
 export function getEnemyProgressStats(type, progress) {
   const rule = getProgressRule(type);
   const baseStats = ENEMY_TYPE_RULES[type] ?? ENEMY_TYPE_RULES.chaser;
-  const hpBonus = Math.min(rule.hpBonusCap, Math.floor(progress * rule.hpGrowth));
-  const atkBonus = Math.min(rule.atkBonusCap, Math.floor(progress * rule.atkGrowth));
+  const hpBonus = Math.min(
+    rule.hpBonusCap,
+    Math.floor(progress * rule.hpGrowth),
+  );
+  const atkBonus = Math.min(
+    rule.atkBonusCap,
+    Math.floor(progress * rule.atkGrowth),
+  );
   return {
     hp: baseStats.hp + hpBonus,
     atk: baseStats.atk + atkBonus,
@@ -192,9 +204,7 @@ export const ENEMY_LEVEL_SCALING = {
 
     const spread = Math.max(1, Math.round(expectedCount * 0.2));
     const randomCount =
-      expectedCount +
-      Math.floor(Math.random() * (spread * 2 + 1)) -
-      spread;
+      expectedCount + Math.floor(Math.random() * (spread * 2 + 1)) - spread;
 
     const minAllowedCount = 1;
     const maxAllowedCount = Math.max(2, Math.floor(cells * 0.1));

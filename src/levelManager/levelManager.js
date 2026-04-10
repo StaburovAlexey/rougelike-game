@@ -37,7 +37,7 @@ export default class LevelManager {
     //   def: 2,
     // });
     this.loot = new LootManager(options.loot, this.grid);
-    this.enemies = new EnemiesManager(options.enemies, this.grid);
+    this.enemies = new EnemiesManager(options.enemies, this.grid, this.loot);
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,

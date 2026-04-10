@@ -30,18 +30,29 @@ export default class LootManager {
       });
     });
   }
+
   delLoot(loot) {
-    this.groundLoot = this.groundLoot.filter((lootIn) => loot.id === lootIn.id);
-    loot.dispose();
-  }
-  findLoot(cell) {
-    console.log('groud loot',this.groundLoot)
-    const loot = this.groundLoot.find(
-      (loot) => cell.id === loot.cellPosition.id,
+    if (!loot) return null;
+    this.groundLoot = this.groundLoot.filter(
+      (lootIn) => loot.id !== lootIn.id,
     );
-    this.delLoot(loot);
-    cell.loot = false;
+    loot.dispose();
     return loot;
+  }
+
+  removeLootAtCell(cell) {
+    if (!cell) return null;
+
+    const loot = this.groundLoot.find((item) => cell.id === item.cellPosition.id);
+    if (!loot) return null;
+
+    cell.loot = false;
+    return this.delLoot(loot);
+  }
+
+  findLoot(cell) {
+    console.log('groud loot', this.groundLoot);
+    return this.removeLootAtCell(cell);
   }
   #findDropCell(enemyCell) {
     if (!enemyCell) return null;
