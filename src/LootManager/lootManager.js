@@ -33,9 +33,7 @@ export default class LootManager {
 
   delLoot(loot) {
     if (!loot) return null;
-    this.groundLoot = this.groundLoot.filter(
-      (lootIn) => loot.id !== lootIn.id,
-    );
+    this.groundLoot = this.groundLoot.filter((lootIn) => lootIn !== loot);
     loot.dispose();
     return loot;
   }
@@ -44,7 +42,11 @@ export default class LootManager {
     if (!cell) return null;
 
     const loot = this.groundLoot.find((item) => cell.id === item.cellPosition.id);
-    if (!loot) return null;
+    if (!loot) {
+      // Heal stale cell state if mesh/list got out of sync.
+      cell.loot = false;
+      return null;
+    }
 
     cell.loot = false;
     return this.delLoot(loot);

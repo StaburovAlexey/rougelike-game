@@ -60,7 +60,7 @@ export default class LevelManager {
             console.log('выбрана клетка с лутом');
             const loot = this.loot.findLoot(cell);
             console.log('лут подобран', loot);
-            this.player.getLoot(loot);
+            if (loot) this.player.getLoot(loot);
             console.log('итвентарь', this.player.inventory);
           }
           this.grid.movePlayerTo(cell);
