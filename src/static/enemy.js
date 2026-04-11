@@ -1,4 +1,13 @@
 export const ENEMY_TYPE_RULES = {
+  glot: {
+    hp: 1,
+    atk: 1,
+    def: 0,
+    aggroRange: 5,
+    lootDropChance: 0.05,
+    speed: 1,
+    windUpTurns: 0,
+  },
   chaser: {
     hp: 2,
     atk: 2,
@@ -68,6 +77,11 @@ export const ENEMY_TYPE_RULES = {
 };
 
 export const ENEMY_SPAWN_RULES = {
+  glot: {
+    baseWeight: 70,
+    unlockAt: 0,
+    growth: 0,
+  },
   chaser: {
     baseWeight: 50,
     unlockAt: 0,
@@ -101,6 +115,12 @@ export const ENEMY_SPAWN_RULES = {
 };
 
 export const ENEMY_PROGRESS_RULES = {
+  glot: {
+    hpGrowth: 0.1,
+    atkGrowth: 0.06,
+    hpBonusCap: 2,
+    atkBonusCap: 1,
+  },
   chaser: {
     hpGrowth: 0.15,
     atkGrowth: 0.12,

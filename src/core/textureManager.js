@@ -15,6 +15,7 @@ class TextureManager {
       skirmisher: '/enemies/skirmisher.png',
       bruiser: '/enemies/bruiser.png',
       guard: '/enemies/guard.png',
+      glot: '/enemies/glot.png',
       ambusher: '/enemies/ambusher.png',
       berserker: '/enemies/berserk.png',
       armor: '/loot/chest.png',
