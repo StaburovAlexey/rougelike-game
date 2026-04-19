@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import { modelManager } from '../../core/modelManager';
 import COLORS from '../../static/constants';
 
+const colorByMaterialName = {
+  Berry: COLORS.BERRY_COLOR,
+  Border: COLORS.BORDER_COLOR,
+  Bush: COLORS.BUSH_COLOR,
+  WallWood: COLORS.WAll_WOOD_COLOR,
+};
+
 export default class Wall {
   constructor(options) {
     this.grid = options.grid;
@@ -16,38 +23,17 @@ export default class Wall {
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
 
-    const wallModel = modelManager.get('wall');
-    wallModel.scene.updateMatrixWorld(true);
-    const wallGroups = wallModel.scene.children.filter((child) => child.isGroup);
-    if (!wallGroups.length) {
-      throw new Error('Wall model has no grouped wall variants');
-    }
+    const { variants } = this.#loadVariants();
+    this.variants = variants;
+    this.cornerVariantIndices = this.variants
+      .map((variant, index) => (variant.isCorner ? index : -1))
+      .filter((index) => index !== -1);
+    this.straightVariantIndices = this.variants
+      .map((variant, index) => (!variant.isCorner ? index : -1))
+      .filter((index) => index !== -1);
 
-    this.variants = wallGroups.map((wallGroup) => {
-      const bbox = new THREE.Box3().setFromObject(wallGroup);
-      const size = new THREE.Vector3();
-      bbox.getSize(size);
-
-      const parts = [];
-      wallGroup.traverse((child) => {
-        if (!child.isMesh) return;
-        parts.push({
-          geometry: child.geometry,
-          material: this.#createMaterial(child.material),
-        });
-      });
-
-      return {
-        parts,
-        modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
-        yOffset: -bbox.min.y,
-      };
-    });
-
-    this.wallVariantByCell = this.wallCells.map(
-      () => Math.floor(Math.random() * this.variants.length),
-    );
-    this.wallFacingByCell = this.wallCells.map(() => (Math.random() < 0.5 ? 0 : Math.PI));
+    this.wallVariantByCell = this.wallCells.map((cell) => this.#pickVariantIndex(cell));
+    this.wallFacingByCell = this.wallCells.map((cell) => this.#getCellRotation(cell));
 
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.wallVariantByCell.length; i++) {
@@ -72,14 +58,72 @@ export default class Wall {
 
   #createMaterial(sourceMaterial) {
     const materialName = sourceMaterial?.name || '';
-    const color =
-      materialName === 'Border'
-        ? COLORS.BORDER_COLOR
-        : COLORS.ROCK_WALL_COLOR;
+    const color = colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR;
 
     const material = new THREE.MeshLambertMaterial({ color });
     material.userData.disposeOnRemove = true;
     return material;
+  }
+
+  #createVariant(object3D, { isCorner = false } = {}) {
+    object3D.updateWorldMatrix(true, true);
+
+    const bbox = new THREE.Box3().setFromObject(object3D);
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+
+    const parts = [];
+    object3D.traverse((child) => {
+      if (!child.isMesh) return;
+      parts.push({
+        geometry: child.geometry,
+        material: this.#createMaterial(child.material),
+        localMatrix: child.matrixWorld.clone(),
+      });
+    });
+
+    return {
+      isCorner,
+      parts,
+      modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
+      yOffset: -bbox.min.y,
+    };
+  }
+
+  #loadVariants() {
+    const levelModel = modelManager.get('level');
+    if (!levelModel) {
+      throw new Error('Level model is not loaded');
+    }
+
+    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    if (!levelVariants.variants.length) {
+      throw new Error('Level model has no wall variants');
+    }
+
+    return levelVariants;
+  }
+
+  #loadVariantsFromLevel(levelModel) {
+    levelModel.scene.updateMatrixWorld(true);
+
+    const wallNodes = levelModel.scene.children.filter((child) =>
+      typeof child.name === 'string' &&
+      child.name.includes('wall') &&
+      !child.name.includes('torch'),
+    );
+
+    if (!wallNodes.length) {
+      return { variants: [] };
+    }
+
+    return {
+      variants: wallNodes.map((node) =>
+        this.#createVariant(node, {
+          isCorner: node.name.toLowerCase().includes('corner'),
+        }),
+      ),
+    };
   }
 
   #isCorner(row, col) {
@@ -93,10 +137,43 @@ export default class Wall {
     );
   }
 
+  #pickVariantIndex(cell) {
+    const pool = this.#isCorner(cell.row, cell.col)
+      ? this.cornerVariantIndices
+      : this.straightVariantIndices;
+
+    if (pool.length) {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    return Math.floor(Math.random() * this.variants.length);
+  }
+
+  #getCornerRotation(cell) {
+    const lastRow = this.grid.rows - 1;
+    const lastCol = this.grid.cols - 1;
+
+    if (cell.row === 0 && cell.col === 0) return 0;
+    if (cell.row === 0 && cell.col === lastCol) return Math.PI / 2;
+    if (cell.row === lastRow && cell.col === lastCol) return Math.PI;
+    if (cell.row === lastRow && cell.col === 0) return -Math.PI / 2;
+
+    return 0;
+  }
+
+  #getCellRotation(cell) {
+    if (this.#isCorner(cell.row, cell.col) && this.cornerVariantIndices.length) {
+      return this.#getCornerRotation(cell);
+    }
+
+    const isSideWall = cell.side === 'left' || cell.side === 'right';
+    const facingOffset = Math.random() < 0.5 ? 0 : Math.PI;
+    return (isSideWall ? Math.PI / 2 : 0) + facingOffset;
+  }
+
   #init() {
     const dummy = new THREE.Object3D();
-    const cornerSize = COLORS.CELL_SIZE;
-    const scale = new THREE.Vector3();
+    const finalMatrix = new THREE.Matrix4();
     const writeOffsets = new Array(this.variants.length).fill(0);
 
     for (let i = 0; i < this.wallCells.length; i++) {
@@ -106,31 +183,16 @@ export default class Wall {
       const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      const isCorner = this.#isCorner(cell.row, cell.col);
-      const isSideWall = cell.side === 'left' || cell.side === 'right';
       const facingOffset = this.wallFacingByCell[i];
 
-      dummy.rotation.set(0, (isSideWall ? Math.PI / 2 : 0) + facingOffset, 0);
+      dummy.rotation.set(0, facingOffset, 0);
       dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
-
-      if (isCorner) {
-        scale.set(
-          cornerSize / variant.modelSize.x,
-          cornerSize / variant.modelSize.y,
-          cornerSize / variant.modelSize.z,
-        );
-      } else {
-        scale.copy(this.hiddenScale);
-      }
-
-      if (isCorner) {
-        scale.multiply(this.hiddenScale);
-      }
-      dummy.scale.copy(scale);
+      dummy.scale.copy(this.hiddenScale);
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], dummy.matrix);
+        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], finalMatrix);
       }
       this.variantIndexByCellId.set(cell.id, variantIndex);
       this.instanceIndexByCellId.set(cell.id, writeOffsets[variantIndex]);
@@ -149,8 +211,7 @@ export default class Wall {
 
   updateVisible(cells = []) {
     const dummy = new THREE.Object3D();
-    const cornerSize = COLORS.CELL_SIZE;
-    const scale = new THREE.Vector3();
+    const finalMatrix = new THREE.Matrix4();
 
     for (const sourceCell of cells) {
       const cell = this.cellById.get(sourceCell.id);
@@ -168,28 +229,16 @@ export default class Wall {
       const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      const isCorner = this.#isCorner(cell.row, cell.col);
-      const isSideWall = cell.side === 'left' || cell.side === 'right';
       const facingOffset = this.facingOffsetByCellId.get(cell.id) ?? 0;
 
-      dummy.rotation.set(0, (isSideWall ? Math.PI / 2 : 0) + facingOffset, 0);
+      dummy.rotation.set(0, facingOffset, 0);
       dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
-
-      if (isCorner) {
-        scale.set(
-          cornerSize / variant.modelSize.x,
-          cornerSize / variant.modelSize.y,
-          cornerSize / variant.modelSize.z,
-        );
-      } else {
-        scale.set(1, 1, 1);
-      }
-
-      dummy.scale.copy(scale);
+      dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        instancedMeshes[j].setMatrixAt(instanceIndex, dummy.matrix);
+        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
     }

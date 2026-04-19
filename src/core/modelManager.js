@@ -5,10 +5,8 @@ class ModelManager {
     this.loader = new GLTFLoader();
     this.models = new Map();
     this.modelPaths = {
-      door: '/models/door_finish_13.03.glb',
-      wall: '/models/walls_finish_13.03.glb',
-      obstacle: '/models/obstacle.glb',
-      torch: '/models/torches_finish_13.03.glb',
+      level: '/level_1.glb',
+    
     };
   }
 

@@ -34,9 +34,20 @@ export default class Doors {
   }
 
   #buildInstancedFromModel() {
-    const gltf = modelManager.get('door');
-    gltf.scene.updateMatrixWorld(true);
-    const bbox = new THREE.Box3().setFromObject(gltf.scene);
+    const levelModel = modelManager.get('level');
+    if (!levelModel) {
+      throw new Error('Level model is not loaded');
+    }
+
+    levelModel.scene.updateMatrixWorld(true);
+    const doorNode = levelModel.scene.children.find((child) =>
+      typeof child.name === 'string' && child.name.includes('door'),
+    );
+    if (!doorNode) {
+      throw new Error('Level model has no door variant');
+    }
+
+    const bbox = new THREE.Box3().setFromObject(doorNode);
     const bboxSize = new THREE.Vector3();
     bbox.getSize(bboxSize);
     const sizeX = bboxSize.x || 1;
@@ -53,7 +64,7 @@ export default class Doors {
     this.baseScale = new THREE.Vector3(scaleX, scaleY, scaleZ);
 
     const meshNodes = [];
-    gltf.scene.traverse((child) => {
+    doorNode.traverse((child) => {
       if (child.isMesh) meshNodes.push(child);
     });
 

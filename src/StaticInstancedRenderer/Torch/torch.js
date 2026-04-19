@@ -40,36 +40,57 @@ export default class Torch {
     return material;
   }
 
-  #buildInstancedFromModel() {
-    const gltf = modelManager.get('torch');
-    gltf.scene.updateMatrixWorld(true);
-    const torchGroups = gltf.scene.children.filter((child) => child.isGroup);
-    if (!torchGroups.length) {
-      throw new Error('Torch model has no grouped torch variants');
+  #createVariant(object3D) {
+    object3D.updateWorldMatrix(true, true);
+
+    const bbox = new THREE.Box3().setFromObject(object3D);
+    const bboxCenter = new THREE.Vector3();
+    bbox.getCenter(bboxCenter);
+    const modelOffsetMatrix = new THREE.Matrix4().makeTranslation(
+      -bboxCenter.x,
+      -bbox.min.y,
+      -bboxCenter.z,
+    );
+
+    const parts = [];
+    object3D.traverse((child) => {
+      if (!child.isMesh) return;
+      parts.push({
+        geometry: child.geometry,
+        material: this.#createMaterial(child.material),
+        localMatrix: modelOffsetMatrix.clone().multiply(child.matrixWorld),
+      });
+    });
+
+    return { parts };
+  }
+
+  #loadVariants() {
+    const levelModel = modelManager.get('level');
+    if (!levelModel) {
+      throw new Error('Level model is not loaded');
     }
 
-    this.variants = torchGroups.map((torchGroup) => {
-      const bbox = new THREE.Box3().setFromObject(torchGroup);
-      const bboxCenter = new THREE.Vector3();
-      bbox.getCenter(bboxCenter);
-      const modelOffsetMatrix = new THREE.Matrix4().makeTranslation(
-        -bboxCenter.x,
-        -bbox.min.y,
-        -bboxCenter.z,
-      );
+    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    if (!levelVariants.length) {
+      throw new Error('Level model has no wall torch variants');
+    }
 
-      const parts = [];
-      torchGroup.traverse((child) => {
-        if (!child.isMesh) return;
-        parts.push({
-          geometry: child.geometry,
-          material: this.#createMaterial(child.material),
-          localMatrix: modelOffsetMatrix.clone(),
-        });
-      });
+    return levelVariants;
+  }
 
-      return { parts };
-    });
+  #loadVariantsFromLevel(levelModel) {
+    levelModel.scene.updateMatrixWorld(true);
+
+    const torchNodes = levelModel.scene.children.filter((child) =>
+      typeof child.name === 'string' && child.name.includes('torch'),
+    );
+
+    return torchNodes.map((torchNode) => this.#createVariant(torchNode));
+  }
+
+  #buildInstancedFromModel() {
+    this.variants = this.#loadVariants();
 
     this.variantByCell = this.cells.map(
       () => Math.floor(Math.random() * this.variants.length),

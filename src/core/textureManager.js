@@ -5,11 +5,12 @@ class TextureManager {
     this.loader = new THREE.TextureLoader();
     this.textures = new Map();
     this.texturePaths = {
+      coastAo: '/floor/coast_sand_rocks_02_ao_1k.jpg',
+      coastDiff: '/floor/coast_sand_rocks_02_diff_1k.jpg',
+      coastNormal: '/floor/coast_sand_rocks_02_nor_gl_1k.jpg',
       floorAo: '/floor/cobblestone_floor_04_ao_1k.jpg',
       floorDiff: '/floor/cobblestone_floor_04_diff_1k.jpg',
-      floorDisp: '/floor/cobblestone_floor_04_disp_1k.jpg',
       floorNormal: '/floor/cobblestone_floor_04_nor_gl_1k.jpg',
-      floorRough: '/floor/cobblestone_floor_04_rough_1k.jpg',
       player: '/player/player.png',
       chaser: '/enemies/chaser.png',
       skirmisher: '/enemies/skirmisher.png',

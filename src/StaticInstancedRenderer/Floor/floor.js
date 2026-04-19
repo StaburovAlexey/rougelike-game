@@ -15,7 +15,7 @@ export default class Floor {
     this.attackHighlightCells = new Set();
     this.lootHighlightCells = new Set();
     this.hoveredCellId = null;
-    const floorDiff = textureManager.get('floorDiff');
+    const floorDiff = textureManager.get('coastDiff');
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
     this.geometry = new THREE.BoxGeometry(
@@ -25,9 +25,9 @@ export default class Floor {
     );
     this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshLambertMaterial({
-      normalMap: textureManager.get('floorNormal'),
+      normalMap: textureManager.get('coastNormal'),
       map: floorDiff,
-      aoMap: textureManager.get('floorAo'),
+      aoMap: textureManager.get('coastAo'),
     });
     this.material.userData.disposeOnRemove = true;
     this.instanced = new THREE.InstancedMesh(

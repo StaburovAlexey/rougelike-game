@@ -15,7 +15,7 @@ const colorByMaterialName = {
 export default class Obstacle {
   constructor(options) {
     this.grid = options.grid;
-    this.minBonfireDistance = 3;
+    this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
     this.hiddenScale = new THREE.Vector3(
       COLORS.HIDDEN_SCALE,
@@ -27,35 +27,7 @@ export default class Obstacle {
     this.instanceIndexByCellId = new Map();
     this.rotationByCellId = new Map();
 
-    const obstacleModel = modelManager.get('obstacle');
-    obstacleModel.scene.updateMatrixWorld(true);
-    const obstacleGroups = obstacleModel.scene.children.filter((child) => child.isGroup);
-    if (!obstacleGroups.length) {
-      throw new Error('Obstacle model has no grouped variants');
-    }
-
-    this.variants = obstacleGroups.map((obstacleGroup) => {
-      const bbox = new THREE.Box3().setFromObject(obstacleGroup);
-      const size = new THREE.Vector3();
-      bbox.getSize(size);
-
-      const parts = [];
-      obstacleGroup.traverse((child) => {
-        if (!child.isMesh) return;
-        parts.push({
-          geometry: child.geometry,
-          material: this.#createMaterial(child.material),
-          localMatrix: child.matrixWorld.clone(),
-        });
-      });
-
-      return {
-        name: obstacleGroup.name,
-        parts,
-        modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
-        yOffset: -bbox.min.y,
-      };
-    });
+    this.variants = this.#loadVariants();
 
     this.obstacleVariantByCell = this.#generateObstacleVariants();
     this.obstacleRotationByCell = this.obstacleCells.map(
@@ -92,8 +64,47 @@ export default class Obstacle {
     return material;
   }
 
+  #createVariant(object3D) {
+    object3D.updateWorldMatrix(true, true);
+
+    const bbox = new THREE.Box3().setFromObject(object3D);
+    const parts = [];
+    object3D.traverse((child) => {
+      if (!child.isMesh) return;
+      parts.push({
+        geometry: child.geometry,
+        material: this.#createMaterial(child.material),
+        localMatrix: child.matrixWorld.clone(),
+      });
+    });
+
+    return {
+      name: object3D.name,
+      parts,
+      yOffset: -bbox.min.y,
+    };
+  }
+
+  #loadVariants() {
+    const levelModel = modelManager.get('level');
+    if (!levelModel) {
+      throw new Error('Level model is not loaded');
+    }
+
+    levelModel.scene.updateMatrixWorld(true);
+    const obstacleNodes = levelModel.scene.children.filter((child) =>
+      typeof child.name === 'string' && child.name.includes('obstacle'),
+    );
+
+    if (!obstacleNodes.length) {
+      throw new Error('Level model has no obstacle variants');
+    }
+
+    return obstacleNodes.map((obstacleNode) => this.#createVariant(obstacleNode));
+  }
+
   #isBonfireVariant(variantIndex) {
-    return this.variants[variantIndex]?.name === 'bonfire';
+    return this.variants[variantIndex]?.name?.includes('bonfire');
   }
 
   #isFarEnoughFromBonfires(cell, bonfireCells) {
