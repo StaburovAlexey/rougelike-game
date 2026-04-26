@@ -10,7 +10,7 @@ const colorByMaterialName = {
 };
 
 export default class Wall {
-  constructor(options) {
+  constructor(options,levelModel) {
     this.grid = options.grid;
     this.wallCells = this.grid.getWallCells();
     this.hiddenScale = new THREE.Vector3(
@@ -22,7 +22,7 @@ export default class Wall {
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
-
+    this.levelModel = levelModel
     const { variants } = this.#loadVariants();
     this.variants = variants;
     this.cornerVariantIndices = this.variants
@@ -91,7 +91,7 @@ export default class Wall {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get('level');
+    const levelModel = modelManager.get(this.levelModel);
     if (!levelModel) {
       throw new Error('Level model is not loaded');
     }

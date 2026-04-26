@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import { modelManager } from '../../core/modelManager';
-import COLORS from '../../static/constants';
+import * as THREE from "three";
+import { modelManager } from "../../core/modelManager";
+import COLORS from "../../static/constants";
 
 const colorByMaterialName = {
   Bonfire: COLORS.BONFIRE_WOOD_COLOR,
@@ -13,7 +13,8 @@ const colorByMaterialName = {
 };
 
 export default class Obstacle {
-  constructor(options) {
+  constructor(options, levelModel) {
+    this.levelModel = levelModel;
     this.grid = options.grid;
     this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
@@ -38,7 +39,10 @@ export default class Obstacle {
     for (let i = 0; i < this.obstacleVariantByCell.length; i++) {
       variantCounts[this.obstacleVariantByCell[i]]++;
       this.cellById.set(this.obstacleCells[i].id, this.obstacleCells[i]);
-      this.rotationByCellId.set(this.obstacleCells[i].id, this.obstacleRotationByCell[i]);
+      this.rotationByCellId.set(
+        this.obstacleCells[i].id,
+        this.obstacleRotationByCell[i],
+      );
     }
 
     this.instanced = new THREE.Group();
@@ -46,7 +50,11 @@ export default class Obstacle {
       const count = variantCounts[variantIndex];
       if (!count) return null;
       return variant.parts.map((part) => {
-        const mesh = new THREE.InstancedMesh(part.geometry, part.material, count);
+        const mesh = new THREE.InstancedMesh(
+          part.geometry,
+          part.material,
+          count,
+        );
         this.instanced.add(mesh);
         return mesh;
       });
@@ -56,7 +64,7 @@ export default class Obstacle {
   }
 
   #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || '';
+    const materialName = sourceMaterial?.name || "";
     const material = new THREE.MeshLambertMaterial({
       color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
     });
@@ -86,29 +94,33 @@ export default class Obstacle {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get('level');
+    const levelModel = modelManager.get(this.levelModel);
     if (!levelModel) {
-      throw new Error('Level model is not loaded');
+      throw new Error("Level model is not loaded");
     }
 
     levelModel.scene.updateMatrixWorld(true);
-    const obstacleNodes = levelModel.scene.children.filter((child) =>
-      typeof child.name === 'string' && child.name.includes('obstacle'),
+    const obstacleNodes = levelModel.scene.children.filter(
+      (child) =>
+        typeof child.name === "string" && child.name.includes("obstacle"),
     );
 
     if (!obstacleNodes.length) {
-      throw new Error('Level model has no obstacle variants');
+      throw new Error("Level model has no obstacle variants");
     }
 
-    return obstacleNodes.map((obstacleNode) => this.#createVariant(obstacleNode));
+    return obstacleNodes.map((obstacleNode) =>
+      this.#createVariant(obstacleNode),
+    );
   }
 
   #isBonfireVariant(variantIndex) {
-    return this.variants[variantIndex]?.name?.includes('bonfire');
+    return this.variants[variantIndex]?.name?.includes("bonfire");
   }
 
   #isFarEnoughFromBonfires(cell, bonfireCells) {
-    const minDistanceSquared = this.minBonfireDistance * this.minBonfireDistance;
+    const minDistanceSquared =
+      this.minBonfireDistance * this.minBonfireDistance;
 
     return bonfireCells.every((bonfireCell) => {
       const rowDelta = cell.row - bonfireCell.row;
@@ -168,7 +180,10 @@ export default class Obstacle {
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        finalMatrix.multiplyMatrices(
+          dummy.matrix,
+          variant.parts[j].localMatrix,
+        );
         instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], finalMatrix);
       }
       this.variantIndexByCellId.set(cell.id, variantIndex);
@@ -194,11 +209,7 @@ export default class Obstacle {
       const cell = this.cellById.get(sourceCell.id);
       const variantIndex = this.variantIndexByCellId.get(sourceCell.id);
       const instanceIndex = this.instanceIndexByCellId.get(sourceCell.id);
-      if (
-        !cell ||
-        variantIndex === undefined ||
-        instanceIndex === undefined
-      ) {
+      if (!cell || variantIndex === undefined || instanceIndex === undefined) {
         continue;
       }
 
@@ -212,7 +223,10 @@ export default class Obstacle {
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        finalMatrix.multiplyMatrices(
+          dummy.matrix,
+          variant.parts[j].localMatrix,
+        );
         instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }

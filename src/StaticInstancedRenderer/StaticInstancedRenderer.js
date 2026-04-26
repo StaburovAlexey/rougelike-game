@@ -1,12 +1,12 @@
-import { sceneManager } from '../scene/scene';
-import Floor from './Floor/floor';
-import Obstacle from './Obstacle/obstacle';
-import Wall from './Wall/wall';
-import Doors from './Door/door';
-import Torch from './Torch/torch';
-import { Group } from 'three';
+import { sceneManager } from "../scene/scene";
+import Floor from "./Floor/floor";
+import Obstacle from "./Obstacle/obstacle";
+import Wall from "./Wall/wall";
+import Doors from "./Door/door";
+import Torch from "./Torch/torch";
+import { Group } from "three";
 export default class StaticInstancedRenderer {
-  constructor(grid) {
+  constructor(grid, ui) {
     this.grid = grid;
     this.options = {
       grid: this.grid,
@@ -18,20 +18,29 @@ export default class StaticInstancedRenderer {
     this.obstacle = null;
     this.doors = null;
     this.torch = null;
+    this.ui = ui;
     this.#init();
   }
   #init() {
-    this.floor = new Floor(this.options);
-    this.wall = new Wall(this.options);
-    this.obstacle = new Obstacle(this.options);
-    this.doors = new Doors({
-      ...this.options,
-      cells: this.grid.getDoorCells(),
-    });
-    this.torch = new Torch({
-      ...this.options,
-      cells: this.grid.getTorchCells(),
-    });
+    const level = this.#initUiModelLevel();
+    const textureFloor = this.#initTextureFloorLevel();
+    this.floor = new Floor(this.options, textureFloor);
+    this.wall = new Wall(this.options, level);
+    this.obstacle = new Obstacle(this.options, level);
+    this.doors = new Doors(
+      {
+        ...this.options,
+        cells: this.grid.getDoorCells(),
+      },
+      level,
+    );
+    this.torch = new Torch(
+      {
+        ...this.options,
+        cells: this.grid.getTorchCells(),
+      },
+      level,
+    );
     this.cells = this.grid.getStaticCells();
     this.group.add(this.floor.instanced);
     this.group.add(this.wall.instanced);
@@ -39,6 +48,27 @@ export default class StaticInstancedRenderer {
     this.group.add(this.doors.instanced);
     this.group.add(this.torch.instanced);
     sceneManager.add(this.group);
+  }
+  #initUiModelLevel() {
+    return `level_${this.ui}`;
+  }
+  #initTextureFloorLevel() {
+    const level_1 = {
+      floorDiff: "coastDiff",
+      normalMap: "coastNormal",
+      aoMap: "coastAo",
+    };
+    const level_2 = {
+      floorDiff: "floorDiff",
+      normalMap: "floorNormal",
+      aoMap: "floorAo",
+    };
+    if (this.ui === 1) {
+      return level_1
+    }
+    if (this.ui === 2) {
+      return level_2
+    }
   }
   updateVisible(cells = []) {
     if (!cells.length) return;

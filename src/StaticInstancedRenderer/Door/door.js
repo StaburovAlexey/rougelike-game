@@ -10,7 +10,7 @@ const colorByMaterialName = {
 };
 
 export default class Doors {
-  constructor({ cells } = {}) {
+  constructor({ cells } = {},levelModel) {
     this.cells = cells;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
@@ -30,11 +30,12 @@ export default class Doors {
       bottom: 0,
       left: -Math.PI / 2,
     };
+    this.levelModel = levelModel
     this.#init();
   }
 
   #buildInstancedFromModel() {
-    const levelModel = modelManager.get('level');
+    const levelModel = modelManager.get(this.levelModel);
     if (!levelModel) {
       throw new Error('Level model is not loaded');
     }

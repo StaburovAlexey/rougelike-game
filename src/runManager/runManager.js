@@ -1,7 +1,7 @@
-import LevelManager from '../levelManager/levelManager';
-import GenerateEnemy from './generateEnemy';
-import GenerateLoot from './generateLoot';
-import Player from '../entity/Player';
+import LevelManager from "../levelManager/levelManager";
+import GenerateEnemy from "./generateEnemy";
+import GenerateLoot from "./generateLoot";
+import Player from "../entity/Player";
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
@@ -13,8 +13,8 @@ export default class RunManager {
     this.runMap = [];
     this.activeIndex = 0;
     this.aciveLevel = null;
-    this.player = new Player(null,{
-      name: 'player',
+    this.player = new Player(null, {
+      name: "player",
       hp: 2,
       atk: 2,
       def: 2,
@@ -22,8 +22,8 @@ export default class RunManager {
     this.#init();
   }
   #init() {
-    if (this.typeRun === 'classic') {
-      this.length = 20;
+    if (this.typeRun === "classic") {
+      this.length = 10;
     }
     for (let i = 0; i < this.length; i++) {
       const level = {};
@@ -42,6 +42,7 @@ export default class RunManager {
       );
       level.enemies = enemyGenerator.enemies;
       level.loot = lootGenerator.loot;
+      level.ui = level.index < 4 ? 1 : 2;
       this.runMap.push(level);
     }
     this.renderLevel(this.runMap[0]);
@@ -50,15 +51,18 @@ export default class RunManager {
     if (this.aciveLevel) {
       this.aciveLevel.clearLevel();
     }
-    console.log('data level', options);
-    this.aciveLevel = new LevelManager({
-      ...options,
-      camera: this.camera,
-      domElement: this.domElement,
-      nextLevel: () => {
-        this.nextLevel();
+    console.log("data level", options);
+    this.aciveLevel = new LevelManager(
+      {
+        ...options,
+        camera: this.camera,
+        domElement: this.domElement,
+        nextLevel: () => {
+          this.nextLevel();
+        },
       },
-    },this.player);
+      this.player,
+    );
   }
   nextLevel() {
     if (this.activeIndex === this.length - 1) return;

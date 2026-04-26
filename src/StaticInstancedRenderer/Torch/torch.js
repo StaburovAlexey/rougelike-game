@@ -3,7 +3,7 @@ import { modelManager } from '../../core/modelManager';
 import COLORS from '../../static/constants';
 
 export default class Torch {
-  constructor({ cells } = {}) {
+  constructor({ cells } = {},levelModel) {
     this.cells = cells;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
@@ -24,6 +24,7 @@ export default class Torch {
       left: -Math.PI / 2,
     };
     this.visibleScale = new THREE.Vector3(1, 1, 1);
+    this.levelModel=levelModel
     this.#init();
   }
 
@@ -66,7 +67,7 @@ export default class Torch {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get('level');
+    const levelModel = modelManager.get(this.levelModel);
     if (!levelModel) {
       throw new Error('Level model is not loaded');
     }

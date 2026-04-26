@@ -1,21 +1,22 @@
-import * as THREE from 'three';
-import { textureManager } from '../../core/textureManager';
-import CONSTANTS from '../../static/constants';
+import * as THREE from "three";
+import { textureManager } from "../../core/textureManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Floor {
-  constructor(options) {
+  constructor(options, texture) {
     this.grid = options.grid;
-    this.colorMoveCell = new THREE.Color('#14ff4e');
-    this.colorAttackCell = new THREE.Color('#f51212');
-    this.colorLootCell = new THREE.Color('#ffd24a');
-    this.colorHoverCell = new THREE.Color('#7bdff2');
-    this.basicColorCell = new THREE.Color('#ffffff');
+    this.colorMoveCell = new THREE.Color("#14ff4e");
+    this.colorAttackCell = new THREE.Color("#f51212");
+    this.colorLootCell = new THREE.Color("#ffd24a");
+    this.colorHoverCell = new THREE.Color("#7bdff2");
+    this.basicColorCell = new THREE.Color("#ffffff");
     this.y = 0.2;
     this.moveHighlightCells = new Set();
     this.attackHighlightCells = new Set();
     this.lootHighlightCells = new Set();
     this.hoveredCellId = null;
-    const floorDiff = textureManager.get('coastDiff');
+    console.log(texture)
+    const floorDiff = textureManager.get(texture.floorDiff);
     floorDiff.colorSpace = THREE.SRGBColorSpace;
 
     this.geometry = new THREE.BoxGeometry(
@@ -25,9 +26,9 @@ export default class Floor {
     );
     this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshLambertMaterial({
-      normalMap: textureManager.get('coastNormal'),
+      normalMap: textureManager.get(texture.normalMap),
       map: floorDiff,
-      aoMap: textureManager.get('coastAo'),
+      aoMap: textureManager.get(texture.aoMap),
     });
     this.material.userData.disposeOnRemove = true;
     this.instanced = new THREE.InstancedMesh(

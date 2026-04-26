@@ -1,11 +1,12 @@
-import Grid from '../grid/grid';
-import StaticInstancedRenderer from '../StaticInstancedRenderer/StaticInstancedRenderer';
-import DungeonLight from '../light/dungeonLight';
-import CONSTANTS from '../static/constants';
-import CellInteractionController from '../interaction/cellInteractionController';
-import Player from '../entity/Player';
-import EnemiesManager from '../EnemiesManager/EnemiesManager';
-import LootManager from '../LootManager/lootManager';
+import Grid from "../grid/grid";
+import StaticInstancedRenderer from "../StaticInstancedRenderer/StaticInstancedRenderer";
+import DungeonLight from "../light/dungeonLight";
+import CONSTANTS from "../static/constants";
+import CellInteractionController from "../interaction/cellInteractionController";
+import Player from "../entity/Player";
+import EnemiesManager from "../EnemiesManager/EnemiesManager";
+import LootManager from "../LootManager/lootManager";
+
 export default class LevelManager {
   constructor(options, player) {
     this.cols = options.size.cols;
@@ -13,7 +14,7 @@ export default class LevelManager {
     this.doorsCount = options.doorsQuantity;
     this.camera = options.camera;
     this.domElement = options.domElement;
-
+    this.ui = options.ui;
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
@@ -26,8 +27,12 @@ export default class LevelManager {
       enemiesCount: options.enemies.length,
       lootGroundCount: options.loot.groundLoot.length,
     });
+
     this.nextLevel = options.nextLevel;
-    this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
+    this.staticInstancedRenderer = new StaticInstancedRenderer(
+      this.grid,
+      this.ui,
+    );
     this.light = new DungeonLight();
     this.player.syncMeshToCell(this.grid.getCellPlayer());
     // this.player = new Player(this.grid.getCellPlayer(), {
@@ -46,7 +51,7 @@ export default class LevelManager {
       onHoverChange: (cell) => {},
       onCellClick: (cell) => {
         if (!this.grid.isEventCell(cell)) return;
-        if (cell.type === 'door' && cell.doorRole === 'out') {
+        if (cell.type === "door" && cell.doorRole === "out") {
           this.nextLevel?.();
           return;
         }
@@ -57,11 +62,11 @@ export default class LevelManager {
           this.loot.renderLootAfterDieEnemy(dieEnemies);
         } else {
           if (cell.loot) {
-            console.log('выбрана клетка с лутом');
+            console.log("выбрана клетка с лутом");
             const loot = this.loot.findLoot(cell);
-            console.log('лут подобран', loot);
+            console.log("лут подобран", loot);
             if (loot) this.player.getLoot(loot);
-            console.log('итвентарь', this.player.inventory);
+            console.log("итвентарь", this.player.inventory);
           }
           this.grid.movePlayerTo(cell);
           this.player.syncMeshToCell(cell);
