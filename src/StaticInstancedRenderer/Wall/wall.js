@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { modelManager } from '../../core/modelManager';
+import { textureManager } from '../../core/textureManager';
+import materialManager from '../../core/materialManager';
 import COLORS from '../../static/constants';
 
 const colorByMaterialName = {
@@ -22,6 +24,7 @@ export default class Wall {
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
+    this.materialByName = new Map();
     this.levelModel = levelModel
     const { variants } = this.#loadVariants();
     this.variants = variants;
@@ -56,14 +59,36 @@ export default class Wall {
     this.#init();
   }
 
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || '';
-    const color = colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR;
+  // #createMaterial(sourceMaterial) {
+  //   const materialName = sourceMaterial?.name || '';
+  //   const cacheKey = materialName || '__default';
+  //   const cachedMaterial = this.materialByName.get(cacheKey);
 
-    const material = new THREE.MeshLambertMaterial({ color });
-    material.userData.disposeOnRemove = true;
-    return material;
-  }
+  //   if (cachedMaterial) {
+  //     return cachedMaterial;
+  //   }
+
+  //   let material;
+
+  //   if (materialName === 'WallWood') {
+  //     const wallWoodTexture = textureManager.get('wallWood');
+
+  //     if (wallWoodTexture) {
+  //       wallWoodTexture.colorSpace = THREE.SRGBColorSpace;
+  //       material = new THREE.MeshLambertMaterial({ map: wallWoodTexture });
+  //       this.materialByName.set(cacheKey, material);
+  //       material.userData.disposeOnRemove = true;
+  //       return material;
+  //     }
+  //   }
+
+  //   material = new THREE.MeshLambertMaterial({
+  //     color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
+  //   });
+  //   this.materialByName.set(cacheKey, material);
+  //   material.userData.disposeOnRemove = true;
+  //   return material;
+  // }
 
   #createVariant(object3D, { isCorner = false } = {}) {
     object3D.updateWorldMatrix(true, true);

@@ -11,6 +11,7 @@ class TextureManager {
       floorAo: '/floor/cobblestone_floor_04_ao_1k.jpg',
       floorDiff: '/floor/cobblestone_floor_04_diff_1k.jpg',
       floorNormal: '/floor/cobblestone_floor_04_nor_gl_1k.jpg',
+      wallWood_texture: '/rough_wood_diff_1k.jpg',
       player: '/player/player.png',
       chaser: '/enemies/chaser.png',
       skirmisher: '/enemies/skirmisher.png',

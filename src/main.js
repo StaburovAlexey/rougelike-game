@@ -6,9 +6,11 @@ import Camera from './camera/camera';
 import Controls from './control/orbitControl';
 import textureManager from './core/textureManager';
 import modelManager from './core/modelManager';
+import materialManager from './core/materialManager';
 import RunManager from './runManager/runManager';
 await textureManager.loadAll();
 await modelManager.loadAll();
+materialManager.initAll()
 
 const camera = new Camera(sceneManager.getSize());
 const control = new Controls(
