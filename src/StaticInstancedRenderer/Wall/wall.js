@@ -1,15 +1,7 @@
 import * as THREE from 'three';
 import { modelManager } from '../../core/modelManager';
-import { textureManager } from '../../core/textureManager';
 import materialManager from '../../core/materialManager';
 import COLORS from '../../static/constants';
-
-const colorByMaterialName = {
-  Berry: COLORS.BERRY_COLOR,
-  Border: COLORS.BORDER_COLOR,
-  Bush: COLORS.BUSH_COLOR,
-  WallWood: COLORS.WAll_WOOD_COLOR,
-};
 
 export default class Wall {
   constructor(options,levelModel) {
@@ -24,7 +16,6 @@ export default class Wall {
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
-    this.materialByName = new Map();
     this.levelModel = levelModel
     const { variants } = this.#loadVariants();
     this.variants = variants;
@@ -59,37 +50,6 @@ export default class Wall {
     this.#init();
   }
 
-  // #createMaterial(sourceMaterial) {
-  //   const materialName = sourceMaterial?.name || '';
-  //   const cacheKey = materialName || '__default';
-  //   const cachedMaterial = this.materialByName.get(cacheKey);
-
-  //   if (cachedMaterial) {
-  //     return cachedMaterial;
-  //   }
-
-  //   let material;
-
-  //   if (materialName === 'WallWood') {
-  //     const wallWoodTexture = textureManager.get('wallWood');
-
-  //     if (wallWoodTexture) {
-  //       wallWoodTexture.colorSpace = THREE.SRGBColorSpace;
-  //       material = new THREE.MeshLambertMaterial({ map: wallWoodTexture });
-  //       this.materialByName.set(cacheKey, material);
-  //       material.userData.disposeOnRemove = true;
-  //       return material;
-  //     }
-  //   }
-
-  //   material = new THREE.MeshLambertMaterial({
-  //     color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
-  //   });
-  //   this.materialByName.set(cacheKey, material);
-  //   material.userData.disposeOnRemove = true;
-  //   return material;
-  // }
-
   #createVariant(object3D, { isCorner = false } = {}) {
     object3D.updateWorldMatrix(true, true);
 
@@ -102,7 +62,7 @@ export default class Wall {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: child.matrixWorld.clone(),
       });
     });

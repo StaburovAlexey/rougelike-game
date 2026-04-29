@@ -1,13 +1,6 @@
 import { textureManager } from "./textureManager";
 import * as THREE from "three";
-import COLORS from '../../static/constants';
-
-const colorByMaterialName = {
-  Berry: COLORS.BERRY_COLOR,
-  Border: COLORS.BORDER_COLOR,
-  Bush: COLORS.BUSH_COLOR,
-  WallWood: COLORS.WAll_WOOD_COLOR,
-};
+import { COLORS } from "../static/constants";
 
 class MaterialManager {
   constructor() {
@@ -15,7 +8,12 @@ class MaterialManager {
   }
   initAll() {
     const filtersTexture = new Map();
-
+    for (const [key, value] of COLORS) {
+      const material = new THREE.MeshLambertMaterial({
+        color: value,
+      });
+      this.materials.set(key, material);
+    }
     for (const [key, value] of textureManager.textures) {
       if (key.includes("texture")) {
         const texture = value;
@@ -25,16 +23,10 @@ class MaterialManager {
       }
     }
 
-    for()
-
     console.log("отфильтрованные материалы", this.materials);
   }
   getMaterial(materialName) {
-    if (this.materials.has(materialName)) {
-      return this.materials.get(materialName);
-    } else {
-
-    }
+    return this.materials.get(materialName);
   }
 }
 const materialManager = new MaterialManager();
