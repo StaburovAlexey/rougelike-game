@@ -6,7 +6,7 @@ const STATIC = {
 };
 
 const COLORS = new Map([
-  ["ROCK_WALL_COLOR", "#73808d"],
+  ["RockWall", "#73808d"],
   ["Border", "#1b1e20"],
   ["TORCH_COLOR", "#4c647c"],
   ["HANDLE_COLOR", "#bbca36"],

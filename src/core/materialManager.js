@@ -18,6 +18,17 @@ class MaterialManager {
       if (key.includes("texture")) {
         const texture = value;
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.minFilter = THREE.NearestFilter;
+        texture.magFilter = THREE.NearestFilter;
+        texture.generateMipmaps = false;
+        // Нужно, чтобы repeat работал нормально
+        texture.wrapS = THREE.MirroredRepeatWrapping;
+        texture.wrapT = THREE.MirroredRepeatWrapping;
+
+        // Текстура будет повторяться 4 раза по X и 4 раза по Y
+        texture.repeat.set(2, 2);
+        texture.needsUpdate = true;
+
         const material = new THREE.MeshLambertMaterial({ map: texture });
         this.materials.set(key.replace("_texture", ""), material);
       }
