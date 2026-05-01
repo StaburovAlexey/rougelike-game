@@ -1,23 +1,22 @@
 import * as THREE from "three";
-import { modelManager } from "../../core/modelManager";
 import materialManager from "../../core/materialManager";
-import COLORS from "../../static/constants";
+import CONSTANTS from "../../static/constants";
 
 export default class Wall {
-  constructor(options, levelModel) {
+  constructor(options, backgroundModels) {
     this.grid = options.grid;
-    this.prefix = options.prefix;
+    this.backgroundModels = backgroundModels;
     this.wallCells = this.grid.getWallCells();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.cellById = new Map();
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
-    this.levelModel = levelModel;
+
     const { variants } = this.#loadVariants();
     this.variants = variants;
     this.cornerVariantIndices = this.variants
@@ -74,10 +73,7 @@ export default class Wall {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: materialManager.getMaterial(
-          child.material?.name,
-          this.prefix,
-        ),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: child.matrixWorld.clone(),
       });
     });
@@ -91,12 +87,11 @@ export default class Wall {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
+    if (!this.backgroundModels) {
       throw new Error("Level model is not loaded");
     }
 
-    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    const levelVariants = this.#loadVariantsFromLevel(this.backgroundModels);
     if (!levelVariants.variants.length) {
       throw new Error("Level model has no wall variants");
     }

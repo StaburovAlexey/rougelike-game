@@ -5,6 +5,7 @@ import { COLORS } from "../static/constants";
 class MaterialManager {
   constructor() {
     this.materials = new Map();
+    this.prefix = null;
   }
   initAll() {
     const filtersTexture = new Map();
@@ -35,13 +36,16 @@ class MaterialManager {
 
     console.log("отфильтрованные материалы", this.materials);
   }
-  getMaterial(materialName, prefix = 1) {
-    const fullName = `${materialName}_${prefix}`;
+  getMaterial(materialName) {
+    const fullName = `${materialName}_${this.prefix}`;
     if (this.materials.has(fullName)) {
       return this.materials.get(fullName);
     } else {
       return this.materials.get(`${materialName}_1`);
     }
+  }
+  setPrefixLevel(setPrefixLevel) {
+    this.prefix = setPrefixLevel;
   }
 }
 const materialManager = new MaterialManager();

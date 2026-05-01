@@ -1,29 +1,17 @@
 import * as THREE from "three";
-import { modelManager } from "../../core/modelManager";
 import materialManager from "../../core/materialManager";
-import COLORS from "../../static/constants";
-
-const colorByMaterialName = {
-  Bonfire: COLORS.BONFIRE_WOOD_COLOR,
-  Border: COLORS.BORDER_COLOR,
-  BoxSteel: COLORS.BOX_STEEL_COLOR,
-  BoxWood: COLORS.BOX_WOOD_COLOR,
-  RockWall: COLORS.ROCK_WALL_COLOR,
-  ShieldSteel: COLORS.SHIELD_STEEL_COLOR,
-  ShieldWood: COLORS.SHIELD_WOOD_COLOR,
-};
+import CONSTANTS from "../../static/constants";
 
 export default class Obstacle {
-  constructor(options, levelModel) {
-    this.levelModel = levelModel;
+  constructor(options, backgroundModels) {
     this.grid = options.grid;
-    this.prefix = options.ui;
+    this.backgroundModels = backgroundModels;
     this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.cellById = new Map();
     this.variantIndexByCellId = new Map();
@@ -65,7 +53,6 @@ export default class Obstacle {
     this.#init();
   }
 
-
   #createVariant(object3D) {
     object3D.updateWorldMatrix(true, true);
 
@@ -75,10 +62,7 @@ export default class Obstacle {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: materialManager.getMaterial(
-          child.material?.name,
-          this.prefix,
-        ),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: child.matrixWorld.clone(),
       });
     });
@@ -91,13 +75,12 @@ export default class Obstacle {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
+    if (!this.backgroundModels) {
       throw new Error("Level model is not loaded");
     }
 
-    levelModel.scene.updateMatrixWorld(true);
-    const obstacleNodes = levelModel.scene.children.filter(
+    this.backgroundModels.scene.updateMatrixWorld(true);
+    const obstacleNodes = this.backgroundModels.scene.children.filter(
       (child) =>
         typeof child.name === "string" && child.name.includes("obstacle"),
     );

@@ -11,12 +11,11 @@ const COLORS = new Map([
   ["Torch_1", "#4c647c"],
   ["Handle_1", "#bbca36"],
   ["Door_1", "#684217"],
-  ["SHIELD_WOOD_COLOR", "#7b5630"],
-  ["SHIELD_STEEL_COLOR", "#6486a8"],
+  ["ShieldWood_1", "#7b5630"],
+  ["ShieldSteel_1", "#6486a8"],
   ["BoxWood_1", "#8a643b"],
   ["BoxSteel_1", "#384553"],
-  ["BONFIRE_WOOD_COLOR", "#875a29"],
-  ["WallWood", "#904c04"],
+  ["Bonfire_1", "#875a29"],
   ["Bush_1", "#3d9c45"],
   ["Berry_1", "#cb2727"],
 ]);
@@ -24,9 +23,6 @@ const COLORS = new Map([
 const CONSTANTS = {
   ...STATIC,
   ...Object.fromEntries(COLORS),
-  WAll_WOOD_COLOR: COLORS.get("WallWood"),
-  BERRY_COLOR: COLORS.get("Berry"),
-  BUSH_COLOR: COLORS.get("Bush"),
 };
 
 export { COLORS, STATIC };

@@ -5,8 +5,7 @@ class ModelManager {
     this.loader = new GLTFLoader();
     this.models = new Map();
     this.modelPaths = {
-      level_1: '/level_1.glb',
-      level_2: '/level_1.glb'
+      backgrounds: '/backgrounds.glb',
     };
   }
 

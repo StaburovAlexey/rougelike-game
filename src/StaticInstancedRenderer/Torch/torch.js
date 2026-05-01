@@ -1,17 +1,16 @@
 import * as THREE from "three";
-import { modelManager } from "../../core/modelManager";
-import materialManager from "../../core/materialManager";
-import COLORS from "../../static/constants";
+import { materialManager } from "../../core/materialManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Torch {
-  constructor(cells, levelModel, prefix) {
+  constructor(cells, backgroundModels) {
     this.cells = cells;
-    this.prefix = prefix;
+    this.backgroundModels = backgroundModels;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.variantByCell = [];
     this.variantInstances = [];
@@ -26,25 +25,8 @@ export default class Torch {
       left: -Math.PI / 2,
     };
     this.visibleScale = new THREE.Vector3(1, 1, 1);
-    this.levelModel = levelModel;
     this.#init();
   }
-
-  // #createMaterial(sourceMaterial) {
-  //   const materialName = sourceMaterial?.name || "";
-  //   let color = sourceMaterial?.color?.getHex?.() ?? 0xffffff;
-
-  //   if (materialName === "RockWall")
-  //     color = new THREE.Color(COLORS.ROCK_WALL_COLOR).getHex();
-  //   if (materialName === "Border")
-  //     color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
-  //   if (materialName === "Torch")
-  //     color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
-
-  //   const material = new THREE.MeshLambertMaterial({ color });
-  //   material.userData.disposeOnRemove = true;
-  //   return material;
-  // }
 
   #createVariant(object3D) {
     object3D.updateWorldMatrix(true, true);
@@ -63,10 +45,7 @@ export default class Torch {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: materialManager.getMaterial(
-          child.material?.name,
-          this.prefix,
-        ),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: modelOffsetMatrix.clone().multiply(child.matrixWorld),
       });
     });
@@ -75,12 +54,11 @@ export default class Torch {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
+    if (!this.backgroundModels) {
       throw new Error("Level model is not loaded");
     }
 
-    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    const levelVariants = this.#loadVariantsFromLevel(this.backgroundModels);
     if (!levelVariants.length) {
       throw new Error("Level model has no wall torch variants");
     }

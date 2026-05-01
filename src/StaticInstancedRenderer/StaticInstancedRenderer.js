@@ -5,13 +5,12 @@ import Wall from "./Wall/wall";
 import Doors from "./Door/door";
 import Torch from "./Torch/torch";
 import { Group } from "three";
+import { modelManager } from "../core/modelManager";
 export default class StaticInstancedRenderer {
-  constructor(grid, ui) {
+  constructor(grid) {
     this.grid = grid;
-    this.ui = ui;
     this.options = {
       grid: this.grid,
-      prefix: ui,
     };
     this.cells = [];
     this.group = new Group();
@@ -20,17 +19,16 @@ export default class StaticInstancedRenderer {
     this.obstacle = null;
     this.doors = null;
     this.torch = null;
-
+    this.backgroundModels = null;
     this.#init();
   }
   #init() {
-    const level = this.#initUiModelLevel();
-    const textureFloor = this.#initTextureFloorLevel();
-    this.floor = new Floor(this.options, textureFloor);
-    this.wall = new Wall(this.options, level);
-    this.obstacle = new Obstacle(this.options, level);
-    this.doors = new Doors(this.grid.getDoorCells(), level, this.ui);
-    this.torch = new Torch(this.grid.getTorchCells(), level, this.ui);
+    this.backgroundModels = modelManager.get("backgrounds");
+    this.floor = new Floor(this.options);
+    this.wall = new Wall(this.options, this.backgroundModels);
+    this.obstacle = new Obstacle(this.options, this.backgroundModels);
+    this.doors = new Doors(this.grid.getDoorCells(), this.backgroundModels);
+    this.torch = new Torch(this.grid.getTorchCells(), this.backgroundModels);
     this.cells = this.grid.getStaticCells();
     this.group.add(this.floor.instanced);
     this.group.add(this.wall.instanced);
@@ -38,27 +36,6 @@ export default class StaticInstancedRenderer {
     this.group.add(this.doors.instanced);
     this.group.add(this.torch.instanced);
     sceneManager.add(this.group);
-  }
-  #initUiModelLevel() {
-    return `level_${this.ui}`;
-  }
-  #initTextureFloorLevel() {
-    const level_1 = {
-      floorDiff: "coastDiff",
-      normalMap: "coastNormal",
-      aoMap: "coastAo",
-    };
-    const level_2 = {
-      floorDiff: "floorDiff",
-      normalMap: "floorNormal",
-      aoMap: "floorAo",
-    };
-    if (this.ui === 1) {
-      return level_1;
-    }
-    if (this.ui === 2) {
-      return level_2;
-    }
   }
   updateVisible(cells = []) {
     if (!cells.length) return;
