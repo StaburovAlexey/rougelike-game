@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { modelManager } from "../../core/modelManager";
+import materialManager from "../../core/materialManager";
 import COLORS from "../../static/constants";
 
 const colorByMaterialName = {
@@ -16,6 +17,7 @@ export default class Obstacle {
   constructor(options, levelModel) {
     this.levelModel = levelModel;
     this.grid = options.grid;
+    this.prefix = options.ui;
     this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
     this.hiddenScale = new THREE.Vector3(
@@ -63,14 +65,6 @@ export default class Obstacle {
     this.#init();
   }
 
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || "";
-    const material = new THREE.MeshLambertMaterial({
-      color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
-    });
-    material.userData.disposeOnRemove = true;
-    return material;
-  }
 
   #createVariant(object3D) {
     object3D.updateWorldMatrix(true, true);
@@ -81,7 +75,10 @@ export default class Obstacle {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(
+          child.material?.name,
+          this.prefix,
+        ),
         localMatrix: child.matrixWorld.clone(),
       });
     });

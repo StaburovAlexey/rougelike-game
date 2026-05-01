@@ -8,8 +8,10 @@ import { Group } from "three";
 export default class StaticInstancedRenderer {
   constructor(grid, ui) {
     this.grid = grid;
+    this.ui = ui;
     this.options = {
       grid: this.grid,
+      prefix: ui,
     };
     this.cells = [];
     this.group = new Group();
@@ -18,7 +20,7 @@ export default class StaticInstancedRenderer {
     this.obstacle = null;
     this.doors = null;
     this.torch = null;
-    this.ui = ui;
+
     this.#init();
   }
   #init() {
@@ -27,20 +29,8 @@ export default class StaticInstancedRenderer {
     this.floor = new Floor(this.options, textureFloor);
     this.wall = new Wall(this.options, level);
     this.obstacle = new Obstacle(this.options, level);
-    this.doors = new Doors(
-      {
-        ...this.options,
-        cells: this.grid.getDoorCells(),
-      },
-      level,
-    );
-    this.torch = new Torch(
-      {
-        ...this.options,
-        cells: this.grid.getTorchCells(),
-      },
-      level,
-    );
+    this.doors = new Doors(this.grid.getDoorCells(), level, this.ui);
+    this.torch = new Torch(this.grid.getTorchCells(), level, this.ui);
     this.cells = this.grid.getStaticCells();
     this.group.add(this.floor.instanced);
     this.group.add(this.wall.instanced);
@@ -64,10 +54,10 @@ export default class StaticInstancedRenderer {
       aoMap: "floorAo",
     };
     if (this.ui === 1) {
-      return level_1
+      return level_1;
     }
     if (this.ui === 2) {
-      return level_2
+      return level_2;
     }
   }
   updateVisible(cells = []) {

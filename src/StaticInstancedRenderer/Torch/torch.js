@@ -1,10 +1,12 @@
-import * as THREE from 'three';
-import { modelManager } from '../../core/modelManager';
-import COLORS from '../../static/constants';
+import * as THREE from "three";
+import { modelManager } from "../../core/modelManager";
+import materialManager from "../../core/materialManager";
+import COLORS from "../../static/constants";
 
 export default class Torch {
-  constructor({ cells } = {},levelModel) {
+  constructor(cells, levelModel, prefix) {
     this.cells = cells;
+    this.prefix = prefix;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
       COLORS.HIDDEN_SCALE,
@@ -24,22 +26,25 @@ export default class Torch {
       left: -Math.PI / 2,
     };
     this.visibleScale = new THREE.Vector3(1, 1, 1);
-    this.levelModel=levelModel
+    this.levelModel = levelModel;
     this.#init();
   }
 
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || '';
-    let color = sourceMaterial?.color?.getHex?.() ?? 0xffffff;
+  // #createMaterial(sourceMaterial) {
+  //   const materialName = sourceMaterial?.name || "";
+  //   let color = sourceMaterial?.color?.getHex?.() ?? 0xffffff;
 
-    if (materialName === 'RockWall') color = new THREE.Color(COLORS.ROCK_WALL_COLOR).getHex();
-    if (materialName === 'Border') color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
-    if (materialName === 'Torch') color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
+  //   if (materialName === "RockWall")
+  //     color = new THREE.Color(COLORS.ROCK_WALL_COLOR).getHex();
+  //   if (materialName === "Border")
+  //     color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
+  //   if (materialName === "Torch")
+  //     color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
 
-    const material = new THREE.MeshLambertMaterial({ color });
-    material.userData.disposeOnRemove = true;
-    return material;
-  }
+  //   const material = new THREE.MeshLambertMaterial({ color });
+  //   material.userData.disposeOnRemove = true;
+  //   return material;
+  // }
 
   #createVariant(object3D) {
     object3D.updateWorldMatrix(true, true);
@@ -58,7 +63,10 @@ export default class Torch {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(
+          child.material?.name,
+          this.prefix,
+        ),
         localMatrix: modelOffsetMatrix.clone().multiply(child.matrixWorld),
       });
     });
@@ -69,12 +77,12 @@ export default class Torch {
   #loadVariants() {
     const levelModel = modelManager.get(this.levelModel);
     if (!levelModel) {
-      throw new Error('Level model is not loaded');
+      throw new Error("Level model is not loaded");
     }
 
     const levelVariants = this.#loadVariantsFromLevel(levelModel);
     if (!levelVariants.length) {
-      throw new Error('Level model has no wall torch variants');
+      throw new Error("Level model has no wall torch variants");
     }
 
     return levelVariants;
@@ -83,8 +91,8 @@ export default class Torch {
   #loadVariantsFromLevel(levelModel) {
     levelModel.scene.updateMatrixWorld(true);
 
-    const torchNodes = levelModel.scene.children.filter((child) =>
-      typeof child.name === 'string' && child.name.includes('torch'),
+    const torchNodes = levelModel.scene.children.filter(
+      (child) => typeof child.name === "string" && child.name.includes("torch"),
     );
 
     return torchNodes.map((torchNode) => this.#createVariant(torchNode));
@@ -93,8 +101,8 @@ export default class Torch {
   #buildInstancedFromModel() {
     this.variants = this.#loadVariants();
 
-    this.variantByCell = this.cells.map(
-      () => Math.floor(Math.random() * this.variants.length),
+    this.variantByCell = this.cells.map(() =>
+      Math.floor(Math.random() * this.variants.length),
     );
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.variantByCell.length; i++) {
@@ -169,7 +177,11 @@ export default class Torch {
       const sourceCell = this.cellById.get(cell.id);
       const sourceIndex = this.cellIndexById.get(cell.id);
       const instanceIndex = this.instanceIndexByCellId.get(cell.id);
-      if (!sourceCell || sourceIndex === undefined || instanceIndex === undefined) {
+      if (
+        !sourceCell ||
+        sourceIndex === undefined ||
+        instanceIndex === undefined
+      ) {
         continue;
       }
 
@@ -179,7 +191,10 @@ export default class Torch {
       if (!instancedMeshes) continue;
 
       basePosition.set(sourceCell.worldX, 0, sourceCell.worldZ);
-      baseRotation.setFromAxisAngle(yawAxis, this.sideYaw[sourceCell.side] ?? 0);
+      baseRotation.setFromAxisAngle(
+        yawAxis,
+        this.sideYaw[sourceCell.side] ?? 0,
+      );
       baseMatrix.compose(basePosition, baseRotation, this.visibleScale);
 
       for (let j = 0; j < variant.parts.length; j++) {

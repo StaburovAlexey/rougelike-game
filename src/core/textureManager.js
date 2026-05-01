@@ -1,32 +1,33 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 
 class TextureManager {
   constructor() {
     this.loader = new THREE.TextureLoader();
     this.textures = new Map();
     this.texturePaths = {
-      coastAo: '/floor/coast_sand_rocks_02_ao_1k.jpg',
-      coastDiff: '/floor/coast_sand_rocks_02_diff_1k.jpg',
-      coastNormal: '/floor/coast_sand_rocks_02_nor_gl_1k.jpg',
-      floorAo: '/floor/cobblestone_floor_04_ao_1k.jpg',
-      floorDiff: '/floor/cobblestone_floor_04_diff_1k.jpg',
-      floorNormal: '/floor/cobblestone_floor_04_nor_gl_1k.jpg',
-      WallWood_texture: '/968cff3ae2aa9a8b4297bdf1f9271bdb.jpg',
-      RockWall_texture: '/rock_wall_02_diff_1k.jpg',
-      player: '/player/player.png',
-      chaser: '/enemies/chaser.png',
-      skirmisher: '/enemies/skirmisher.png',
-      bruiser: '/enemies/bruiser.png',
-      guard: '/enemies/guard.png',
-      glot: '/enemies/glot.png',
-      ambusher: '/enemies/ambusher.png',
-      berserker: '/enemies/berserk.png',
-      armor: '/loot/chest.png',
-      gold: '/loot/gold.png',
-      heal: '/loot/hp_potion.png',
-      weapon: '/loot/sword.png',
+      coastAo: "/floor/coast_sand_rocks_02_ao_1k.jpg",
+      coastDiff: "/floor/coast_sand_rocks_02_diff_1k.jpg",
+      coastNormal: "/floor/coast_sand_rocks_02_nor_gl_1k.jpg",
+      floorAo: "/floor/cobblestone_floor_04_ao_1k.jpg",
+      floorDiff: "/floor/cobblestone_floor_04_diff_1k.jpg",
+      floorNormal: "/floor/cobblestone_floor_04_nor_gl_1k.jpg",
+      RockWall_2_texture: "/texture/dry_riverbed_rock_diff_1k.jpg",
+      RockWall_1_texture: "/texture/mossy_rock_diff_1k.jpg",
+      // Door_1_texture: "/texture/dark_wood_diff_1k.jpg",
+      Stone_1_texture:'/texture/coral_fort_wall_03_diff_1k.jpg',
+      player: "/player/player.png",
+      chaser: "/enemies/chaser.png",
+      skirmisher: "/enemies/skirmisher.png",
+      bruiser: "/enemies/bruiser.png",
+      guard: "/enemies/guard.png",
+      glot: "/enemies/glot.png",
+      ambusher: "/enemies/ambusher.png",
+      berserker: "/enemies/berserk.png",
+      armor: "/loot/chest.png",
+      gold: "/loot/gold.png",
+      heal: "/loot/hp_potion.png",
+      weapon: "/loot/sword.png",
     };
-    
   }
 
   loadAll() {

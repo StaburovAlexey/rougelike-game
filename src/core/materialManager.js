@@ -25,8 +25,7 @@ class MaterialManager {
         texture.wrapS = THREE.MirroredRepeatWrapping;
         texture.wrapT = THREE.MirroredRepeatWrapping;
 
-        // Текстура будет повторяться 4 раза по X и 4 раза по Y
-        texture.repeat.set(2, 2);
+        texture.repeat.set(3, 3);
         texture.needsUpdate = true;
 
         const material = new THREE.MeshLambertMaterial({ map: texture });
@@ -36,8 +35,13 @@ class MaterialManager {
 
     console.log("отфильтрованные материалы", this.materials);
   }
-  getMaterial(materialName) {
-    return this.materials.get(materialName);
+  getMaterial(materialName, prefix = 1) {
+    const fullName = `${materialName}_${prefix}`;
+    if (this.materials.has(fullName)) {
+      return this.materials.get(fullName);
+    } else {
+      return this.materials.get(`${materialName}_1`);
+    }
   }
 }
 const materialManager = new MaterialManager();
