@@ -105,12 +105,19 @@ export default class StaticInstancedRenderer {
     sceneManager.remove(this.group);
     this.group.traverse((child) => {
       if (!child.isMesh) return;
-      if (child.geometry?.userData?.disposeOnRemove) {
-        child.geometry.dispose();
+      if (child.isInstancedMesh) {
+        child.dispose();
       }
+      child.geometry?.dispose?.();
       this.#disposeMaterial(child.material);
     });
+    this.group.clear();
     this.cells = [];
+    this.floor = null;
+    this.wall = null;
+    this.obstacle = null;
+    this.doors = null;
+    this.torch = null;
     this.group = null;
   }
 }
