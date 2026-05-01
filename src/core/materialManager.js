@@ -19,17 +19,26 @@ class MaterialManager {
       if (key.includes("texture")) {
         const texture = value;
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+
         texture.minFilter = THREE.NearestFilter;
         texture.magFilter = THREE.NearestFilter;
         texture.generateMipmaps = false;
         // Нужно, чтобы repeat работал нормально
-        texture.wrapS = THREE.MirroredRepeatWrapping;
-        texture.wrapT = THREE.MirroredRepeatWrapping;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        if (key.includes("floor")) {
+          texture.repeat.set(0.5, 0.5);
+        } else {
+          texture.repeat.set(1, 1);
+        }
 
-        texture.repeat.set(3, 3);
         texture.needsUpdate = true;
 
-        const material = new THREE.MeshLambertMaterial({ map: texture });
+        const material = new THREE.MeshLambertMaterial({
+          map: texture,
+          side: THREE.FrontSide,
+        });
         this.materials.set(key.replace("_texture", ""), material);
       }
     }
