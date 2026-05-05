@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { textureManager } from "../../core/textureManager";
 import CONSTANTS from "../../static/constants";
-
+import materialManager from "../../core/materialManager";
 export default class Floor {
-  constructor(options, texture) {
+  constructor(options) {
     this.grid = options.grid;
     this.colorMoveCell = new THREE.Color("#14ff4e");
     this.colorAttackCell = new THREE.Color("#f51212");
@@ -15,25 +15,16 @@ export default class Floor {
     this.attackHighlightCells = new Set();
     this.lootHighlightCells = new Set();
     this.hoveredCellId = null;
-    console.log(texture)
-    const floorDiff = textureManager.get(texture.floorDiff);
-    floorDiff.colorSpace = THREE.SRGBColorSpace;
-
     this.geometry = new THREE.BoxGeometry(
       CONSTANTS.CELL_SIZE,
       this.y,
       CONSTANTS.CELL_SIZE,
     );
     this.geometry.userData.disposeOnRemove = true;
-    this.material = new THREE.MeshLambertMaterial({
-      normalMap: textureManager.get(texture.normalMap),
-      map: floorDiff,
-      aoMap: textureManager.get(texture.aoMap),
-    });
-    this.material.userData.disposeOnRemove = true;
+
     this.instanced = new THREE.InstancedMesh(
       this.geometry,
-      this.material,
+      materialManager.getMaterial("floor"),
       this.grid.cols * this.grid.rows,
     );
     this.dummy = new THREE.Object3D();

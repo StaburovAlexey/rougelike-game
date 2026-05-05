@@ -1,32 +1,30 @@
 import * as THREE from "three";
-import { modelManager } from "../../core/modelManager";
-import COLORS from "../../static/constants";
-
-const colorByMaterialName = {
-  Bonfire: COLORS.BONFIRE_WOOD_COLOR,
-  Border: COLORS.BORDER_COLOR,
-  BoxSteel: COLORS.BOX_STEEL_COLOR,
-  BoxWood: COLORS.BOX_WOOD_COLOR,
-  RockWall: COLORS.ROCK_WALL_COLOR,
-  ShieldSteel: COLORS.SHIELD_STEEL_COLOR,
-  ShieldWood: COLORS.SHIELD_WOOD_COLOR,
-};
+import materialManager from "../../core/materialManager";
+import { animationsManager } from "../../core/animationManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Obstacle {
-  constructor(options, levelModel) {
-    this.levelModel = levelModel;
+  constructor(options, backgroundModels) {
     this.grid = options.grid;
+    this.backgroundModels = backgroundModels;
     this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.cellById = new Map();
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.rotationByCellId = new Map();
+    this.bonfireFireSprites = new Map();
+    this.bonfireFireFrames = [];
+    this.bonfireFireFrame = 0;
+    this.bonfireFireElapsed = 0;
+    this.bonfireFireFps = 12;
+    this.bonfireFireGeometry = null;
+    this.bonfireFireMaterial = null;
 
     this.variants = this.#loadVariants();
 
@@ -63,15 +61,6 @@ export default class Obstacle {
     this.#init();
   }
 
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || "";
-    const material = new THREE.MeshLambertMaterial({
-      color: colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR,
-    });
-    material.userData.disposeOnRemove = true;
-    return material;
-  }
-
   #createVariant(object3D) {
     object3D.updateWorldMatrix(true, true);
 
@@ -81,7 +70,7 @@ export default class Obstacle {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: child.matrixWorld.clone(),
       });
     });
@@ -94,13 +83,12 @@ export default class Obstacle {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
+    if (!this.backgroundModels) {
       throw new Error("Level model is not loaded");
     }
 
-    levelModel.scene.updateMatrixWorld(true);
-    const obstacleNodes = levelModel.scene.children.filter(
+    this.backgroundModels.scene.updateMatrixWorld(true);
+    const obstacleNodes = this.backgroundModels.scene.children.filter(
       (child) =>
         typeof child.name === "string" && child.name.includes("obstacle"),
     );
@@ -199,6 +187,50 @@ export default class Obstacle {
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
     }
+
+    this.#createBonfireFireSprites();
+  }
+
+  #prepareBonfireFireFrames() {
+    for (const texture of this.bonfireFireFrames) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+    }
+  }
+
+  #createBonfireFireSprites() {
+    this.bonfireFireFrames =
+      animationsManager.get("bonfire")?.fireAnimation ?? [];
+    if (!this.bonfireFireFrames.length) return;
+
+    this.#prepareBonfireFireFrames();
+    this.bonfireFireGeometry = new THREE.PlaneGeometry(1.1, 1.25);
+    this.bonfireFireMaterial = new THREE.MeshBasicMaterial({
+      map: this.bonfireFireFrames[0],
+      transparent: true,
+      alphaTest: 0.05,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+    this.bonfireFireMaterial.userData.disposeOnRemove = true;
+
+    for (let i = 0; i < this.obstacleCells.length; i++) {
+      const cell = this.obstacleCells[i];
+      const variantIndex = this.obstacleVariantByCell[i];
+      if (!this.#isBonfireVariant(variantIndex)) continue;
+
+      const fire = new THREE.Mesh(
+        this.bonfireFireGeometry,
+        this.bonfireFireMaterial,
+      );
+      fire.visible = false;
+      fire.position.set(cell.worldX, 0.85, cell.worldZ);
+      this.bonfireFireSprites.set(cell.id, fire);
+      this.instanced.add(fire);
+    }
   }
 
   updateVisible(cells = []) {
@@ -230,6 +262,37 @@ export default class Obstacle {
         instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
+
+      const bonfireFire = this.bonfireFireSprites.get(cell.id);
+      if (bonfireFire) bonfireFire.visible = true;
+    }
+  }
+
+  update(delta, camera) {
+    this.#lookAtCameraYawOnly(camera);
+
+    if (!this.bonfireFireMaterial || this.bonfireFireFrames.length <= 1) return;
+
+    this.bonfireFireElapsed += delta;
+    const frameDuration = 1 / this.bonfireFireFps;
+
+    while (this.bonfireFireElapsed >= frameDuration) {
+      this.bonfireFireElapsed -= frameDuration;
+      this.bonfireFireFrame =
+        (this.bonfireFireFrame + 1) % this.bonfireFireFrames.length;
+      this.bonfireFireMaterial.map =
+        this.bonfireFireFrames[this.bonfireFireFrame];
+      this.bonfireFireMaterial.needsUpdate = true;
+    }
+  }
+
+  #lookAtCameraYawOnly(camera) {
+    if (!camera) return;
+
+    for (const fire of this.bonfireFireSprites.values()) {
+      const dx = camera.position.x - fire.position.x;
+      const dz = camera.position.z - fire.position.z;
+      fire.rotation.set(0, Math.atan2(dx, dz), 0);
     }
   }
 }

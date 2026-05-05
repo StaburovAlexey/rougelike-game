@@ -1,19 +1,28 @@
-import * as THREE from 'three';
-import { modelManager } from '../../core/modelManager';
-import COLORS from '../../static/constants';
+import * as THREE from "three";
+import { materialManager } from "../../core/materialManager";
+import { animationsManager } from "../../core/animationManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Torch {
-  constructor({ cells } = {},levelModel) {
+  constructor(cells, backgroundModels) {
     this.cells = cells;
+    this.backgroundModels = backgroundModels;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.variantByCell = [];
     this.variantInstances = [];
     this.variants = [];
+    this.fireMeshes = new Map();
+    this.fireFrames = [];
+    this.fireFrame = 0;
+    this.fireElapsed = 0;
+    this.fireFps = 12;
+    this.fireGeometry = null;
+    this.fireMaterial = null;
     this.cellById = new Map();
     this.cellIndexById = new Map();
     this.instanceIndexByCellId = new Map();
@@ -24,21 +33,7 @@ export default class Torch {
       left: -Math.PI / 2,
     };
     this.visibleScale = new THREE.Vector3(1, 1, 1);
-    this.levelModel=levelModel
     this.#init();
-  }
-
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || '';
-    let color = sourceMaterial?.color?.getHex?.() ?? 0xffffff;
-
-    if (materialName === 'RockWall') color = new THREE.Color(COLORS.ROCK_WALL_COLOR).getHex();
-    if (materialName === 'Border') color = new THREE.Color(COLORS.BORDER_COLOR).getHex();
-    if (materialName === 'Torch') color = new THREE.Color(COLORS.TORCH_COLOR).getHex();
-
-    const material = new THREE.MeshLambertMaterial({ color });
-    material.userData.disposeOnRemove = true;
-    return material;
   }
 
   #createVariant(object3D) {
@@ -58,7 +53,7 @@ export default class Torch {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: modelOffsetMatrix.clone().multiply(child.matrixWorld),
       });
     });
@@ -67,14 +62,13 @@ export default class Torch {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
-      throw new Error('Level model is not loaded');
+    if (!this.backgroundModels) {
+      throw new Error("Level model is not loaded");
     }
 
-    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    const levelVariants = this.#loadVariantsFromLevel(this.backgroundModels);
     if (!levelVariants.length) {
-      throw new Error('Level model has no wall torch variants');
+      throw new Error("Level model has no wall torch variants");
     }
 
     return levelVariants;
@@ -83,8 +77,8 @@ export default class Torch {
   #loadVariantsFromLevel(levelModel) {
     levelModel.scene.updateMatrixWorld(true);
 
-    const torchNodes = levelModel.scene.children.filter((child) =>
-      typeof child.name === 'string' && child.name.includes('torch'),
+    const torchNodes = levelModel.scene.children.filter(
+      (child) => typeof child.name === "string" && child.name.includes("torch"),
     );
 
     return torchNodes.map((torchNode) => this.#createVariant(torchNode));
@@ -93,8 +87,8 @@ export default class Torch {
   #buildInstancedFromModel() {
     this.variants = this.#loadVariants();
 
-    this.variantByCell = this.cells.map(
-      () => Math.floor(Math.random() * this.variants.length),
+    this.variantByCell = this.cells.map(() =>
+      Math.floor(Math.random() * this.variants.length),
     );
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.variantByCell.length; i++) {
@@ -157,6 +151,53 @@ export default class Torch {
     }
   }
 
+  #prepareFireFrames() {
+    for (const texture of this.fireFrames) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+    }
+  }
+
+  #createFireSprites() {
+    this.fireFrames = animationsManager.get("torch")?.fireAnimation ?? [];
+    if (!this.fireFrames.length) return;
+
+    this.#prepareFireFrames();
+    this.fireGeometry = new THREE.PlaneGeometry(0.35, 0.55);
+    this.fireMaterial = new THREE.MeshBasicMaterial({
+      map: this.fireFrames[0],
+      transparent: true,
+      alphaTest: 0.05,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+    this.fireMaterial.userData.disposeOnRemove = true;
+
+    for (const cell of this.cells) {
+      const fire = new THREE.Mesh(this.fireGeometry, this.fireMaterial);
+      fire.visible = false;
+      fire.position.copy(this.#getFirePosition(cell));
+      fire.rotation.y = this.sideYaw[cell.side] ?? 0;
+      this.fireMeshes.set(cell.id, fire);
+      this.instanced.add(fire);
+    }
+  }
+
+  #getFirePosition(cell) {
+    const position = new THREE.Vector3(cell.worldX, 1.5, cell.worldZ);
+    const offset = 0.40;
+
+    if (cell.side === "top") position.z += offset;
+    if (cell.side === "bottom") position.z -= offset;
+    if (cell.side === "left") position.x += offset;
+    if (cell.side === "right") position.x -= offset;
+
+    return position;
+  }
+
   updateVisible(cells = []) {
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
@@ -169,7 +210,11 @@ export default class Torch {
       const sourceCell = this.cellById.get(cell.id);
       const sourceIndex = this.cellIndexById.get(cell.id);
       const instanceIndex = this.instanceIndexByCellId.get(cell.id);
-      if (!sourceCell || sourceIndex === undefined || instanceIndex === undefined) {
+      if (
+        !sourceCell ||
+        sourceIndex === undefined ||
+        instanceIndex === undefined
+      ) {
         continue;
       }
 
@@ -179,7 +224,10 @@ export default class Torch {
       if (!instancedMeshes) continue;
 
       basePosition.set(sourceCell.worldX, 0, sourceCell.worldZ);
-      baseRotation.setFromAxisAngle(yawAxis, this.sideYaw[sourceCell.side] ?? 0);
+      baseRotation.setFromAxisAngle(
+        yawAxis,
+        this.sideYaw[sourceCell.side] ?? 0,
+      );
       baseMatrix.compose(basePosition, baseRotation, this.visibleScale);
 
       for (let j = 0; j < variant.parts.length; j++) {
@@ -188,6 +236,23 @@ export default class Torch {
         instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
+
+      const fire = this.fireMeshes.get(cell.id);
+      if (fire) fire.visible = true;
+    }
+  }
+
+  update(delta) {
+    if (!this.fireMaterial || this.fireFrames.length <= 1) return;
+
+    this.fireElapsed += delta;
+    const frameDuration = 1 / this.fireFps;
+
+    while (this.fireElapsed >= frameDuration) {
+      this.fireElapsed -= frameDuration;
+      this.fireFrame = (this.fireFrame + 1) % this.fireFrames.length;
+      this.fireMaterial.map = this.fireFrames[this.fireFrame];
+      this.fireMaterial.needsUpdate = true;
     }
   }
 
@@ -199,5 +264,6 @@ export default class Torch {
     }
 
     this.#buildInstancedFromModel();
+    this.#createFireSprites();
   }
 }

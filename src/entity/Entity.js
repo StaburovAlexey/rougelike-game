@@ -7,7 +7,9 @@ export default class Entity {
     this.atk = type.atk;
     this.name = type.type || type.name;
     this.cellPosition = position;
-    this.mesh = new MashEntity(this.name).mesh;
+    const mash = new MashEntity(this.name);
+    this.mesh = mash.mesh;
+    this.animator = mash.animator;
     this.syncMeshToCell(this.cellPosition);
     this.inventory = new InventoryManager();
     sceneManager.add(this.mesh);
@@ -28,7 +30,11 @@ export default class Entity {
     this.mesh.material?.dispose?.();
     this.mesh = null;
   }
+  update(delta) {
+    this.animator?.update(delta);
+  }
   tryAttack(entity) {
+    this.animator?.playOnce('attack');
     const entityDef = entity.inventory.def;
     const atk = this.atk + this.inventory.weaponAtk;
     if (entityDef > atk) {

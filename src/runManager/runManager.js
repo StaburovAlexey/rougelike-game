@@ -23,7 +23,7 @@ export default class RunManager {
   }
   #init() {
     if (this.typeRun === "classic") {
-      this.length = 10;
+      this.length = 12;
     }
     for (let i = 0; i < this.length; i++) {
       const level = {};
@@ -42,7 +42,12 @@ export default class RunManager {
       );
       level.enemies = enemyGenerator.enemies;
       level.loot = lootGenerator.loot;
-      level.ui = level.index < 4 ? 1 : 2;
+      level.levelPrefix =
+        level.index < this.length / 3
+          ? 1
+          : level.index < this.length / 3 + this.length / 3
+            ? 2
+            : 3;
       this.runMap.push(level);
     }
     this.renderLevel(this.runMap[0]);
@@ -69,6 +74,9 @@ export default class RunManager {
     this.activeIndex++;
     const level = this.runMap[this.activeIndex];
     this.renderLevel(level);
+  }
+  update(delta) {
+    this.aciveLevel?.update(delta, this.camera);
   }
   getRandomGrid(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

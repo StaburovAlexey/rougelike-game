@@ -6,7 +6,7 @@ import CellInteractionController from "../interaction/cellInteractionController"
 import Player from "../entity/Player";
 import EnemiesManager from "../EnemiesManager/EnemiesManager";
 import LootManager from "../LootManager/lootManager";
-
+import materialManager from "../core/materialManager";
 export default class LevelManager {
   constructor(options, player) {
     this.cols = options.size.cols;
@@ -14,7 +14,7 @@ export default class LevelManager {
     this.doorsCount = options.doorsQuantity;
     this.camera = options.camera;
     this.domElement = options.domElement;
-    this.ui = options.ui;
+    this.levelPrefix = options.levelPrefix;
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = ((this.cols - 1) * this.step) / 2;
     this.halfH = ((this.rows - 1) * this.step) / 2;
@@ -29,18 +29,10 @@ export default class LevelManager {
     });
 
     this.nextLevel = options.nextLevel;
-    this.staticInstancedRenderer = new StaticInstancedRenderer(
-      this.grid,
-      this.ui,
-    );
+    materialManager.setPrefixLevel(this.levelPrefix);
+    this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
     this.player.syncMeshToCell(this.grid.getCellPlayer());
-    // this.player = new Player(this.grid.getCellPlayer(), {
-    //   name: 'player',
-    //   hp: 2,
-    //   atk: 2,
-    //   def: 2,
-    // });
     this.loot = new LootManager(options.loot, this.grid);
     this.enemies = new EnemiesManager(options.enemies, this.grid, this.loot);
     this.cellInteractionController = new CellInteractionController({
@@ -100,5 +92,11 @@ export default class LevelManager {
     this.grid = null;
     this.enemies = null;
     this.loot = null;
+  }
+
+  update(delta, camera) {
+    this.staticInstancedRenderer?.update(delta, camera);
+    this.player?.update(delta);
+    this.enemies?.update(delta);
   }
 }

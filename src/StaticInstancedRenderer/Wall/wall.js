@@ -1,28 +1,22 @@
-import * as THREE from 'three';
-import { modelManager } from '../../core/modelManager';
-import COLORS from '../../static/constants';
-
-const colorByMaterialName = {
-  Berry: COLORS.BERRY_COLOR,
-  Border: COLORS.BORDER_COLOR,
-  Bush: COLORS.BUSH_COLOR,
-  WallWood: COLORS.WAll_WOOD_COLOR,
-};
+import * as THREE from "three";
+import materialManager from "../../core/materialManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Wall {
-  constructor(options,levelModel) {
+  constructor(options, backgroundModels) {
     this.grid = options.grid;
+    this.backgroundModels = backgroundModels;
     this.wallCells = this.grid.getWallCells();
     this.hiddenScale = new THREE.Vector3(
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
-      COLORS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.cellById = new Map();
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
-    this.levelModel = levelModel
+
     const { variants } = this.#loadVariants();
     this.variants = variants;
     this.cornerVariantIndices = this.variants
@@ -32,14 +26,21 @@ export default class Wall {
       .map((variant, index) => (!variant.isCorner ? index : -1))
       .filter((index) => index !== -1);
 
-    this.wallVariantByCell = this.wallCells.map((cell) => this.#pickVariantIndex(cell));
-    this.wallFacingByCell = this.wallCells.map((cell) => this.#getCellRotation(cell));
+    this.wallVariantByCell = this.wallCells.map((cell) =>
+      this.#pickVariantIndex(cell),
+    );
+    this.wallFacingByCell = this.wallCells.map((cell) =>
+      this.#getCellRotation(cell),
+    );
 
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.wallVariantByCell.length; i++) {
       variantCounts[this.wallVariantByCell[i]]++;
       this.cellById.set(this.wallCells[i].id, this.wallCells[i]);
-      this.facingOffsetByCellId.set(this.wallCells[i].id, this.wallFacingByCell[i]);
+      this.facingOffsetByCellId.set(
+        this.wallCells[i].id,
+        this.wallFacingByCell[i],
+      );
     }
 
     this.instanced = new THREE.Group();
@@ -47,22 +48,17 @@ export default class Wall {
       const count = variantCounts[variantIndex];
       if (!count) return null;
       return variant.parts.map((part) => {
-        const mesh = new THREE.InstancedMesh(part.geometry, part.material, count);
+        const mesh = new THREE.InstancedMesh(
+          part.geometry,
+          part.material,
+          count,
+        );
         this.instanced.add(mesh);
         return mesh;
       });
     });
 
     this.#init();
-  }
-
-  #createMaterial(sourceMaterial) {
-    const materialName = sourceMaterial?.name || '';
-    const color = colorByMaterialName[materialName] || COLORS.ROCK_WALL_COLOR;
-
-    const material = new THREE.MeshLambertMaterial({ color });
-    material.userData.disposeOnRemove = true;
-    return material;
   }
 
   #createVariant(object3D, { isCorner = false } = {}) {
@@ -77,7 +73,7 @@ export default class Wall {
       if (!child.isMesh) return;
       parts.push({
         geometry: child.geometry,
-        material: this.#createMaterial(child.material),
+        material: materialManager.getMaterial(child.material?.name),
         localMatrix: child.matrixWorld.clone(),
       });
     });
@@ -91,14 +87,13 @@ export default class Wall {
   }
 
   #loadVariants() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
-      throw new Error('Level model is not loaded');
+    if (!this.backgroundModels) {
+      throw new Error("Level model is not loaded");
     }
 
-    const levelVariants = this.#loadVariantsFromLevel(levelModel);
+    const levelVariants = this.#loadVariantsFromLevel(this.backgroundModels);
     if (!levelVariants.variants.length) {
-      throw new Error('Level model has no wall variants');
+      throw new Error("Level model has no wall variants");
     }
 
     return levelVariants;
@@ -107,10 +102,11 @@ export default class Wall {
   #loadVariantsFromLevel(levelModel) {
     levelModel.scene.updateMatrixWorld(true);
 
-    const wallNodes = levelModel.scene.children.filter((child) =>
-      typeof child.name === 'string' &&
-      child.name.includes('wall') &&
-      !child.name.includes('torch'),
+    const wallNodes = levelModel.scene.children.filter(
+      (child) =>
+        typeof child.name === "string" &&
+        child.name.includes("wall") &&
+        !child.name.includes("torch"),
     );
 
     if (!wallNodes.length) {
@@ -120,7 +116,7 @@ export default class Wall {
     return {
       variants: wallNodes.map((node) =>
         this.#createVariant(node, {
-          isCorner: node.name.toLowerCase().includes('corner'),
+          isCorner: node.name.toLowerCase().includes("corner"),
         }),
       ),
     };
@@ -162,11 +158,14 @@ export default class Wall {
   }
 
   #getCellRotation(cell) {
-    if (this.#isCorner(cell.row, cell.col) && this.cornerVariantIndices.length) {
+    if (
+      this.#isCorner(cell.row, cell.col) &&
+      this.cornerVariantIndices.length
+    ) {
       return this.#getCornerRotation(cell);
     }
 
-    const isSideWall = cell.side === 'left' || cell.side === 'right';
+    const isSideWall = cell.side === "left" || cell.side === "right";
     const facingOffset = Math.random() < 0.5 ? 0 : Math.PI;
     return (isSideWall ? Math.PI / 2 : 0) + facingOffset;
   }
@@ -191,7 +190,10 @@ export default class Wall {
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        finalMatrix.multiplyMatrices(
+          dummy.matrix,
+          variant.parts[j].localMatrix,
+        );
         instancedMeshes[j].setMatrixAt(writeOffsets[variantIndex], finalMatrix);
       }
       this.variantIndexByCellId.set(cell.id, variantIndex);
@@ -217,11 +219,7 @@ export default class Wall {
       const cell = this.cellById.get(sourceCell.id);
       const variantIndex = this.variantIndexByCellId.get(sourceCell.id);
       const instanceIndex = this.instanceIndexByCellId.get(sourceCell.id);
-      if (
-        !cell ||
-        variantIndex === undefined ||
-        instanceIndex === undefined
-      ) {
+      if (!cell || variantIndex === undefined || instanceIndex === undefined) {
         continue;
       }
 
@@ -237,7 +235,10 @@ export default class Wall {
       dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
-        finalMatrix.multiplyMatrices(dummy.matrix, variant.parts[j].localMatrix);
+        finalMatrix.multiplyMatrices(
+          dummy.matrix,
+          variant.parts[j].localMatrix,
+        );
         instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }

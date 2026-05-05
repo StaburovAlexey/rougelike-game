@@ -305,6 +305,12 @@ export default class EnemiesManager {
     });
   }
 
+  update(delta) {
+    this.enemies.forEach((enemy) => {
+      enemy.update(delta);
+    });
+  }
+
   tryMove() {
     const playerCell = this.grid.getCellPlayer();
     if (!playerCell) return;

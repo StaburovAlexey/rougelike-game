@@ -1,22 +1,16 @@
-import * as THREE from 'three';
-import { modelManager } from '../../core/modelManager';
-import constants from '../../static/constants';
-
-const colorByMaterialName = {
-  Border: constants.BORDER_COLOR,
-  Door: constants.DOOR_COLOR,
-  Handle: constants.HANDLE_COLOR,
-  RockWall: constants.ROCK_WALL_COLOR,
-};
+import * as THREE from "three";
+import materialManager from "../../core/materialManager";
+import CONSTANTS from "../../static/constants";
 
 export default class Doors {
-  constructor({ cells } = {},levelModel) {
+  constructor(cells, backgroundModels) {
     this.cells = cells;
+    this.backgroundModels = backgroundModels;
     this.instanced = new THREE.Group();
     this.hiddenScale = new THREE.Vector3(
-      constants.HIDDEN_SCALE,
-      constants.HIDDEN_SCALE,
-      constants.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
+      CONSTANTS.HIDDEN_SCALE,
     );
     this.baseScale = null;
     this.baseYOffset = 0;
@@ -30,22 +24,20 @@ export default class Doors {
       bottom: 0,
       left: -Math.PI / 2,
     };
-    this.levelModel = levelModel
     this.#init();
   }
 
   #buildInstancedFromModel() {
-    const levelModel = modelManager.get(this.levelModel);
-    if (!levelModel) {
-      throw new Error('Level model is not loaded');
+    if (!this.backgroundModels) {
+      throw new Error("Level model is not loaded");
     }
 
-    levelModel.scene.updateMatrixWorld(true);
-    const doorNode = levelModel.scene.children.find((child) =>
-      typeof child.name === 'string' && child.name.includes('door'),
+    this.backgroundModels.scene.updateMatrixWorld(true);
+    const doorNode = this.backgroundModels.scene.children.find(
+      (child) => typeof child.name === "string" && child.name.includes("door"),
     );
     if (!doorNode) {
-      throw new Error('Level model has no door variant');
+      throw new Error("Level model has no door variant");
     }
 
     const bbox = new THREE.Box3().setFromObject(doorNode);
@@ -54,13 +46,13 @@ export default class Doors {
     const sizeX = bboxSize.x || 1;
     const sizeY = bboxSize.y || 1;
     const sizeZ = bboxSize.z || 1;
-    const targetX = constants.CELL_SIZE;
-    const targetY = constants.CELL_SIZE * 1.4;
-    const targetZ = constants.CELL_SIZE * 0.5;
+    const targetX = CONSTANTS.CELL_SIZE;
+    const targetY = CONSTANTS.CELL_SIZE * 1.4;
+    const targetZ = CONSTANTS.CELL_SIZE * 0.5;
     const scaleX = targetX / sizeX;
     const scaleY = targetY / sizeY;
     const scaleZ = targetZ / sizeZ;
-    const liftOffset = constants.CELL_SIZE * 0.18;
+    const liftOffset = CONSTANTS.CELL_SIZE * 0.18;
     this.baseYOffset = -bbox.min.y * scaleY + liftOffset;
     this.baseScale = new THREE.Vector3(scaleX, scaleY, scaleZ);
 
@@ -76,20 +68,9 @@ export default class Doors {
     const finalMatrix = new THREE.Matrix4();
 
     for (const source of meshNodes) {
-      const toLambert = (mat) => {
-        const material = new THREE.MeshLambertMaterial({
-          color: colorByMaterialName[mat?.name] || '#ffffff',
-        });
-        material.userData.disposeOnRemove = true;
-        return material;
-      };
-      const material = Array.isArray(source.material)
-        ? source.material.map(toLambert)
-        : toLambert(source.material);
-
       const instancedMesh = new THREE.InstancedMesh(
         source.geometry,
-        material,
+        materialManager.getMaterial(source.material?.name),
         this.cells.length,
       );
       instancedMesh.matrixAutoUpdate = false;
@@ -125,7 +106,10 @@ export default class Doors {
       if (!sourceCell || index === undefined) continue;
 
       basePosition.set(sourceCell.worldX, this.baseYOffset, sourceCell.worldZ);
-      baseRotation.setFromAxisAngle(yawAxis, this.sideYaw[sourceCell.side] ?? 0);
+      baseRotation.setFromAxisAngle(
+        yawAxis,
+        this.sideYaw[sourceCell.side] ?? 0,
+      );
       baseMatrix.compose(basePosition, baseRotation, this.baseScale);
 
       for (let meshIndex = 0; meshIndex < this.meshes.length; meshIndex++) {
