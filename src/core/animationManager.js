@@ -1,5 +1,6 @@
 import textureManager from "./textureManager";
 import { ENEMY_TYPE_RULES } from "../static/enemy";
+import { HERO_CLASS } from "../static/hero";
 export class AnimationsManager {
   static #instance = null;
   constructor() {
@@ -11,7 +12,7 @@ export class AnimationsManager {
     this.#initStatic();
   }
   #initEntity() {
-    const temp = { ...ENEMY_TYPE_RULES, player_1: {} };
+    const temp = { ...ENEMY_TYPE_RULES, ...HERO_CLASS };
     for (const entity in temp) {
       const idleAnimation = this.#getAnimationFrames(entity, "idle");
       const attackAnimation = this.#getAnimationFrames(entity, "attack");

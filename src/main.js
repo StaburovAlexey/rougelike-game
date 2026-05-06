@@ -21,6 +21,7 @@ const control = new Controls(
 );
 const run = new RunManager({
   typeRun: "classic",
+  classHero: "warrior",
   camera: camera.getCamera(),
   domElement: sceneManager.renderer.domElement,
 });

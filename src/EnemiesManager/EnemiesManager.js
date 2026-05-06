@@ -57,7 +57,7 @@ export default class EnemiesManager {
   #renderEnemies(enemies) {
     const cellsForEnemies = this.#shuffle(this.grid.getEnemyCells());
     const count = Math.min(enemies.length, cellsForEnemies.length);
-
+    console.log('enemise', enemies)
     return enemies.slice(0, count).map((enemy, index) => {
       const cell = cellsForEnemies[index];
       return new Enemy(cell, {

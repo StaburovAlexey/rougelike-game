@@ -2,6 +2,7 @@ import LevelManager from "../levelManager/levelManager";
 import GenerateEnemy from "./generateEnemy";
 import GenerateLoot from "./generateLoot";
 import Player from "../entity/Player";
+import { HERO_CLASS } from "../static/hero";
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement }) {
     this.difficulty = difficulty;
@@ -13,12 +14,7 @@ export default class RunManager {
     this.runMap = [];
     this.activeIndex = 0;
     this.aciveLevel = null;
-    this.player = new Player(null, {
-      name: "player",
-      hp: 2,
-      atk: 2,
-      def: 2,
-    });
+    this.player = new Player(null, HERO_CLASS["rouge"]);
     this.#init();
   }
   #init() {

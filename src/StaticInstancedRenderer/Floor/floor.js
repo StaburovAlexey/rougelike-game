@@ -10,7 +10,7 @@ export default class Floor {
     this.colorLootCell = new THREE.Color("#ffd24a");
     this.colorHoverCell = new THREE.Color("#7bdff2");
     this.basicColorCell = new THREE.Color("#ffffff");
-    this.y = 0.2;
+    this.y = CONSTANTS.FLOOR_HEIGHT;
     this.moveHighlightCells = new Set();
     this.attackHighlightCells = new Set();
     this.lootHighlightCells = new Set();

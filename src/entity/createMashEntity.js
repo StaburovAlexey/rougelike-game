@@ -17,8 +17,9 @@ export default class MashEntity {
       transparent: true,
       alphaTest: 0.05,
     });
+
     this.mesh = new THREE.Sprite(this.material);
-    this.mesh.scale.set(this.size, this.height, 1);
+    this.#getScale(typeTexture);
     this.animator = new SpriteAnimator(this.material, animations);
   }
 
@@ -33,10 +34,15 @@ export default class MashEntity {
       texture.wrapT = THREE.RepeatWrapping;
     }
   }
-
+  #getScale(typeTexture) {
+    if (typeTexture === "rouge") {
+      this.mesh.scale.set(2, 2, 2);
+    } else {
+      this.mesh.scale.set(this.size, this.height, 1);
+    }
+  }
   #getAnimations(typeTexture) {
-    const type = typeTexture === "player" ? "player_1" : typeTexture;
-    const animation = animationsManager.get(type);
+    const animation = animationsManager.get(typeTexture);
     if (animation?.idleAnimation?.length) {
       return {
         idle: animation.idleAnimation,

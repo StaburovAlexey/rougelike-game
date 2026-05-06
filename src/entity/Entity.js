@@ -1,6 +1,7 @@
 import MashEntity from './createMashEntity';
 import { sceneManager } from '../scene/scene';
 import InventoryManager from '../InventoryManager/inventoryManager';
+import CONSTANTS from '../static/constants';
 export default class Entity {
   constructor(position = null, type) {
     this.hp = type.hp;
@@ -18,9 +19,11 @@ export default class Entity {
   syncMeshToCell(cell) {
     if (!cell) return;
     this.cellPosition = cell;
+    const floorTopY = CONSTANTS.FLOOR_HEIGHT;
+    const meshCenterY = this.mesh.center?.y ?? 0.5;
     this.mesh.position.set(
       this.cellPosition.worldX,
-      0.9,
+      floorTopY + this.mesh.scale.y * meshCenterY,
       this.cellPosition.worldZ,
     );
   }
