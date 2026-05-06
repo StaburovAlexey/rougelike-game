@@ -1,6 +1,6 @@
 export const ENEMY_TYPE_RULES = {
   glot: {
-    hp: 20,
+    hp: 10,
     atk: 1,
     def: 0,
     aggroRange: 5,

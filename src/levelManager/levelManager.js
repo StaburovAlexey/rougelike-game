@@ -41,7 +41,7 @@ export default class LevelManager {
       grid: this.grid,
       renderer: this.staticInstancedRenderer,
       onHoverChange: (cell) => {},
-      onCellClick: (cell) => {
+      onCellClick: async (cell) => {
         if (!this.grid.isEventCell(cell)) return;
         if (cell.type === "door" && cell.doorRole === "out") {
           this.nextLevel?.();
@@ -49,26 +49,24 @@ export default class LevelManager {
         }
         if (cell.enemy) {
           const enemy = this.enemies.getEnemy(cell);
-          this.player.tryAttack(enemy);
+          await this.player.tryAttack(enemy);
+          console.log('атака прошла')
           const dieEnemies = this.enemies.tryAttack(this.player);
           this.loot.renderLootAfterDieEnemy(dieEnemies);
         } else {
           if (cell.loot) {
-            console.log("выбрана клетка с лутом");
             const loot = this.loot.findLoot(cell);
-            console.log("лут подобран", loot);
             if (loot) this.player.getLoot(loot);
-            console.log("итвентарь", this.player.inventory);
           }
           this.grid.movePlayerTo(cell);
           this.player.syncMeshToCell(cell);
           this.staticInstancedRenderer.updateVisible(
             this.grid.setVisibleCell(),
           );
-          this.enemies.tryMove();
-          this.enemies.syncVisible();
-          this.loot.syncVisible();
         }
+        this.enemies.tryMove();
+        this.enemies.syncVisible();
+        this.loot.syncVisible();
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
         );

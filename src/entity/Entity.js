@@ -1,8 +1,8 @@
-import * as THREE from 'three';
-import MashEntity from './createMashEntity';
-import { sceneManager } from '../scene/scene';
-import InventoryManager from '../InventoryManager/inventoryManager';
-import CONSTANTS from '../static/constants';
+import * as THREE from "three";
+import MashEntity from "./createMashEntity";
+import { sceneManager } from "../scene/scene";
+import InventoryManager from "../InventoryManager/inventoryManager";
+import CONSTANTS from "../static/constants";
 export default class Entity {
   constructor(position = null, type) {
     this.hp = type.hp;
@@ -64,10 +64,7 @@ export default class Entity {
   }
 
   #hasActiveAttackDirection() {
-    return (
-      this.animator?.current === 'attack' ||
-      this.attackFacingTime > 0
-    );
+    return this.animator?.current === "attack" || this.attackFacingTime > 0;
   }
 
   #setFacingLeft(facingLeft) {
@@ -109,17 +106,18 @@ export default class Entity {
     this.attackTarget = null;
     this.#setFacingLeft(false);
   }
-  tryAttack(entity) {
+  async tryAttack(entity) {
     this.attackTarget = entity;
     if (entity?.mesh) {
       this.attackTargetPosition.copy(entity.mesh.position);
     }
 
-    const attackStarted = this.animator?.playOnce('attack');
+    this.#syncAttackDirection();
+    const attackStarted = await this.animator?.playOnce("attack");
     if (!attackStarted) {
       this.attackFacingTime = 0.25;
     }
-    this.#syncAttackDirection();
+
     const entityDef = entity.inventory.def;
     const atk = this.atk + this.inventory.weaponAtk;
     if (entityDef > atk) {
@@ -130,13 +128,13 @@ export default class Entity {
 
     entity.inventory.useArmor();
     this.inventory.useWeapon();
-    if (this.name == 'player') {
-      console.log(this.inventory.weapon[0])
-      console.log('weaponAtk',this.inventory.weaponAtk )
+    if (this.name == "player") {
+      console.log(this.inventory.weapon[0]);
+      console.log("weaponAtk", this.inventory.weaponAtk);
     }
-    if (entity.name == 'player') {
-      console.log('DEF равен', entityDef);
-      console.log('Игрок получил урон:', atk);
+    if (entity.name == "player") {
+      console.log("DEF равен", entityDef);
+      console.log("Игрок получил урон:", atk);
     }
   }
 }

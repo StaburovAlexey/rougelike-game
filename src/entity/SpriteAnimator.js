@@ -2,7 +2,7 @@ export default class SpriteAnimator {
   constructor(material, animations = {}, options = {}) {
     this.material = material;
     this.animations = animations;
-    this.defaultAnimation = options.defaultAnimation ?? 'idle';
+    this.defaultAnimation = options.defaultAnimation ?? "idle";
     this.fps = options.fps ?? 8;
     this.fpsByAnimation = options.fpsByAnimation ?? {};
     this.current = this.defaultAnimation;
@@ -10,6 +10,7 @@ export default class SpriteAnimator {
     this.elapsed = 0;
     this.loop = true;
     this.afterOnce = null;
+    this.onComplete = null;
 
     this.#applyFrame();
   }
@@ -25,15 +26,20 @@ export default class SpriteAnimator {
     this.elapsed = 0;
     this.loop = options.loop ?? true;
     this.afterOnce = options.afterOnce ?? null;
+    this.onComplete = options.onComplete ?? null;
     this.#applyFrame();
     return true;
   }
 
   playOnce(name, afterOnce = this.defaultAnimation) {
-    return this.play(name, {
-      restart: true,
-      loop: false,
-      afterOnce,
+    return new Promise((resolve) => {
+      const started = this.play(name, {
+        restart: true,
+        loop: false,
+        afterOnce,
+        onComplete: () => resolve(true),
+      });
+      if (!started) resolve(false);
     });
   }
 
@@ -48,7 +54,10 @@ export default class SpriteAnimator {
     if (frames.length === 1) {
       if (!this.loop && this.elapsed >= frameDuration) {
         const nextAnimation = this.afterOnce;
+        const onComplete = this.onComplete;
         this.afterOnce = null;
+        this.onComplete = null;
+        onComplete?.();
         if (nextAnimation) this.play(nextAnimation, { restart: true });
       }
       return;
@@ -70,7 +79,10 @@ export default class SpriteAnimator {
       }
 
       const nextAnimation = this.afterOnce;
+      const onComplete = this.onComplete;
       this.afterOnce = null;
+      this.onComplete = null;
+      onComplete?.();
       if (nextAnimation) this.play(nextAnimation, { restart: true });
       return;
     }
