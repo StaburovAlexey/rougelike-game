@@ -305,9 +305,9 @@ export default class EnemiesManager {
     });
   }
 
-  update(delta) {
+  update(delta, camera) {
     this.enemies.forEach((enemy) => {
-      enemy.update(delta);
+      enemy.update(delta, camera);
     });
   }
 

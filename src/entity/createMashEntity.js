@@ -10,15 +10,18 @@ export default class MashEntity {
     const animations = this.#getAnimations(typeTexture);
     this.#prepareTextures(animations);
     const texture = animations.idle[0];
-    this.material = new THREE.SpriteMaterial({
+    this.geometry = new THREE.PlaneGeometry(1, 1);
+    this.geometry.userData.disposeOnRemove = true;
+    this.material = new THREE.MeshBasicMaterial({
       map: texture,
       color: 0xffffff,
       toneMapped: false,
       transparent: true,
       alphaTest: 0.05,
+      side: THREE.DoubleSide,
     });
 
-    this.mesh = new THREE.Sprite(this.material);
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.#getScale(typeTexture);
     this.animator = new SpriteAnimator(this.material, animations);
   }

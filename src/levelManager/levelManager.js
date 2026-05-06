@@ -96,7 +96,7 @@ export default class LevelManager {
 
   update(delta, camera) {
     this.staticInstancedRenderer?.update(delta, camera);
-    this.player?.update(delta);
-    this.enemies?.update(delta);
+    this.player?.update(delta, camera);
+    this.enemies?.update(delta, camera);
   }
 }

@@ -20,21 +20,32 @@ export default class Entity {
     if (!cell) return;
     this.cellPosition = cell;
     const floorTopY = CONSTANTS.FLOOR_HEIGHT;
-    const meshCenterY = this.mesh.center?.y ?? 0.5;
+    const meshCenterY = 0.5;
     this.mesh.position.set(
       this.cellPosition.worldX,
       floorTopY + this.mesh.scale.y * meshCenterY,
       this.cellPosition.worldZ,
     );
   }
+
+  syncMeshToCamera(camera) {
+    if (!camera || !this.mesh) return;
+
+    const dx = camera.position.x - this.mesh.position.x;
+    const dz = camera.position.z - this.mesh.position.z;
+    this.mesh.rotation.set(0, Math.atan2(dx, dz), 0);
+  }
+
   dispose() {
     if (!this.mesh) return;
     sceneManager.remove(this.mesh);
     this.mesh.material?.dispose?.();
+    this.mesh.geometry?.dispose?.();
     this.mesh = null;
   }
-  update(delta) {
+  update(delta, camera) {
     this.animator?.update(delta);
+    this.syncMeshToCamera(camera);
   }
   tryAttack(entity) {
     this.animator?.playOnce('attack');
