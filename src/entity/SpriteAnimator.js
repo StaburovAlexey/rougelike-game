@@ -4,6 +4,7 @@ export default class SpriteAnimator {
     this.animations = animations;
     this.defaultAnimation = options.defaultAnimation ?? 'idle';
     this.fps = options.fps ?? 8;
+    this.fpsByAnimation = options.fpsByAnimation ?? {};
     this.current = this.defaultAnimation;
     this.frame = 0;
     this.elapsed = 0;
@@ -41,7 +42,8 @@ export default class SpriteAnimator {
     if (!frames?.length) return;
 
     this.elapsed += delta;
-    const frameDuration = 1 / this.fps;
+    const fps = this.fpsByAnimation[this.current] ?? this.fps;
+    const frameDuration = 1 / fps;
 
     if (frames.length === 1) {
       if (!this.loop && this.elapsed >= frameDuration) {
