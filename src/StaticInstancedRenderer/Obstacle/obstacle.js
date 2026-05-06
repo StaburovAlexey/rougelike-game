@@ -3,6 +3,13 @@ import materialManager from "../../core/materialManager";
 import { animationsManager } from "../../core/animationManager";
 import CONSTANTS from "../../static/constants";
 
+const BONFIRE_LIGHT_COLOR = 0xff9b35;
+const BONFIRE_LIGHT_INTENSITY = 4.35;
+const BONFIRE_LIGHT_DISTANCE = 10.2;
+const BONFIRE_LIGHT_DECAY = 2;
+const BONFIRE_LIGHT_FLICKER_SPEED = 5.5;
+const BONFIRE_LIGHT_FLICKER_AMOUNT = 0.18;
+
 export default class Obstacle {
   constructor(options, backgroundModels) {
     this.grid = options.grid;
@@ -19,6 +26,8 @@ export default class Obstacle {
     this.instanceIndexByCellId = new Map();
     this.rotationByCellId = new Map();
     this.bonfireFireSprites = new Map();
+    this.bonfireLights = new Map();
+    this.bonfireLightPhases = new Map();
     this.bonfireFireFrames = [];
     this.bonfireFireFrame = 0;
     this.bonfireFireElapsed = 0;
@@ -230,7 +239,25 @@ export default class Obstacle {
       fire.position.set(cell.worldX, 0.85, cell.worldZ);
       this.bonfireFireSprites.set(cell.id, fire);
       this.instanced.add(fire);
+
+      const light = this.#createBonfireLight(fire.position);
+      this.bonfireLights.set(cell.id, light);
+      this.bonfireLightPhases.set(cell.id, Math.random() * Math.PI * 2);
+      this.instanced.add(light);
     }
+  }
+
+  #createBonfireLight(position) {
+    const light = new THREE.PointLight(
+      BONFIRE_LIGHT_COLOR,
+      BONFIRE_LIGHT_INTENSITY,
+      BONFIRE_LIGHT_DISTANCE,
+      BONFIRE_LIGHT_DECAY,
+    );
+    light.visible = false;
+    light.castShadow = false;
+    light.position.copy(position);
+    return light;
   }
 
   updateVisible(cells = []) {
@@ -265,12 +292,19 @@ export default class Obstacle {
 
       const bonfireFire = this.bonfireFireSprites.get(cell.id);
       if (bonfireFire) bonfireFire.visible = true;
+
+      const bonfireLight = this.bonfireLights.get(cell.id);
+      if (bonfireLight) bonfireLight.visible = true;
     }
   }
 
   update(delta, camera) {
     this.#lookAtCameraYawOnly(camera);
+    this.#updateBonfireFireAnimation(delta);
+    this.#updateBonfireLights();
+  }
 
+  #updateBonfireFireAnimation(delta) {
     if (!this.bonfireFireMaterial || this.bonfireFireFrames.length <= 1) return;
 
     this.bonfireFireElapsed += delta;
@@ -283,6 +317,23 @@ export default class Obstacle {
       this.bonfireFireMaterial.map =
         this.bonfireFireFrames[this.bonfireFireFrame];
       this.bonfireFireMaterial.needsUpdate = true;
+    }
+  }
+
+  #updateBonfireLights() {
+    const time = performance.now() / 1000;
+
+    for (const [cellId, light] of this.bonfireLights) {
+      if (!light.visible) continue;
+
+      const phase = this.bonfireLightPhases.get(cellId) ?? 0;
+      const wave = Math.sin(time * BONFIRE_LIGHT_FLICKER_SPEED + phase);
+      const fastWave = Math.sin(
+        time * BONFIRE_LIGHT_FLICKER_SPEED * 1.6 + phase,
+      );
+      const flicker =
+        1 + (wave * 0.65 + fastWave * 0.35) * BONFIRE_LIGHT_FLICKER_AMOUNT;
+      light.intensity = BONFIRE_LIGHT_INTENSITY * flicker;
     }
   }
 

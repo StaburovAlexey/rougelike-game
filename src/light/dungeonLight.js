@@ -15,7 +15,7 @@ export default class DungeonLight {
   }
 
   #createKeyLight() {
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
     keyLight.position.set(6, 10, 4);
     return keyLight;
   }
@@ -31,7 +31,7 @@ export default class DungeonLight {
     this.scene.fog = new THREE.Fog(fogColor, 12, 42);
 
     this.hemisphere = new THREE.HemisphereLight(0xf5f2ea, 0x1a1816, 0.38);
-    this.ambient = new THREE.AmbientLight(0xffffff, 0.24);
+    this.ambient = new THREE.AmbientLight(0xffffff, 0.04);
     this.keyLight = this.#createKeyLight();
 
     this.fillLight = new THREE.DirectionalLight(0xf2ede3, 0.3);
@@ -40,8 +40,8 @@ export default class DungeonLight {
     this.rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
     this.rimLight.position.set(1, 4, -8);
     this.lightGroup.add(
-      this.hemisphere,
-      this.ambient,
+      // this.hemisphere,
+      // this.ambient,
       this.keyLight,
       this.fillLight,
       this.rimLight,

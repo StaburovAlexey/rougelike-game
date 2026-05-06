@@ -3,6 +3,13 @@ import { materialManager } from "../../core/materialManager";
 import { animationsManager } from "../../core/animationManager";
 import CONSTANTS from "../../static/constants";
 
+const FIRE_LIGHT_COLOR = 0xff8a2a;
+const FIRE_LIGHT_INTENSITY = 2.75;
+const FIRE_LIGHT_DISTANCE = 2.8;
+const FIRE_LIGHT_DECAY = 2;
+const FIRE_LIGHT_FLICKER_SPEED = 7;
+const FIRE_LIGHT_FLICKER_AMOUNT = 0.16;
+
 export default class Torch {
   constructor(cells, backgroundModels) {
     this.cells = cells;
@@ -17,6 +24,8 @@ export default class Torch {
     this.variantInstances = [];
     this.variants = [];
     this.fireMeshes = new Map();
+    this.fireLights = new Map();
+    this.fireLightPhases = new Map();
     this.fireFrames = [];
     this.fireFrame = 0;
     this.fireElapsed = 0;
@@ -183,7 +192,25 @@ export default class Torch {
       fire.rotation.y = this.sideYaw[cell.side] ?? 0;
       this.fireMeshes.set(cell.id, fire);
       this.instanced.add(fire);
+
+      const light = this.#createFireLight(fire.position);
+      this.fireLights.set(cell.id, light);
+      this.fireLightPhases.set(cell.id, Math.random() * Math.PI * 2);
+      this.instanced.add(light);
     }
+  }
+
+  #createFireLight(position) {
+    const light = new THREE.PointLight(
+      FIRE_LIGHT_COLOR,
+      FIRE_LIGHT_INTENSITY,
+      FIRE_LIGHT_DISTANCE,
+      FIRE_LIGHT_DECAY,
+    );
+    light.visible = false;
+    light.castShadow = false;
+    light.position.copy(position);
+    return light;
   }
 
   #getFirePosition(cell) {
@@ -239,10 +266,18 @@ export default class Torch {
 
       const fire = this.fireMeshes.get(cell.id);
       if (fire) fire.visible = true;
+
+      const light = this.fireLights.get(cell.id);
+      if (light) light.visible = true;
     }
   }
 
   update(delta) {
+    this.#updateFireAnimation(delta);
+    this.#updateFireLights();
+  }
+
+  #updateFireAnimation(delta) {
     if (!this.fireMaterial || this.fireFrames.length <= 1) return;
 
     this.fireElapsed += delta;
@@ -253,6 +288,21 @@ export default class Torch {
       this.fireFrame = (this.fireFrame + 1) % this.fireFrames.length;
       this.fireMaterial.map = this.fireFrames[this.fireFrame];
       this.fireMaterial.needsUpdate = true;
+    }
+  }
+
+  #updateFireLights() {
+    const time = performance.now() / 1000;
+
+    for (const [cellId, light] of this.fireLights) {
+      if (!light.visible) continue;
+
+      const phase = this.fireLightPhases.get(cellId) ?? 0;
+      const wave = Math.sin(time * FIRE_LIGHT_FLICKER_SPEED + phase);
+      const fastWave = Math.sin(time * FIRE_LIGHT_FLICKER_SPEED * 1.7 + phase);
+      const flicker =
+        1 + (wave * 0.7 + fastWave * 0.3) * FIRE_LIGHT_FLICKER_AMOUNT;
+      light.intensity = FIRE_LIGHT_INTENSITY * flicker;
     }
   }
 
