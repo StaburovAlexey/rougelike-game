@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+
 class TextureManager {
   constructor() {
     this.loader = new THREE.TextureLoader();
@@ -121,7 +123,7 @@ class TextureManager {
   #loadTexture(name, path) {
     return new Promise((resolve, reject) => {
       this.loader.load(
-        path,
+        assetUrl(path),
         (texture) => {
           this.textures.set(name, texture);
           resolve(texture);

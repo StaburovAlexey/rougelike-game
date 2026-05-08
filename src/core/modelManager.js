@@ -1,5 +1,7 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+
 class ModelManager {
   constructor() {
     this.loader = new GLTFLoader();
@@ -30,7 +32,7 @@ class ModelManager {
   #loadModel(name, path) {
     return new Promise((resolve, reject) => {
       this.loader.load(
-        path,
+        assetUrl(path),
         (gltf) => {
           this.models.set(name, gltf);
           resolve(gltf);
