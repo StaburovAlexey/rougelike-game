@@ -37,7 +37,7 @@ export default class StaticMeshRenderer {
       });
       const geometry = new THREE.BoxGeometry(CONSTANTS.CELL_SIZE, 1.5, CONSTANTS.CELL_SIZE);
       const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(x, 1.5 / 2 + 0.2, z);
+      mesh.position.set(x, 1.5 / 2 + CONSTANTS.FLOOR_HEIGHT, z);
 
       // ориентация по стороне
       if (cell.side === 'left' || cell.side === 'right')

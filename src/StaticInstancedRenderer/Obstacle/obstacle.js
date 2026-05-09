@@ -171,7 +171,11 @@ export default class Obstacle {
       const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+      dummy.position.set(
+        cell.worldX,
+        variant.yOffset + CONSTANTS.FLOOR_HEIGHT,
+        cell.worldZ,
+      );
       dummy.rotation.set(0, this.obstacleRotationByCell[i], 0);
       dummy.scale.copy(this.hiddenScale);
       dummy.updateMatrix();
@@ -276,7 +280,11 @@ export default class Obstacle {
       const instancedMeshes = this.variantInstances[variantIndex];
       if (!instancedMeshes) continue;
 
-      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+      dummy.position.set(
+        cell.worldX,
+        variant.yOffset + CONSTANTS.FLOOR_HEIGHT,
+        cell.worldZ,
+      );
       dummy.rotation.set(0, this.rotationByCellId.get(cell.id) ?? 0, 0);
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();

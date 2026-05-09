@@ -19,6 +19,7 @@ const COLORS = new Map([
   ["Bonfire_1", "#875a29"],
   ["Bush_1", "#3d9c45"],
   ["Berry_1", "#cb2727"],
+  ["Tube_1", "#384553"],
 ]);
 
 const CONSTANTS = {

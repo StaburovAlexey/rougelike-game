@@ -16,6 +16,7 @@ export default class Wall {
     this.variantIndexByCellId = new Map();
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
+    this.inwardFacingOffsetByCellId = new Map();
 
     const { variants } = this.#loadVariants();
     this.variants = variants;
@@ -29,6 +30,9 @@ export default class Wall {
     this.wallVariantByCell = this.wallCells.map((cell) =>
       this.#pickVariantIndex(cell),
     );
+    this.wallInwardFacingByCell = this.wallCells.map((cell) =>
+      this.#getCellInwardRotation(cell),
+    );
     this.wallFacingByCell = this.wallCells.map((cell) =>
       this.#getCellRotation(cell),
     );
@@ -40,6 +44,10 @@ export default class Wall {
       this.facingOffsetByCellId.set(
         this.wallCells[i].id,
         this.wallFacingByCell[i],
+      );
+      this.inwardFacingOffsetByCellId.set(
+        this.wallCells[i].id,
+        this.wallInwardFacingByCell[i],
       );
     }
 
@@ -68,6 +76,8 @@ export default class Wall {
     const size = new THREE.Vector3();
     bbox.getSize(size);
 
+    const objectName = object3D.name.toLowerCase();
+    const facesInward = objectName.includes("walltube");
     const parts = [];
     object3D.traverse((child) => {
       if (!child.isMesh) return;
@@ -80,6 +90,7 @@ export default class Wall {
 
     return {
       isCorner,
+      facesInward,
       parts,
       modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
       yOffset: -bbox.min.y,
@@ -165,9 +176,32 @@ export default class Wall {
       return this.#getCornerRotation(cell);
     }
 
+    return (
+      this.#getCellBaseRotation(cell) + (Math.random() < 0.5 ? 0 : Math.PI)
+    );
+  }
+
+  #getCellInwardRotation(cell) {
+    const inwardRotationBySide = {
+      top: 0,
+      right: -Math.PI / 2,
+      bottom: Math.PI,
+      left: Math.PI / 2,
+    };
+
+    return inwardRotationBySide[cell.side] ?? this.#getCellBaseRotation(cell);
+  }
+
+  #getCellBaseRotation(cell) {
+    if (
+      this.#isCorner(cell.row, cell.col) &&
+      this.cornerVariantIndices.length
+    ) {
+      return this.#getCornerRotation(cell);
+    }
+
     const isSideWall = cell.side === "left" || cell.side === "right";
-    const facingOffset = Math.random() < 0.5 ? 0 : Math.PI;
-    return (isSideWall ? Math.PI / 2 : 0) + facingOffset;
+    return isSideWall ? Math.PI / 2 : 0;
   }
 
   #init() {
@@ -184,12 +218,20 @@ export default class Wall {
 
       const facingOffset = this.wallFacingByCell[i];
 
-      dummy.rotation.set(0, facingOffset, 0);
-      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+      dummy.position.set(
+        cell.worldX,
+        variant.yOffset + CONSTANTS.FLOOR_HEIGHT,
+        cell.worldZ,
+      );
       dummy.scale.copy(this.hiddenScale);
-      dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
+        dummy.rotation.set(
+          0,
+          variant.facesInward ? this.wallInwardFacingByCell[i] : facingOffset,
+          0,
+        );
+        dummy.updateMatrix();
         finalMatrix.multiplyMatrices(
           dummy.matrix,
           variant.parts[j].localMatrix,
@@ -228,13 +270,23 @@ export default class Wall {
       if (!instancedMeshes) continue;
 
       const facingOffset = this.facingOffsetByCellId.get(cell.id) ?? 0;
+      const inwardFacingOffset =
+        this.inwardFacingOffsetByCellId.get(cell.id) ?? 0;
 
-      dummy.rotation.set(0, facingOffset, 0);
-      dummy.position.set(cell.worldX, variant.yOffset + 0.2, cell.worldZ);
+      dummy.position.set(
+        cell.worldX,
+        variant.yOffset + CONSTANTS.FLOOR_HEIGHT,
+        cell.worldZ,
+      );
       dummy.scale.set(1, 1, 1);
-      dummy.updateMatrix();
 
       for (let j = 0; j < instancedMeshes.length; j++) {
+        dummy.rotation.set(
+          0,
+          variant.facesInward ? inwardFacingOffset : facingOffset,
+          0,
+        );
+        dummy.updateMatrix();
         finalMatrix.multiplyMatrices(
           dummy.matrix,
           variant.parts[j].localMatrix,
