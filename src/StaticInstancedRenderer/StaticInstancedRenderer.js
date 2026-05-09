@@ -63,6 +63,7 @@ export default class StaticInstancedRenderer {
     this.floor?.setHoveredCell(id);
   }
   update(delta, camera) {
+    this.wall?.update(delta);
     this.obstacle?.update(delta, camera);
     this.torch?.update(delta);
   }

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
-const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+const assetUrl = (path) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
 
 class TextureManager {
   constructor() {
@@ -12,6 +13,7 @@ class TextureManager {
       RockWall_2_texture: "/texture/dry_riverbed_rock_diff_1k.jpg",
       RockWall_1_texture: "/texture/mossy_rock_diff_1k.jpg",
       Stone_1_texture: "/texture/coral_fort_wall_03_diff_1k.jpg",
+      Tube_1_texture: "/texture/rusty_metal_02_diff_1k.jpg",
       glot_idle_1: "/enemies/glot/idle/1.png",
       glot_idle_2: "/enemies/glot/idle/2.png",
       glot_idle_3: "/enemies/glot/idle/3.png",
@@ -96,6 +98,14 @@ class TextureManager {
       bonfire_fire_12: "/fire/Group 6 - 2_12.png",
       bonfire_fire_13: "/fire/Group 6 - 2_13.png",
       bonfire_fire_14: "/fire/Group 6 - 2_14.png",
+      tube_flow_1: "/tube/Group 7 - 2_1.png",
+      tube_flow_2: "/tube/Group 7 - 2_2.png",
+      tube_flow_3: "/tube/Group 7 - 2_3.png",
+      tube_flow_4: "/tube/Group 7 - 2_4.png",
+      tube_flow_5: "/tube/Group 7 - 2_5.png",
+      tube_flow_6: "/tube/Group 7 - 2_6.png",
+      tube_flow_7: "/tube/Group 7 - 2_7.png",
+      tube_flow_8: "/tube/Group 7 - 2_8.png",
       chaser: "/enemies/chaser.png",
       skirmisher: "/enemies/skirmisher.png",
       bruiser: "/enemies/glot.png",

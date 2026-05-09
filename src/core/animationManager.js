@@ -34,6 +34,9 @@ export class AnimationsManager {
     this.animations.set("bonfire", {
       fireAnimation: this.#getAnimationFrames("bonfire", "fire"),
     });
+    this.animations.set("tube", {
+      flowAnimation: this.#getAnimationFrames("tube", "flow"),
+    });
   }
 
   #getFrameIndex(key) {

@@ -1,6 +1,19 @@
 import * as THREE from "three";
 import materialManager from "../../core/materialManager";
+import { animationsManager } from "../../core/animationManager";
 import CONSTANTS from "../../static/constants";
+
+const TUBE_ANIMATION_FPS = 6;
+const TUBE_SPRITE_WIDTH = 0.66;
+const TUBE_SPRITE_HEIGHT = 1.2;
+const TUBE_SPRITE_LOCAL_Y = 0.58;
+const TUBE_SPRITE_LOCAL_Z = 0.43;
+const TUBE_LIGHT_COLOR = 0x55ff8a;
+const TUBE_LIGHT_INTENSITY = 1.2;
+const TUBE_LIGHT_DISTANCE = 1.5;
+const TUBE_LIGHT_DECAY = 2;
+const TUBE_LIGHT_FLICKER_SPEED = 3.5;
+const TUBE_LIGHT_FLICKER_AMOUNT = 0.12;
 
 export default class Wall {
   constructor(options, backgroundModels) {
@@ -17,6 +30,14 @@ export default class Wall {
     this.instanceIndexByCellId = new Map();
     this.facingOffsetByCellId = new Map();
     this.inwardFacingOffsetByCellId = new Map();
+    this.tubeSprites = new Map();
+    this.tubeFrames = [];
+    this.tubeFrame = 0;
+    this.tubeElapsed = 0;
+    this.tubeGeometry = null;
+    this.tubeMaterial = null;
+    this.tubeLights = new Map();
+    this.tubeLightPhases = new Map();
 
     const { variants } = this.#loadVariants();
     this.variants = variants;
@@ -67,6 +88,7 @@ export default class Wall {
     });
 
     this.#init();
+    this.#createTubeSprites();
   }
 
   #createVariant(object3D, { isCorner = false } = {}) {
@@ -294,6 +316,122 @@ export default class Wall {
         instancedMeshes[j].setMatrixAt(instanceIndex, finalMatrix);
         instancedMeshes[j].instanceMatrix.needsUpdate = true;
       }
+
+      const tubeSprite = this.tubeSprites.get(cell.id);
+      if (tubeSprite) tubeSprite.visible = true;
+
+      const tubeLight = this.tubeLights.get(cell.id);
+      if (tubeLight) tubeLight.visible = true;
+    }
+  }
+
+  update(delta) {
+    this.#updateTubeAnimation(delta);
+    this.#updateTubeLights();
+  }
+
+  #createTubeSprites() {
+    this.tubeFrames = animationsManager.get("tube")?.flowAnimation ?? [];
+    if (!this.tubeFrames.length) return;
+
+    this.#prepareTubeFrames();
+    this.tubeGeometry = new THREE.PlaneGeometry(
+      TUBE_SPRITE_WIDTH,
+      TUBE_SPRITE_HEIGHT,
+    );
+    this.tubeMaterial = new THREE.MeshBasicMaterial({
+      map: this.tubeFrames[0],
+      transparent: true,
+      alphaTest: 0.05,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+    this.tubeMaterial.userData.disposeOnRemove = true;
+
+    for (let i = 0; i < this.wallCells.length; i++) {
+      const cell = this.wallCells[i];
+      const variant = this.variants[this.wallVariantByCell[i]];
+      if (!variant?.facesInward) continue;
+
+      const yaw = this.wallInwardFacingByCell[i];
+      const sprite = new THREE.Mesh(this.tubeGeometry, this.tubeMaterial);
+      sprite.visible = false;
+      sprite.position.copy(this.#getTubeSpritePosition(cell, yaw));
+      sprite.rotation.y = yaw;
+      this.tubeSprites.set(cell.id, sprite);
+      this.instanced.add(sprite);
+
+      const light = this.#createTubeLight(sprite.position);
+      this.tubeLights.set(cell.id, light);
+      this.tubeLightPhases.set(cell.id, Math.random() * Math.PI * 2);
+      this.instanced.add(light);
+    }
+  }
+
+  #createTubeLight(position) {
+    const light = new THREE.PointLight(
+      TUBE_LIGHT_COLOR,
+      TUBE_LIGHT_INTENSITY,
+      TUBE_LIGHT_DISTANCE,
+      TUBE_LIGHT_DECAY,
+    );
+    light.visible = false;
+    light.castShadow = false;
+    light.position.copy(position);
+    return light;
+  }
+
+  #prepareTubeFrames() {
+    for (const texture of this.tubeFrames) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.center.set(0.5, 0.5);
+      texture.rotation = Math.PI;
+    }
+  }
+
+  #getTubeSpritePosition(cell, yaw) {
+    const localOffset = new THREE.Vector3(
+      0,
+      CONSTANTS.FLOOR_HEIGHT + TUBE_SPRITE_LOCAL_Y,
+      TUBE_SPRITE_LOCAL_Z,
+    );
+    localOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+    return new THREE.Vector3(
+      cell.worldX + localOffset.x,
+      localOffset.y - 0.3,
+      cell.worldZ + localOffset.z,
+    );
+  }
+
+  #updateTubeAnimation(delta) {
+    if (!this.tubeMaterial || this.tubeFrames.length <= 1) return;
+
+    this.tubeElapsed += delta;
+    const frameDuration = 1 / TUBE_ANIMATION_FPS;
+
+    while (this.tubeElapsed >= frameDuration) {
+      this.tubeElapsed -= frameDuration;
+      this.tubeFrame = (this.tubeFrame + 1) % this.tubeFrames.length;
+      this.tubeMaterial.map = this.tubeFrames[this.tubeFrame];
+      this.tubeMaterial.needsUpdate = true;
+    }
+  }
+
+  #updateTubeLights() {
+    const time = performance.now() / 1000;
+
+    for (const [cellId, light] of this.tubeLights) {
+      if (!light.visible) continue;
+
+      const phase = this.tubeLightPhases.get(cellId) ?? 0;
+      const wave = Math.sin(time * TUBE_LIGHT_FLICKER_SPEED + phase);
+      light.intensity =
+        TUBE_LIGHT_INTENSITY * (1 + wave * TUBE_LIGHT_FLICKER_AMOUNT);
     }
   }
 }
