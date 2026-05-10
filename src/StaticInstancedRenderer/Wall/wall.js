@@ -99,7 +99,9 @@ export default class Wall {
     bbox.getSize(size);
 
     const objectName = object3D.name.toLowerCase();
-    const facesInward = objectName.includes("walltube");
+    const hasTubeAnimation = objectName.includes("walltube");
+    const facesInward =
+      hasTubeAnimation || objectName.includes("wallbanner");
     const parts = [];
     object3D.traverse((child) => {
       if (!child.isMesh) return;
@@ -113,6 +115,7 @@ export default class Wall {
     return {
       isCorner,
       facesInward,
+      hasTubeAnimation,
       parts,
       modelSize: new THREE.Vector3(size.x || 1, size.y || 1, size.z || 1),
       yOffset: -bbox.min.y,
@@ -352,7 +355,7 @@ export default class Wall {
     for (let i = 0; i < this.wallCells.length; i++) {
       const cell = this.wallCells[i];
       const variant = this.variants[this.wallVariantByCell[i]];
-      if (!variant?.facesInward) continue;
+      if (!variant?.hasTubeAnimation) continue;
 
       const yaw = this.wallInwardFacingByCell[i];
       const sprite = new THREE.Mesh(this.tubeGeometry, this.tubeMaterial);
