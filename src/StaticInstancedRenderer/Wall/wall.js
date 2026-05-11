@@ -14,6 +14,7 @@ const TUBE_LIGHT_DISTANCE = 1.5;
 const TUBE_LIGHT_DECAY = 2;
 const TUBE_LIGHT_FLICKER_SPEED = 3.5;
 const TUBE_LIGHT_FLICKER_AMOUNT = 0.12;
+const WALL_VARIANT_MIN_DISTANCE = 2;
 
 export default class Wall {
   constructor(options, backgroundModels) {
@@ -48,9 +49,7 @@ export default class Wall {
       .map((variant, index) => (!variant.isCorner ? index : -1))
       .filter((index) => index !== -1);
 
-    this.wallVariantByCell = this.wallCells.map((cell) =>
-      this.#pickVariantIndex(cell),
-    );
+    this.wallVariantByCell = this.#pickVariantIndices();
     this.wallInwardFacingByCell = this.wallCells.map((cell) =>
       this.#getCellInwardRotation(cell),
     );
@@ -169,16 +168,46 @@ export default class Wall {
     );
   }
 
-  #pickVariantIndex(cell) {
+  #pickVariantIndices() {
+    const picked = [];
+
+    for (let i = 0; i < this.wallCells.length; i++) {
+      picked.push(this.#pickVariantIndex(this.wallCells[i], picked));
+    }
+
+    return picked;
+  }
+
+  #pickVariantIndex(cell, pickedVariantIndices = []) {
     const pool = this.#isCorner(cell.row, cell.col)
       ? this.cornerVariantIndices
       : this.straightVariantIndices;
 
-    if (pool.length) {
-      return pool[Math.floor(Math.random() * pool.length)];
+    if (!pool.length) return Math.floor(Math.random() * this.variants.length);
+
+    const spacedPool = pool.filter(
+      (variantIndex) =>
+        !this.#hasNearbyVariant(cell, variantIndex, pickedVariantIndices),
+    );
+    const finalPool = spacedPool.length ? spacedPool : pool;
+    return finalPool[Math.floor(Math.random() * finalPool.length)];
+  }
+
+  #hasNearbyVariant(cell, variantIndex, pickedVariantIndices) {
+    for (let i = 0; i < pickedVariantIndices.length; i++) {
+      if (pickedVariantIndices[i] !== variantIndex) continue;
+
+      const otherCell = this.wallCells[i];
+      const rowDistance = Math.abs(cell.row - otherCell.row);
+      const colDistance = Math.abs(cell.col - otherCell.col);
+      if (
+        Math.max(rowDistance, colDistance) <= WALL_VARIANT_MIN_DISTANCE
+      ) {
+        return true;
+      }
     }
 
-    return Math.floor(Math.random() * this.variants.length);
+    return false;
   }
 
   #getCornerRotation(cell) {

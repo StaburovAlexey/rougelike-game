@@ -16,7 +16,7 @@ class Cell {
     this.enemy = null;
     this.loot = null;
     this.meta = {};
-    this.visible = false;
+    this.visible = true;
     this.expand = false;
   }
 }
@@ -30,7 +30,7 @@ export default class Grid {
       halfH = 0,
       doorsCount = 4,
       torchesChance = 1,
-      torchesCount = 4,
+      torchesCount = 6,
       enemiesCount = 0,
       lootGroundCount = 0,
     } = {},

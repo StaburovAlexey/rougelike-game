@@ -25,8 +25,8 @@ export default class RunManager {
       const level = {};
       level.index = i;
       level.size = {
-        rows: this.getRandomGrid(7, 15),
-        cols: this.getRandomGrid(7, 15),
+        rows: this.getRandomGrid(10, 15),
+        cols: this.getRandomGrid(10, 15),
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
       const enemyGenerator = new GenerateEnemy(i, level.size);
