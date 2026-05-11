@@ -213,8 +213,8 @@ export function pickWeightedEnemyType(weights) {
 
 export const ENEMY_LEVEL_SCALING = {
   getEnemyCount(cells, progress) {
-    const baseCount = Math.max(1, Math.floor(cells * 0.025));
-    const progressBonus = Math.floor(progress * 0.25);
+    const baseCount = Math.max(1, Math.floor(cells * 0.035));
+    const progressBonus = Math.floor(progress * 0.35);
     const expectedCount = baseCount + progressBonus;
 
     const spread = Math.max(1, Math.round(expectedCount * 0.2));
