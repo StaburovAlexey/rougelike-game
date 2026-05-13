@@ -14,7 +14,7 @@ export default class RunManager {
     this.runMap = [];
     this.activeIndex = 0;
     this.aciveLevel = null;
-    this.player = new Player(null, HERO_CLASS["rouge"]);
+    this.player = new Player(null, HERO_CLASS["warrior"]);
     this.#init();
   }
   #init() {

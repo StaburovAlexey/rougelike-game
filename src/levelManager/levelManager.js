@@ -51,7 +51,7 @@ export default class LevelManager {
           const enemy = this.enemies.getEnemy(cell);
           await this.player.tryAttack(enemy);
           console.log('атака прошла')
-          const dieEnemies = this.enemies.tryAttack(this.player);
+          const dieEnemies = await this.enemies.tryAttack(this.player);
           this.loot.renderLootAfterDieEnemy(dieEnemies);
         } else {
           if (cell.loot) {

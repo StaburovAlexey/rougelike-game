@@ -16,7 +16,6 @@ export const ENEMY_TYPE_RULES = {
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
-    hitAndRun: true,
   },
   bruiser: {
     hp: 6,

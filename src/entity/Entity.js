@@ -20,6 +20,9 @@ export default class Entity {
     this.directionToTarget = new THREE.Vector3();
     this.cameraForward = new THREE.Vector3();
     this.cameraRight = new THREE.Vector3();
+    this.meshCellPosition = new THREE.Vector3();
+    this.cameraOffsetDirection = new THREE.Vector3();
+    this.cameraDepthOffset = this.name === "warrior" ? 0.3 : 0;
     this.syncMeshToCell(this.cellPosition);
     this.inventory = new InventoryManager();
     sceneManager.add(this.mesh);
@@ -27,21 +30,36 @@ export default class Entity {
 
   syncMeshToCell(cell) {
     if (!cell) return;
+
     this.cellPosition = cell;
     const floorTopY = CONSTANTS.FLOOR_HEIGHT;
     const meshCenterY = 0.5;
-    this.mesh.position.set(
+    this.meshCellPosition.set(
       this.cellPosition.worldX,
       floorTopY + this.mesh.scale.y * meshCenterY,
       this.cellPosition.worldZ,
     );
+    this.#syncMeshVisualPosition(this.lastCamera);
   }
 
   syncMeshToCamera(camera) {
     if (!camera || !this.mesh) return;
 
     this.lastCamera = camera;
+    this.#syncMeshVisualPosition(camera);
     this.#syncMeshYawToPosition(camera.position);
+  }
+
+  #syncMeshVisualPosition(camera) {
+    this.mesh.position.copy(this.meshCellPosition);
+    if (!camera || this.cameraDepthOffset === 0) return;
+
+    this.cameraOffsetDirection.subVectors(camera.position, this.meshCellPosition);
+    this.cameraOffsetDirection.y = 0;
+    if (this.cameraOffsetDirection.lengthSq() === 0) return;
+
+    this.cameraOffsetDirection.normalize().multiplyScalar(this.cameraDepthOffset);
+    this.mesh.position.add(this.cameraOffsetDirection);
   }
 
   #syncMeshYawToPosition(position) {

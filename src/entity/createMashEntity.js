@@ -45,6 +45,8 @@ export default class MashEntity {
   #getScale(typeTexture) {
     if (typeTexture === "rouge") {
       this.mesh.scale.set(2, 2, 2);
+    } else if (typeTexture === "warrior") {
+      this.mesh.scale.set(1.5, 1.5, 1.5);
     } else if (typeTexture === "glot") {
       this.mesh.scale.set(2, 2, 2);
     } else {

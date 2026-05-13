@@ -13,8 +13,8 @@ export default class EnemiesManager {
       this.enemies.find((enemy) => enemy.cellPosition?.id === cell.id) ?? null
     );
   }
-
-  tryAttack(player) {
+  
+  async tryAttack(player) {
     const dieEnemies = [];
     for (const enemy of this.enemies) {
       if (enemy.hp < 1) {
@@ -28,7 +28,7 @@ export default class EnemiesManager {
       );
 
       if (isPlayer) {
-        enemy.tryAttack(player);
+        await enemy.tryAttack(player);
         this.#tryHitAndRun(enemy, player.cellPosition);
       }
     }
