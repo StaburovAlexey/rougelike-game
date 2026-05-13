@@ -15,13 +15,9 @@ export default class EnemiesManager {
   }
   
   async tryAttack(player) {
-    const dieEnemies = [];
+  
     for (const enemy of this.enemies) {
-      if (enemy.hp < 1) {
-        dieEnemies.push({ ...enemy });
-        this.enemyDie(enemy);
-        continue;
-      }
+    
       const cellsAround = this.grid.getCellAround(enemy.cellPosition);
       const isPlayer = cellsAround.find(
         (cell) => cell.id === player.cellPosition.id,
@@ -32,7 +28,6 @@ export default class EnemiesManager {
         this.#tryHitAndRun(enemy, player.cellPosition);
       }
     }
-    return dieEnemies;
   }
 
   enemyDie(enemy) {
