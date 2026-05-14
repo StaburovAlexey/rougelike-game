@@ -16,7 +16,7 @@ export default class Entity {
     this.attackTarget = null;
     this.attackTargetPosition = new THREE.Vector3();
     this.attackFacingTime = 0;
-    this.facingLeft = false;
+    this.facingLeft = true;
     this.lastCamera = null;
     this.directionToTarget = new THREE.Vector3();
     this.cameraForward = new THREE.Vector3();
@@ -36,6 +36,7 @@ export default class Entity {
     const floorTopY = CONSTANTS.FLOOR_HEIGHT;
     const meshCenterY = 0.5;
     if (instant) {
+      gsap.killTweensOf(this.meshCellPosition);
       this.meshCellPosition.set(
         this.cellPosition.worldX,
         floorTopY + this.mesh.scale.y * meshCenterY,
@@ -97,22 +98,37 @@ export default class Entity {
     camera.getWorldDirection(this.cameraForward);
     this.cameraRight.copy(this.cameraForward).cross(camera.up).normalize();
 
-    this.#setFacingLeft(this.directionToTarget.dot(this.cameraRight) < 0);
+    this.setFacingLeft(this.directionToTarget.dot(this.cameraRight) < 0);
   }
 
   #hasActiveAttackDirection() {
     return this.animator?.current === "attack" || this.attackFacingTime > 0;
   }
 
-  #setFacingLeft(facingLeft) {
+  faceMovementToward(targetX, targetZ, camera) {
+    if (!camera || !this.mesh) return;
+
+    const dx = targetX - this.mesh.position.x;
+    const dz = targetZ - this.mesh.position.z;
+
+    camera.getWorldDirection(this.cameraForward);
+    this.cameraRight.copy(this.cameraForward).cross(camera.up).normalize();
+
+    this.directionToTarget.set(dx, 0, dz);
+    const facingLeft = this.directionToTarget.dot(this.cameraRight) < 0;
+
+    this.setFacingLeft(facingLeft);
+  }
+
+  setFacingLeft(facingLeft) {
     if (this.facingLeft === facingLeft) return;
 
     this.facingLeft = facingLeft;
     const uv = this.mesh.geometry?.attributes?.uv;
     if (!uv) return;
 
-    const leftU = facingLeft ? 1 : 0;
-    const rightU = facingLeft ? 0 : 1;
+    const leftU = facingLeft ? 0 : 1;
+    const rightU = facingLeft ? 1 : 0;
 
     uv.setXY(0, leftU, 1);
     uv.setXY(1, rightU, 1);
@@ -141,7 +157,6 @@ export default class Entity {
     }
 
     this.attackTarget = null;
-    this.#setFacingLeft(false);
   }
   async tryAttack(entity) {
     this.attackTarget = entity;

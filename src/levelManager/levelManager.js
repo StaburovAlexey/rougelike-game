@@ -68,6 +68,7 @@ export default class LevelManager {
             if (loot) this.player.getLoot(loot);
           }
           this.grid.movePlayerTo(cell);
+          this.player.faceMovementToward(cell.worldX, cell.worldZ, this.camera);
           this.player.syncMeshToCell(cell);
           this.staticInstancedRenderer.updateVisible(
             this.grid.setVisibleCell(),
