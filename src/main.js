@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import "./style.css";
 import GUI from "lil-gui";
 import Stats from "three/examples/jsm/libs/stats.module.js";
@@ -44,6 +45,22 @@ let last = performance.now();
 function loop(now) {
   const delta = (now - last) / 1000;
   last = now;
+
+  const playerMesh = run.player?.mesh;
+  if (playerMesh) {
+    const oldTarget = control.getTarget(new THREE.Vector3());
+    const newX = playerMesh.position.x;
+    const newY = playerMesh.position.y;
+    const newZ = playerMesh.position.z;
+
+    const cam = camera.getCamera();
+    cam.position.x += newX - oldTarget.x;
+    cam.position.y += newY - oldTarget.y;
+    cam.position.z += newZ - oldTarget.z;
+
+    control.setTarget(newX, newY, newZ);
+  }
+
   control.update();
   run.update(delta);
   stats.update();
