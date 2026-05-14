@@ -28,6 +28,7 @@ class MaterialManager {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         if (key.includes("floor")) {
+          
           texture.repeat.set(0.5, 0.5);
         } else if (key.includes("wood")) {
           texture.repeat.set(2, 2);

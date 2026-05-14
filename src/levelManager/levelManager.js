@@ -27,12 +27,12 @@ export default class LevelManager {
       enemiesCount: options.enemies.length,
       lootGroundCount: options.loot.groundLoot.length,
     });
-
+    this.startAction = false;
     this.nextLevel = options.nextLevel;
     materialManager.setPrefixLevel(this.levelPrefix);
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
-    this.player.syncMeshToCell(this.grid.getCellPlayer());
+    this.player.syncMeshToCell(this.grid.getCellPlayer(), true);
     this.loot = new LootManager(options.loot, this.grid);
     this.enemies = new EnemiesManager(options.enemies, this.grid, this.loot);
     this.cellInteractionController = new CellInteractionController({
@@ -42,9 +42,16 @@ export default class LevelManager {
       renderer: this.staticInstancedRenderer,
       onHoverChange: (cell) => {},
       onCellClick: async (cell) => {
-        if (!this.grid.isEventCell(cell)) return;
+        if (this.startAction) return;
+        this.startAction = true;
+
+        if (!this.grid.isEventCell(cell)) {
+          this.startAction = false;
+          return;
+        }
         if (cell.type === "door" && cell.doorRole === "out") {
           this.nextLevel?.();
+          this.startAction = false;
           return;
         }
         if (cell.enemy) {
@@ -54,7 +61,6 @@ export default class LevelManager {
             this.enemies.enemyDie(enemy);
             this.loot.renderLootAfterDieEnemy([enemy]);
           }
-          console.log("атака прошла", enemy);
           await this.enemies.tryAttack(this.player);
         } else {
           if (cell.loot) {
@@ -73,6 +79,7 @@ export default class LevelManager {
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
         );
+        this.startAction = false;
       },
     });
     this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());

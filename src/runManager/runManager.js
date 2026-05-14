@@ -38,15 +38,23 @@ export default class RunManager {
       );
       level.enemies = enemyGenerator.enemies;
       level.loot = lootGenerator.loot;
-      level.levelPrefix =
-        level.index < this.length / 3
-          ? 1
-          : level.index < this.length / 3 + this.length / 3
-            ? 2
-            : 3;
+      level.levelPrefix = this.#getLevelPrefix(i);
       this.runMap.push(level);
     }
     this.renderLevel(this.runMap[0]);
+  }
+  #getLevelPrefix(index) {
+    const partSize = this.length / 4;
+
+    if (index < 0 || index > this.length) {
+      return 1;
+    }
+
+    if (index <= partSize) return 1;
+    if (index <= partSize * 2) return 2;
+    if (index <= partSize * 3) return 3;
+
+    return 4;
   }
   renderLevel(options) {
     if (this.aciveLevel) {

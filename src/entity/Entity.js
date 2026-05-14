@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import gsap from "gsap";
 import MashEntity from "./createMashEntity";
 import { sceneManager } from "../scene/scene";
 import InventoryManager from "../InventoryManager/inventoryManager";
@@ -23,22 +24,35 @@ export default class Entity {
     this.meshCellPosition = new THREE.Vector3();
     this.cameraOffsetDirection = new THREE.Vector3();
     this.cameraDepthOffset = this.name === "warrior" ? 0.3 : 0;
-    this.syncMeshToCell(this.cellPosition);
+    this.syncMeshToCell(this.cellPosition, true);
     this.inventory = new InventoryManager();
     sceneManager.add(this.mesh);
   }
 
-  syncMeshToCell(cell) {
+  syncMeshToCell(cell, instant = false) {
     if (!cell) return;
 
     this.cellPosition = cell;
     const floorTopY = CONSTANTS.FLOOR_HEIGHT;
     const meshCenterY = 0.5;
-    this.meshCellPosition.set(
-      this.cellPosition.worldX,
-      floorTopY + this.mesh.scale.y * meshCenterY,
-      this.cellPosition.worldZ,
-    );
+    if (instant) {
+      this.meshCellPosition.set(
+        this.cellPosition.worldX,
+        floorTopY + this.mesh.scale.y * meshCenterY,
+        this.cellPosition.worldZ,
+      );
+      this.#syncMeshVisualPosition(this.lastCamera);
+      return;
+    }
+    gsap.to(this.meshCellPosition, {
+      x: this.cellPosition.worldX,
+      y: floorTopY + this.mesh.scale.y * meshCenterY,
+      z: this.cellPosition.worldZ,
+      duration: 1,
+      ease: "power2.out",
+      
+    });
+
     this.#syncMeshVisualPosition(this.lastCamera);
   }
 
@@ -54,11 +68,16 @@ export default class Entity {
     this.mesh.position.copy(this.meshCellPosition);
     if (!camera || this.cameraDepthOffset === 0) return;
 
-    this.cameraOffsetDirection.subVectors(camera.position, this.meshCellPosition);
+    this.cameraOffsetDirection.subVectors(
+      camera.position,
+      this.meshCellPosition,
+    );
     this.cameraOffsetDirection.y = 0;
     if (this.cameraOffsetDirection.lengthSq() === 0) return;
 
-    this.cameraOffsetDirection.normalize().multiplyScalar(this.cameraDepthOffset);
+    this.cameraOffsetDirection
+      .normalize()
+      .multiplyScalar(this.cameraDepthOffset);
     this.mesh.position.add(this.cameraOffsetDirection);
   }
 
