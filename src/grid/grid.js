@@ -104,10 +104,11 @@ export default class Grid {
       ) {
         if (!this.inBounds(col, row)) continue;
 
-        const manhattan =
-          Math.abs(cellPlayer.row - row) + Math.abs(cellPlayer.col - col);
+        const dx = cellPlayer.col - col;
+        const dz = cellPlayer.row - row;
+        const cellDistance = Math.sqrt(dx * dx + dz * dz);
 
-        if (manhattan > distance) continue;
+        if (cellDistance > distance) continue;
         result.push(this.get(col, row));
       }
     }

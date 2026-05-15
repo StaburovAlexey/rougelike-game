@@ -13,6 +13,9 @@ const PLAYER_LIGHT_COLOR = 0xffc36a;
 const PLAYER_LIGHT_BASE_INTENSITY = 1.8;
 const PLAYER_LIGHT_INTENSITY_PER_CELL = 0.55;
 const PLAYER_LIGHT_DECAY = 1;
+const PLAYER_LIGHT_EXTRA_RADIUS_CELLS = 0.95;
+const PLAYER_LIGHT_EXTRA_RADIUS_START = 3;
+const PLAYER_LIGHT_EXTRA_RADIUS_PER_CELL = 0.35;
 
 export default class LevelManager {
   constructor(options, player) {
@@ -125,7 +128,16 @@ export default class LevelManager {
   }
 
   #getPlayerLightDistance() {
-    return this.#getPlayerLightRadius() * this.step;
+    const radius = this.#getPlayerLightRadius();
+    const radiusOverflow = Math.max(
+      0,
+      radius - PLAYER_LIGHT_EXTRA_RADIUS_START,
+    );
+    const extraRadius =
+      PLAYER_LIGHT_EXTRA_RADIUS_CELLS +
+      radiusOverflow * PLAYER_LIGHT_EXTRA_RADIUS_PER_CELL;
+
+    return (radius + extraRadius) * this.step;
   }
 
   #syncPlayerLight() {

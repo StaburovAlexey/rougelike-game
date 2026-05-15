@@ -303,16 +303,20 @@ export default class EnemiesManager {
   syncLighting(playerCell, lightRadius = 4) {
     if (!playerCell) return;
 
-    const minLight = 0;
+    const minLight = 0.05;
 
     this.enemies.forEach((enemy) => {
       if (!enemy.cellPosition) return;
 
-      const distance = this.#getManhattanDistance(
-        playerCell,
-        enemy.cellPosition,
-      );
-      const falloff = Math.max(0, 1 - distance / lightRadius);
+      const dx = playerCell.col - enemy.cellPosition.col;
+      const dz = playerCell.row - enemy.cellPosition.row;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance > lightRadius) {
+        enemy.setLightIntensity(0);
+        return;
+      }
+
+      const falloff = 1 - distance / lightRadius;
       enemy.setLightIntensity(minLight + (1 - minLight) * falloff);
     });
   }
