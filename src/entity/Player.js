@@ -18,6 +18,12 @@ export default class Player extends Entity {
     if (this.inventory.armor.length > 0) bonus += 0.08;
     return bonus;
   }
+  get rewardBonus() {
+    // Дополнительные предметы в levelReward (целое число)
+    let bonus = 0;
+    if (this.inventory.gold > 50) bonus += 1;
+    return bonus;
+  }
   getLoot(loot) {
     const value = this.inventory.getLoot(loot);
     if (loot.type === 'heal') {

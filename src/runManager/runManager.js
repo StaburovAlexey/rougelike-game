@@ -59,6 +59,7 @@ export default class RunManager {
       this.difficulty ?? 'normal',
       this.player.dropBonus,
       this.player.rarityBonus,
+      this.player.rewardBonus,
     );
     console.log("data level", options);
     this.aciveLevel = new LevelManager(

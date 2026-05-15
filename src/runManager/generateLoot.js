@@ -43,12 +43,13 @@ export function buildEnemyDropItem(levelIndex, rarityBonus = 0) {
 // ── класс для groundLoot / levelReward ──────────────────────────────
 
 export default class GenerateLoot {
-  constructor(levelIndex, levelSize, difficulty = 'normal', dropBonus = 0, rarityBonus = 0) {
+  constructor(levelIndex, levelSize, difficulty = 'normal', dropBonus = 0, rarityBonus = 0, rewardBonus = 0) {
     this.levelIndex = levelIndex;
     this.levelSize = levelSize;
     this.difficulty = difficulty;
     this.dropBonus = dropBonus;
     this.rarityBonus = rarityBonus;
+    this.rewardBonus = rewardBonus;
     this.difficultyMultiplier = this.#getDifficultyMultiplier(difficulty);
 
     this.groundLoot = this.#generateGroundLoot();
@@ -108,15 +109,21 @@ export default class GenerateLoot {
   }
 
   #generateLevelReward() {
-    const reward = this.#buildItem(LOOT_SOURCES.levelReward);
+    const items = [];
 
-    if (!reward) return [];
+    const reward = this.#buildItem(LOOT_SOURCES.levelReward);
+    if (reward) items.push(reward);
 
     if (this.levelIndex > 0 && this.levelIndex % 5 === 0) {
       const bonusReward = this.#buildItem(LOOT_SOURCES.levelReward);
-      return bonusReward ? [reward, bonusReward] : [reward];
+      if (bonusReward) items.push(bonusReward);
     }
 
-    return [reward];
+    for (let i = 0; i < this.rewardBonus; i++) {
+      const extra = this.#buildItem(LOOT_SOURCES.levelReward);
+      if (extra) items.push(extra);
+    }
+
+    return items;
   }
 }

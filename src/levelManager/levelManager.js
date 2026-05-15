@@ -29,6 +29,7 @@ export default class LevelManager {
     });
     this.startAction = false;
     this.nextLevel = options.nextLevel;
+    this.levelReward = options.levelReward ?? [];
     materialManager.setPrefixLevel(this.levelPrefix);
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
@@ -56,6 +57,9 @@ export default class LevelManager {
           return;
         }
         if (cell.type === "door" && cell.doorRole === "out") {
+          for (const item of this.levelReward) {
+            this.player.getLoot({ ...item, loot: item });
+          }
           this.nextLevel?.();
           this.startAction = false;
           return;
