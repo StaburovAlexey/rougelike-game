@@ -277,6 +277,10 @@ export default class Torch {
     this.#updateFireLights();
   }
 
+  getLightCellIds() {
+    return [...this.fireLights.keys()];
+  }
+
   #updateFireAnimation(delta) {
     if (!this.fireMaterial || this.fireFrames.length <= 1) return;
 

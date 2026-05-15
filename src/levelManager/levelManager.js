@@ -156,6 +156,7 @@ export default class LevelManager {
     this.enemies?.syncLighting(
       this.grid?.getCellPlayer(),
       this.#getPlayerLightRadius(),
+      this.staticInstancedRenderer?.getLightCells(),
     );
   }
 

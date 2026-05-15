@@ -60,6 +60,17 @@ export default class StaticInstancedRenderer {
     this.floor?.hightLightMove(idsMove);
     this.floor?.hightLightLoot(idsLoot);
   }
+  getLightCells() {
+    const ids = new Set([
+      ...(this.torch?.getLightCellIds() ?? []),
+      ...(this.wall?.getLightCellIds() ?? []),
+      ...(this.obstacle?.getLightCellIds() ?? []),
+    ]);
+
+    return [...ids]
+      .map((id) => this.grid.cells[id])
+      .filter(Boolean);
+  }
   setHoveredCell(id = null) {
     this.floor?.setHoveredCell(id);
   }
