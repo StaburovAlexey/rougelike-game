@@ -16,7 +16,7 @@ class Cell {
     this.enemy = null;
     this.loot = null;
     this.meta = {};
-    this.visible = true;
+    this.visible = false;
     this.expand = false;
   }
 }
@@ -134,8 +134,8 @@ export default class Grid {
 
     return this.getCellAround(cellPlayer);
   }
-  setVisibleCell() {
-    const cells = this.getCellsAroundPlayer();
+  setVisibleCell(distance = 3) {
+    const cells = this.getCellsAroundPlayer(distance);
     const invisibleCells = cells.filter((cell) => !cell.visible);
     invisibleCells.forEach((cell) => {
       cell.visible = true;
@@ -217,6 +217,7 @@ export default class Grid {
     this.#setStartLevelCell();
     this.#generateEnemyCells();
     this.#generateLootGroundCells();
+    this.setVisibleCell();
   }
   #setStartLevelCell() {
     const doorIn = this.cells.find((cell) => cell.doorRole === 'in');

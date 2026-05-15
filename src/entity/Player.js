@@ -25,7 +25,7 @@ export default class Player extends Entity {
     return bonus;
   }
   get lightRadius() {
-    let radius = 4;
+    let radius = 3;
     //  if (this.inventory.weapon.length > 0) radius += 1;
     // if (this.inventory.armor.length > 0) radius += 1;
     //if (this.hp < this.maxHp * 0.3) radius -= 1;

@@ -35,6 +35,7 @@ export default class LevelManager {
       enemiesCount: options.enemies.length,
       lootGroundCount: options.groundLoot.length,
     });
+    this.grid.setVisibleCell(this.#getPlayerLightRadius());
     this.startAction = false;
     this.nextLevel = options.nextLevel;
     this.levelReward = options.levelReward ?? [];
@@ -90,6 +91,9 @@ export default class LevelManager {
           this.grid.movePlayerTo(cell);
           this.player.faceMovementToward(cell.worldX, cell.worldZ, this.camera);
           this.player.syncMeshToCell(cell);
+          this.staticInstancedRenderer.updateVisible(
+            this.grid.setVisibleCell(this.#getPlayerLightRadius()),
+          );
           this.#syncPlayerLight();
         }
         this.enemies.tryMove();

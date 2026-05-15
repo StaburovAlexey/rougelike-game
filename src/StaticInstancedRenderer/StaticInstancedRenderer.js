@@ -35,7 +35,7 @@ export default class StaticInstancedRenderer {
     this.group.add(this.obstacle.instanced);
     this.group.add(this.doors.instanced);
     this.group.add(this.torch.instanced);
-    this.updateVisible(this.grid.cells);
+    this.updateVisible(this.grid.getDontExpandCell());
     sceneManager.add(this.group);
   }
   updateVisible(cells = []) {
