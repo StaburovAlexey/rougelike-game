@@ -18,6 +18,11 @@ export default class Loot {
     if (!this.mesh) return
     this.mesh.visible = this.cellPosition.visible;
   }
+  setLightIntensity(intensity = 1) {
+    if (!this.mesh?.material?.color) return;
+    const value = Math.min(Math.max(intensity, 0), 1);
+    this.mesh.material.color.setRGB(value, value, value);
+  }
   dispose() {
     if (!this.mesh) return;
     sceneManager.remove(this.mesh);

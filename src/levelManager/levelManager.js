@@ -84,6 +84,7 @@ export default class LevelManager {
           if (enemy.hp < 1) {
             this.enemies.enemyDie(enemy);
             this.loot.renderLootAfterDieEnemy([enemy]);
+            this.#syncEntityLighting();
           }
           await this.enemies.tryAttack(this.player);
         } else {
@@ -153,10 +154,19 @@ export default class LevelManager {
 
   #syncEntityLighting() {
     this.player?.setLightIntensity(1);
+    const playerCell = this.grid?.getCellPlayer();
+    const lightRadius = this.#getPlayerLightRadius();
+    const lightCells = this.staticInstancedRenderer?.getLightCells();
+
     this.enemies?.syncLighting(
-      this.grid?.getCellPlayer(),
-      this.#getPlayerLightRadius(),
-      this.staticInstancedRenderer?.getLightCells(),
+      playerCell,
+      lightRadius,
+      lightCells,
+    );
+    this.loot?.syncLighting(
+      playerCell,
+      lightRadius,
+      lightCells,
     );
   }
 
