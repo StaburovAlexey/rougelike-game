@@ -35,6 +35,7 @@ export default class StaticInstancedRenderer {
     this.group.add(this.obstacle.instanced);
     this.group.add(this.doors.instanced);
     this.group.add(this.torch.instanced);
+    this.updateVisible(this.grid.getDontExpandCell());
     sceneManager.add(this.group);
   }
   updateVisible(cells = []) {
@@ -58,6 +59,17 @@ export default class StaticInstancedRenderer {
     this.floor?.hightLightAttak(idsAttak);
     this.floor?.hightLightMove(idsMove);
     this.floor?.hightLightLoot(idsLoot);
+  }
+  getLightCells() {
+    const ids = new Set([
+      ...(this.torch?.getLightCellIds() ?? []),
+      ...(this.wall?.getLightCellIds() ?? []),
+      ...(this.obstacle?.getLightCellIds() ?? []),
+    ]);
+
+    return [...ids]
+      .map((id) => this.grid.cells[id])
+      .filter(Boolean);
   }
   setHoveredCell(id = null) {
     this.floor?.setHoveredCell(id);

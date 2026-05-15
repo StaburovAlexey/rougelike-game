@@ -120,6 +120,43 @@ export default class LootManager {
     });
   }
 
+  syncLighting(playerCell, lightRadius = 4, lightCells = []) {
+    if (!playerCell) return;
+
+    const minLight = 0.05;
+    const staticLightRadius = 1;
+    const staticLightMinLight = 0.1;
+
+    this.groundLoot.forEach((loot) => {
+      if (!loot.cellPosition) return;
+
+      const dx = playerCell.col - loot.cellPosition.col;
+      const dz = playerCell.row - loot.cellPosition.row;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      const playerLight =
+        distance <= lightRadius
+          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
+          : 0;
+      const staticLight = this.#isNearLightCell(
+        loot.cellPosition,
+        lightCells,
+        staticLightRadius,
+      )
+        ? staticLightMinLight
+        : 0;
+
+      loot.setLightIntensity(Math.max(playerLight, staticLight));
+    });
+  }
+
+  #isNearLightCell(cell, lightCells, radius) {
+    return lightCells.some((lightCell) => {
+      const dx = cell.col - lightCell.col;
+      const dz = cell.row - lightCell.row;
+      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
+    });
+  }
+
   dispose() {
     this.groundLoot.forEach((loot) => {
       loot.dispose();

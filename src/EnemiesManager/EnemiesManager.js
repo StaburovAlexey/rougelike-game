@@ -300,6 +300,43 @@ export default class EnemiesManager {
     });
   }
 
+  syncLighting(playerCell, lightRadius = 4, lightCells = []) {
+    if (!playerCell) return;
+
+    const minLight = 0.05;
+    const staticLightRadius = 1;
+    const staticLightMinLight = 0.1;
+
+    this.enemies.forEach((enemy) => {
+      if (!enemy.cellPosition) return;
+
+      const dx = playerCell.col - enemy.cellPosition.col;
+      const dz = playerCell.row - enemy.cellPosition.row;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      const playerLight =
+        distance <= lightRadius
+          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
+          : 0;
+      const staticLight = this.#isNearLightCell(
+        enemy.cellPosition,
+        lightCells,
+        staticLightRadius,
+      )
+        ? staticLightMinLight
+        : 0;
+
+      enemy.setLightIntensity(Math.max(playerLight, staticLight));
+    });
+  }
+
+  #isNearLightCell(cell, lightCells, radius) {
+    return lightCells.some((lightCell) => {
+      const dx = cell.col - lightCell.col;
+      const dz = cell.row - lightCell.row;
+      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
+    });
+  }
+
   update(delta, camera) {
     this.enemies.forEach((enemy) => {
       enemy.update(delta, camera);

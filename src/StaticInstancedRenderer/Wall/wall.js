@@ -362,6 +362,10 @@ export default class Wall {
     this.#updateTubeLights();
   }
 
+  getLightCellIds() {
+    return [...this.tubeLights.keys()];
+  }
+
   #createTubeSprites() {
     this.tubeFrames = animationsManager.get("tube")?.flowAnimation ?? [];
     if (!this.tubeFrames.length) return;

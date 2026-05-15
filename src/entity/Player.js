@@ -1,4 +1,4 @@
-import Entity from './Entity';
+import Entity from "./Entity";
 
 export default class Player extends Entity {
   constructor(position, type) {
@@ -24,9 +24,16 @@ export default class Player extends Entity {
     if (this.inventory.gold > 50) bonus += 1;
     return bonus;
   }
+  get lightRadius() {
+    let radius = 3;
+    //  if (this.inventory.weapon.length > 0) radius += 1;
+    // if (this.inventory.armor.length > 0) radius += 1;
+    //if (this.hp < this.maxHp * 0.3) radius -= 1;
+    return Math.max(1, radius);
+  }
   getLoot(loot) {
     const value = this.inventory.getLoot(loot);
-    if (loot.type === 'heal') {
+    if (loot.type === "heal") {
       const finalyHeal = this.hp + value;
       this.hp = finalyHeal > this.maxHp ? this.maxHp : finalyHeal;
     }

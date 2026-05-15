@@ -312,6 +312,10 @@ export default class Obstacle {
     this.#updateBonfireLights();
   }
 
+  getLightCellIds() {
+    return [...this.bonfireLights.keys()];
+  }
+
   #updateBonfireFireAnimation(delta) {
     if (!this.bonfireFireMaterial || this.bonfireFireFrames.length <= 1) return;
 
