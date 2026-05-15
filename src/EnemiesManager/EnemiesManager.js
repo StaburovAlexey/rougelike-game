@@ -300,6 +300,23 @@ export default class EnemiesManager {
     });
   }
 
+  syncLighting(playerCell, lightRadius = 4) {
+    if (!playerCell) return;
+
+    const minLight = 0;
+
+    this.enemies.forEach((enemy) => {
+      if (!enemy.cellPosition) return;
+
+      const distance = this.#getManhattanDistance(
+        playerCell,
+        enemy.cellPosition,
+      );
+      const falloff = Math.max(0, 1 - distance / lightRadius);
+      enemy.setLightIntensity(minLight + (1 - minLight) * falloff);
+    });
+  }
+
   update(delta, camera) {
     this.enemies.forEach((enemy) => {
       enemy.update(delta, camera);

@@ -16,7 +16,7 @@ class Cell {
     this.enemy = null;
     this.loot = null;
     this.meta = {};
-    this.visible = false;
+    this.visible = true;
     this.expand = false;
   }
 }
@@ -217,7 +217,6 @@ export default class Grid {
     this.#setStartLevelCell();
     this.#generateEnemyCells();
     this.#generateLootGroundCells();
-    this.setVisibleCell();
   }
   #setStartLevelCell() {
     const doorIn = this.cells.find((cell) => cell.doorRole === 'in');

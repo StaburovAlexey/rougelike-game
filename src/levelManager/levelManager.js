@@ -1,4 +1,5 @@
 import Grid from "../grid/grid";
+import * as THREE from "three";
 import StaticInstancedRenderer from "../StaticInstancedRenderer/StaticInstancedRenderer";
 import DungeonLight from "../light/dungeonLight";
 import CONSTANTS from "../static/constants";
@@ -7,6 +8,12 @@ import Player from "../entity/Player";
 import EnemiesManager from "../EnemiesManager/EnemiesManager";
 import LootManager from "../LootManager/lootManager";
 import materialManager from "../core/materialManager";
+
+const PLAYER_LIGHT_COLOR = 0xffc36a;
+const PLAYER_LIGHT_BASE_INTENSITY = 1.8;
+const PLAYER_LIGHT_INTENSITY_PER_CELL = 0.55;
+const PLAYER_LIGHT_DECAY = 1;
+
 export default class LevelManager {
   constructor(options, player) {
     this.cols = options.size.cols;
@@ -20,6 +27,7 @@ export default class LevelManager {
     this.halfH = ((this.rows - 1) * this.step) / 2;
     this.cellInteractionController = null;
     this.player = player;
+    this.playerLight = null;
     this.grid = new Grid(this.cols, this.rows, {
       halfW: this.halfW,
       halfH: this.halfH,
@@ -34,6 +42,7 @@ export default class LevelManager {
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
     this.player.syncMeshToCell(this.grid.getCellPlayer(), true);
+    this.#createPlayerLight();
     this.loot = new LootManager(
       options.groundLoot,
       this.grid,
@@ -42,6 +51,7 @@ export default class LevelManager {
       options.difficulty,
     );
     this.enemies = new EnemiesManager(options.enemies, this.grid, this.loot);
+    this.#syncEntityLighting();
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
       domElement: this.domElement,
@@ -80,12 +90,11 @@ export default class LevelManager {
           this.grid.movePlayerTo(cell);
           this.player.faceMovementToward(cell.worldX, cell.worldZ, this.camera);
           this.player.syncMeshToCell(cell);
-          this.staticInstancedRenderer.updateVisible(
-            this.grid.setVisibleCell(),
-          );
+          this.#syncPlayerLight();
         }
         this.enemies.tryMove();
         this.enemies.syncVisible();
+        this.#syncEntityLighting();
         this.loot.syncVisible();
         this.staticInstancedRenderer.hightLightMoveCells(
           this.grid.getMoveCellsAroundPlayer(),
@@ -93,19 +102,59 @@ export default class LevelManager {
         this.startAction = false;
       },
     });
-    this.staticInstancedRenderer.updateVisible(this.grid.getDontExpandCell());
     this.staticInstancedRenderer.hightLightMoveCells(
       this.grid.getMoveCellsAroundPlayer(),
     );
   }
 
+  #createPlayerLight() {
+    if (!this.player?.mesh || this.playerLight) return;
+
+    this.playerLight = new THREE.PointLight(PLAYER_LIGHT_COLOR);
+    this.playerLight.castShadow = false;
+    this.player.mesh.add(this.playerLight);
+    this.#syncPlayerLight();
+  }
+
+  #getPlayerLightRadius() {
+    return this.player?.lightRadius ?? 4;
+  }
+
+  #getPlayerLightDistance() {
+    return this.#getPlayerLightRadius() * this.step;
+  }
+
+  #syncPlayerLight() {
+    if (!this.playerLight) return;
+
+    const radius = this.#getPlayerLightRadius();
+    this.playerLight.intensity =
+      PLAYER_LIGHT_BASE_INTENSITY + radius * PLAYER_LIGHT_INTENSITY_PER_CELL;
+    this.playerLight.distance = this.#getPlayerLightDistance();
+    this.playerLight.decay = PLAYER_LIGHT_DECAY;
+    this.playerLight.position.set(0, 0.35, 0);
+  }
+
+  #syncEntityLighting() {
+    this.player?.setLightIntensity(1);
+    this.enemies?.syncLighting(
+      this.grid?.getCellPlayer(),
+      this.#getPlayerLightRadius(),
+    );
+  }
+
   clearLevel() {
     this.cellInteractionController?.dispose();
+    if (this.playerLight) {
+      this.playerLight.parent?.remove(this.playerLight);
+      this.playerLight.dispose?.();
+    }
     this.staticInstancedRenderer.dispose();
     this.light.dispose();
     this.enemies.dispose();
     this.loot?.dispose();
     this.cellInteractionController = null;
+    this.playerLight = null;
     this.staticInstancedRenderer = null;
     this.light = null;
     this.grid = null;

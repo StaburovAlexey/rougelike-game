@@ -137,6 +137,11 @@ export default class Entity {
     uv.needsUpdate = true;
   }
 
+  setLightIntensity(intensity = 1) {
+    const value = THREE.MathUtils.clamp(intensity, 0, 1);
+    this.mesh?.material?.color?.setRGB(value, value, value);
+  }
+
   dispose() {
     if (!this.mesh) return;
     sceneManager.remove(this.mesh);
