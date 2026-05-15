@@ -1,11 +1,14 @@
 import Loot from './loot';
+import { getEnemyDropChance, buildEnemyDropItem } from '../runManager/generateLoot';
 
 export default class LootManager {
-  constructor(loot, grid) {
-    console.log('лут пришел', loot);
+  constructor(groundLoot, grid, player, levelIndex, difficulty) {
+    console.log('лут пришел', groundLoot);
     this.grid = grid;
-    this.groundLoot = this.#renderLoot(loot.groundLoot);
-    this.enemyDrops = loot.enemyDrops;
+    this.player = player;
+    this.levelIndex = levelIndex;
+    this.difficulty = difficulty;
+    this.groundLoot = this.#renderLoot(groundLoot);
     console.log('рендер лут', this.groundLoot);
     this.syncVisible();
   }
@@ -43,7 +46,6 @@ export default class LootManager {
 
     const loot = this.groundLoot.find((item) => cell.id === item.cellPosition.id);
     if (!loot) {
-      // Heal stale cell state if mesh/list got out of sync.
       cell.loot = false;
       return null;
     }
@@ -56,6 +58,7 @@ export default class LootManager {
     console.log('groud loot', this.groundLoot);
     return this.removeLootAtCell(cell);
   }
+
   #findDropCell(enemyCell) {
     if (!enemyCell) return null;
 
@@ -86,16 +89,25 @@ export default class LootManager {
   }
 
   renderLootAfterDieEnemy(enemies) {
-    enemies.forEach((enemy) => {
-      const isDrop = this.enemyDrops.find((loot) => loot.enemyId === enemy.id);
-      const dropCell = this.#findDropCell(enemy.cellPosition);
+    const dropBonus = this.player?.dropBonus ?? 0;
+    const rarityBonus = this.player?.rarityBonus ?? 0;
 
-      if (!isDrop || !dropCell) return;
+    enemies.forEach((enemy) => {
+      const dropChance = getEnemyDropChance(
+        enemy,
+        this.levelIndex,
+        this.difficulty,
+        dropBonus,
+      );
+
+      if (Math.random() > dropChance) return;
+
+      const dropCell = this.#findDropCell(enemy.cellPosition);
+      if (!dropCell) return;
 
       dropCell.loot = true;
-      const loot = new Loot(dropCell, {
-        ...isDrop.loot,
-      });
+      const lootData = buildEnemyDropItem(this.levelIndex, rarityBonus);
+      const loot = new Loot(dropCell, lootData);
       this.groundLoot.push(loot);
     });
 

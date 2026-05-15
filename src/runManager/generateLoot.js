@@ -6,32 +6,61 @@ import {
   pickWeighted,
 } from '../static/loot';
 
+// ── утилиты для генерации вражеского дропа «на лету» ─────────────────
+
+export function getEnemyDropChance(enemy, levelIndex, difficulty = 'normal', dropBonus = 0) {
+  const rules = { easy: 1.15, normal: 1, hard: 0.85, nightmare: 0.7 };
+  const diffMult = rules[difficulty] ?? 1;
+  const baseChance =
+    typeof enemy.lootDropChance === 'number' ? enemy.lootDropChance : 0;
+  const levelBonus = levelIndex * 0.012;
+  const eliteBonus =
+    Math.max(0, (enemy.hp ?? 0) + (enemy.atk ?? 0) - 6) * 0.004;
+
+  return Math.min(
+    0.85,
+    (baseChance + levelBonus + eliteBonus) * diffMult * (1 + dropBonus),
+  );
+}
+
+export function buildEnemyDropItem(levelIndex, rarityBonus = 0) {
+  const type =
+    pickWeighted(getLootTypeWeights(levelIndex, LOOT_SOURCES.enemy)) ?? 'gold';
+
+  const weights = getLootRarityWeights(levelIndex, LOOT_SOURCES.enemy);
+  weights.rare = Math.floor(weights.rare * (1 + rarityBonus));
+  weights.legendary = Math.floor(weights.legendary * (1 + rarityBonus));
+  const rarity = pickWeighted(weights) ?? 'common';
+
+  return buildLootItem({
+    type,
+    rarity,
+    levelIndex,
+    source: LOOT_SOURCES.enemy,
+  });
+}
+
+// ── класс для groundLoot / levelReward ──────────────────────────────
+
 export default class GenerateLoot {
-  constructor(levelIndex, levelSize, enemies = [], difficulty = 'normal') {
+  constructor(levelIndex, levelSize, difficulty = 'normal', dropBonus = 0, rarityBonus = 0) {
     this.levelIndex = levelIndex;
     this.levelSize = levelSize;
-    this.enemies = enemies;
     this.difficulty = difficulty;
+    this.dropBonus = dropBonus;
+    this.rarityBonus = rarityBonus;
     this.difficultyMultiplier = this.#getDifficultyMultiplier(difficulty);
 
-    this.enemyDrops = this.#generateEnemyDrops();
     this.groundLoot = this.#generateGroundLoot();
     this.levelReward = this.#generateLevelReward();
     this.loot = {
-      enemyDrops: this.enemyDrops,
       groundLoot: this.groundLoot,
       levelReward: this.levelReward,
     };
   }
 
   #getDifficultyMultiplier(difficulty) {
-    const rules = {
-      easy: 1.15,
-      normal: 1,
-      hard: 0.85,
-      nightmare: 0.7,
-    };
-
+    const rules = { easy: 1.15, normal: 1, hard: 0.85, nightmare: 0.7 };
     return rules[difficulty] ?? 1;
   }
 
@@ -42,6 +71,8 @@ export default class GenerateLoot {
 
   #pickLootRarity(source) {
     const weights = getLootRarityWeights(this.levelIndex, source);
+    weights.rare = Math.floor(weights.rare * (1 + this.rarityBonus));
+    weights.legendary = Math.floor(weights.legendary * (1 + this.rarityBonus));
     return pickWeighted(weights) ?? 'common';
   }
 
@@ -56,36 +87,12 @@ export default class GenerateLoot {
     });
   }
 
-  #getEnemyDropChance(enemy) {
-    const baseChance =
-      typeof enemy.lootDropChance === 'number' ? enemy.lootDropChance : 0;
-    const levelBonus = this.levelIndex * 0.012;
-    const eliteBonus = Math.max(0, (enemy.hp ?? 0) + (enemy.atk ?? 0) - 6) * 0.004;
-
-    return Math.min(0.85, (baseChance + levelBonus + eliteBonus) * this.difficultyMultiplier);
-  }
-
-  #generateEnemyDrops() {
-    return this.enemies
-      .map((enemy, index) => {
-        const dropChance = this.#getEnemyDropChance(enemy);
-        const hasDrop = Math.random() <= dropChance;
-        if (!hasDrop) return null;
-
-        return {
-          enemyId: enemy.id ?? index,
-          enemyType: enemy.type,
-          dropChance,
-          loot: this.#buildItem(LOOT_SOURCES.enemy),
-        };
-      })
-      .filter(Boolean);
-  }
-
   #getGroundLootCount() {
     const baseCount = 1 + Math.floor(this.levelIndex / 4);
     const extraCount = this.levelIndex >= 6 ? 1 : 0;
-    const total = Math.floor((baseCount + extraCount) * this.difficultyMultiplier);
+    const total = Math.floor(
+      (baseCount + extraCount) * this.difficultyMultiplier * (1 + this.dropBonus),
+    );
     return Math.max(1, Math.min(total, 4));
   }
 

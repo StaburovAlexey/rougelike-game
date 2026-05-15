@@ -30,14 +30,7 @@ export default class RunManager {
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
       const enemyGenerator = new GenerateEnemy(i, level.size);
-      const lootGenerator = new GenerateLoot(
-        i,
-        level.size,
-        enemyGenerator.enemies,
-        this.difficulty,
-      );
       level.enemies = enemyGenerator.enemies;
-      level.loot = lootGenerator.loot;
       level.levelPrefix = this.#getLevelPrefix(i);
       this.runMap.push(level);
     }
@@ -60,10 +53,20 @@ export default class RunManager {
     if (this.aciveLevel) {
       this.aciveLevel.clearLevel();
     }
+    const lootGenerator = new GenerateLoot(
+      options.index,
+      options.size,
+      this.difficulty ?? 'normal',
+      this.player.dropBonus,
+      this.player.rarityBonus,
+    );
     console.log("data level", options);
     this.aciveLevel = new LevelManager(
       {
         ...options,
+        difficulty: this.difficulty ?? 'normal',
+        groundLoot: lootGenerator.loot.groundLoot,
+        levelReward: lootGenerator.loot.levelReward,
         camera: this.camera,
         domElement: this.domElement,
         nextLevel: () => {

@@ -25,7 +25,7 @@ export default class LevelManager {
       halfH: this.halfH,
       doorsCount: this.doorsCount,
       enemiesCount: options.enemies.length,
-      lootGroundCount: options.loot.groundLoot.length,
+      lootGroundCount: options.groundLoot.length,
     });
     this.startAction = false;
     this.nextLevel = options.nextLevel;
@@ -33,7 +33,13 @@ export default class LevelManager {
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
     this.light = new DungeonLight();
     this.player.syncMeshToCell(this.grid.getCellPlayer(), true);
-    this.loot = new LootManager(options.loot, this.grid);
+    this.loot = new LootManager(
+      options.groundLoot,
+      this.grid,
+      this.player,
+      options.index,
+      options.difficulty,
+    );
     this.enemies = new EnemiesManager(options.enemies, this.grid, this.loot);
     this.cellInteractionController = new CellInteractionController({
       camera: this.camera,
