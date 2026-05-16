@@ -23,6 +23,23 @@ export function getEnemyDropChance(enemy, levelIndex, difficulty = 'normal', dro
   );
 }
 
+export function buildLevelRewardItem(levelIndex, rarityBonus = 0) {
+  const type =
+    pickWeighted(getLootTypeWeights(levelIndex, LOOT_SOURCES.levelReward)) ?? 'gold';
+
+  const weights = getLootRarityWeights(levelIndex, LOOT_SOURCES.levelReward);
+  weights.rare = Math.floor(weights.rare * (1 + rarityBonus));
+  weights.legendary = Math.floor(weights.legendary * (1 + rarityBonus));
+  const rarity = pickWeighted(weights) ?? 'common';
+
+  return buildLootItem({
+    type,
+    rarity,
+    levelIndex,
+    source: LOOT_SOURCES.levelReward,
+  });
+}
+
 export function buildEnemyDropItem(levelIndex, rarityBonus = 0) {
   const type =
     pickWeighted(getLootTypeWeights(levelIndex, LOOT_SOURCES.enemy)) ?? 'gold';
@@ -49,7 +66,6 @@ export default class GenerateLoot {
     this.difficulty = difficulty;
     this.dropBonus = dropBonus;
     this.rarityBonus = rarityBonus;
-    this.rewardBonus = rewardBonus;
     this.difficultyMultiplier = this.#getDifficultyMultiplier(difficulty);
 
     this.groundLoot = this.#generateGroundLoot();
@@ -117,11 +133,6 @@ export default class GenerateLoot {
     if (this.levelIndex > 0 && this.levelIndex % 5 === 0) {
       const bonusReward = this.#buildItem(LOOT_SOURCES.levelReward);
       if (bonusReward) items.push(bonusReward);
-    }
-
-    for (let i = 0; i < this.rewardBonus; i++) {
-      const extra = this.#buildItem(LOOT_SOURCES.levelReward);
-      if (extra) items.push(extra);
     }
 
     return items;

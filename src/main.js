@@ -27,6 +27,17 @@ const run = new RunManager({
   domElement: sceneManager.renderer.domElement,
 });
 const gui = new GUI();
+
+const sceneLights = { enabled: true };
+
+gui.add(sceneLights, "enabled")
+  .name("Scene lights")
+  .onChange((value) => {
+    if (run.aciveLevel?.light?.lightGroup) {
+      run.aciveLevel.light.lightGroup.visible = value;
+    }
+  });
+
 const runControls = {
   nextLevel: () => {
     console.log(sceneManager.renderer.info);

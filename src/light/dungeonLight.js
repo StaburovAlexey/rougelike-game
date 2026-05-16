@@ -39,6 +39,13 @@ export default class DungeonLight {
 
     this.rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
     this.rimLight.position.set(1, 4, -8);
+    this.lightGroup.add(
+      this.hemisphere,
+      this.ambient,
+      this.keyLight,
+      this.fillLight,
+      this.rimLight,
+    );
     this.scene.add(this.lightGroup);
   }
 

@@ -21,7 +21,7 @@ export default class Player extends Entity {
   get rewardBonus() {
     // Дополнительные предметы в levelReward (целое число)
     let bonus = 0;
-    if (this.inventory.gold > 50) bonus += 1;
+    // if (this.inventory.gold > 50) bonus += 1;
     return bonus;
   }
   get lightRadius() {

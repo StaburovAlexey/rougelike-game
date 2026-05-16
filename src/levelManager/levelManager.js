@@ -8,6 +8,7 @@ import Player from "../entity/Player";
 import EnemiesManager from "../EnemiesManager/EnemiesManager";
 import LootManager from "../LootManager/lootManager";
 import materialManager from "../core/materialManager";
+import { buildLevelRewardItem } from "../runManager/generateLoot";
 
 const PLAYER_LIGHT_COLOR = 0xffc36a;
 const PLAYER_LIGHT_BASE_INTENSITY = 1.8;
@@ -41,6 +42,7 @@ export default class LevelManager {
     this.grid.setVisibleCell(this.#getPlayerLightRadius());
     this.startAction = false;
     this.nextLevel = options.nextLevel;
+    this.levelIndex = options.index;
     this.levelReward = options.levelReward ?? [];
     materialManager.setPrefixLevel(this.levelPrefix);
     this.staticInstancedRenderer = new StaticInstancedRenderer(this.grid);
@@ -71,6 +73,14 @@ export default class LevelManager {
           return;
         }
         if (cell.type === "door" && cell.doorRole === "out") {
+          const extraCount = this.player.rewardBonus;
+          for (let i = 0; i < extraCount; i++) {
+            const item = buildLevelRewardItem(
+              this.levelIndex,
+              this.player.rarityBonus,
+            );
+            if (item) this.player.getLoot({ ...item, loot: item });
+          }
           for (const item of this.levelReward) {
             this.player.getLoot({ ...item, loot: item });
           }
