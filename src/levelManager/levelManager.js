@@ -38,6 +38,7 @@ export default class LevelManager {
       doorsCount: this.doorsCount,
       enemiesCount: options.enemies.length,
       lootGroundCount: options.groundLoot.length,
+      indexLevel: options.index,
     });
     this.grid.setVisibleCell(this.#getPlayerLightRadius());
     this.startAction = false;
@@ -168,16 +169,8 @@ export default class LevelManager {
     const lightRadius = this.#getPlayerLightRadius();
     const lightCells = this.staticInstancedRenderer?.getLightCells();
 
-    this.enemies?.syncLighting(
-      playerCell,
-      lightRadius,
-      lightCells,
-    );
-    this.loot?.syncLighting(
-      playerCell,
-      lightRadius,
-      lightCells,
-    );
+    this.enemies?.syncLighting(playerCell, lightRadius, lightCells);
+    this.loot?.syncLighting(playerCell, lightRadius, lightCells);
   }
 
   clearLevel() {

@@ -1,5 +1,5 @@
-import CONSTANTS from '../static/constants';
-
+import CONSTANTS from "../static/constants";
+import { getSubTypesDoors } from "../static/subtypeDoors";
 class Cell {
   constructor(id, x, z, worldX, worldZ) {
     this.id = id;
@@ -10,7 +10,7 @@ class Cell {
     this.worldX = worldX;
     this.worldZ = worldZ;
     this.side = null;
-    this.type = 'floor';
+    this.type = "floor";
     this.blocked = false;
     this.player = null;
     this.enemy = null;
@@ -33,6 +33,7 @@ export default class Grid {
       torchesCount = 6,
       enemiesCount = 0,
       lootGroundCount = 0,
+      indexLevel = 0,
     } = {},
   ) {
     this.cols = cols;
@@ -40,6 +41,7 @@ export default class Grid {
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = halfW;
     this.halfH = halfH;
+    this.indexLevel = indexLevel;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
     this.enemiesCount = Math.max(0, enemiesCount);
     this.lootGroundCount = Math.max(0, lootGroundCount);
@@ -163,11 +165,11 @@ export default class Grid {
   }
 
   getInDoorCell() {
-    return this.doorCells.find((cell) => cell.doorRole === 'in') ?? null;
+    return this.doorCells.find((cell) => cell.doorRole === "in") ?? null;
   }
 
   getOutDoorCells() {
-    return this.doorCells.filter((cell) => cell.doorRole === 'out');
+    return this.doorCells.filter((cell) => cell.doorRole === "out");
   }
 
   getTorchCells() {
@@ -221,18 +223,18 @@ export default class Grid {
     this.setVisibleCell();
   }
   #setStartLevelCell() {
-    const doorIn = this.cells.find((cell) => cell.doorRole === 'in');
+    const doorIn = this.cells.find((cell) => cell.doorRole === "in");
     let startLevelCell = null;
-    if (doorIn.side === 'top') {
+    if (doorIn.side === "top") {
       startLevelCell = this.get(doorIn.col, doorIn.row + 1);
     }
-    if (doorIn.side === 'bottom') {
+    if (doorIn.side === "bottom") {
       startLevelCell = this.get(doorIn.col, doorIn.row - 1);
     }
-    if (doorIn.side === 'left') {
+    if (doorIn.side === "left") {
       startLevelCell = this.get(doorIn.col + 1, doorIn.row);
     }
-    if (doorIn.side === 'right') {
+    if (doorIn.side === "right") {
       startLevelCell = this.get(doorIn.col - 1, doorIn.row);
     }
     startLevelCell.player = true;
@@ -256,16 +258,16 @@ export default class Grid {
   #getCellBeforeDoor(doorCell) {
     if (!doorCell) return null;
 
-    if (doorCell.side === 'top') {
+    if (doorCell.side === "top") {
       return this.get(doorCell.col, doorCell.row + 1);
     }
-    if (doorCell.side === 'bottom') {
+    if (doorCell.side === "bottom") {
       return this.get(doorCell.col, doorCell.row - 1);
     }
-    if (doorCell.side === 'left') {
+    if (doorCell.side === "left") {
       return this.get(doorCell.col + 1, doorCell.row);
     }
-    if (doorCell.side === 'right') {
+    if (doorCell.side === "right") {
       return this.get(doorCell.col - 1, doorCell.row);
     }
 
@@ -274,18 +276,22 @@ export default class Grid {
 
   #isFreeEnemyCell(cell) {
     return Boolean(
-      cell && !cell.blocked && !cell.player && !cell.enemy && cell.type === 'floor',
+      cell &&
+      !cell.blocked &&
+      !cell.player &&
+      !cell.enemy &&
+      cell.type === "floor",
     );
   }
 
   #isFreeLootCell(cell) {
     return Boolean(
       cell &&
-        !cell.blocked &&
-        !cell.player &&
-        !cell.enemy &&
-        !cell.loot &&
-        cell.type === 'floor',
+      !cell.blocked &&
+      !cell.player &&
+      !cell.enemy &&
+      !cell.loot &&
+      cell.type === "floor",
     );
   }
 
@@ -300,7 +306,7 @@ export default class Grid {
 
   #placeLootGroundCell(cell) {
     if (!this.#isFreeLootCell(cell)) return false;
-    cell.loot = true
+    cell.loot = true;
     this.loot.push(cell);
     return true;
   }
@@ -350,10 +356,10 @@ export default class Grid {
     cell.side = staticCell.side;
     cell.type = staticCell.type;
     cell.blocked =
-      staticCell.type === 'wall' ||
-      staticCell.type === 'obstacle' ||
-      staticCell.doorRole === 'in' ||
-      staticCell.type === 'torch';
+      staticCell.type === "wall" ||
+      staticCell.type === "obstacle" ||
+      staticCell.doorRole === "in" ||
+      staticCell.type === "torch";
 
     if (staticCell.doorRole !== null) {
       cell.doorRole = staticCell.doorRole;
@@ -365,23 +371,23 @@ export default class Grid {
   #pickCellOnSide(side, reserved = [], avoidCorners = true, type) {
     const candidates = [];
 
-    if (side === 'top') {
+    if (side === "top") {
       for (let col = 0; col < this.cols; col++)
         candidates.push({ row: 0, col });
     }
 
-    if (side === 'bottom') {
+    if (side === "bottom") {
       for (let col = 0; col < this.cols; col++) {
         candidates.push({ row: this.rows - 1, col });
       }
     }
 
-    if (side === 'left') {
+    if (side === "left") {
       for (let row = 0; row < this.rows; row++)
         candidates.push({ row, col: 0 });
     }
 
-    if (side === 'right') {
+    if (side === "right") {
       for (let row = 0; row < this.rows; row++) {
         candidates.push({ row, col: this.cols - 1 });
       }
@@ -408,25 +414,27 @@ export default class Grid {
   }
 
   #generateDoorCells() {
-    const sides = ['top', 'right', 'bottom', 'left'];
+    const sides = ["top", "right", "bottom", "left"];
     const shuffled = [...sides].sort(() => Math.random() - 0.5);
     const selectedSides = shuffled.slice(0, this.doorsCount);
     const result = [];
 
     for (const side of selectedSides) {
-      const cell = this.#pickCellOnSide(side, result, true, 'door');
+      const cell = this.#pickCellOnSide(side, result, true, "door");
       if (!cell) continue;
       result.push(cell);
     }
 
     if (result.length > 0) {
-      result[0].doorRole = 'in';
+      result[0].doorRole = "in";
 
       for (let i = 1; i < result.length; i++) {
-        result[i].doorRole = 'out';
+        result[i].doorRole = "out";
       }
     }
 
+    const resultWithSubtype = getSubTypesDoors(result, this.indexLevel);
+    console.log("двери", resultWithSubtype);
     return result.map((cell) => this.#applyStaticCellData(cell));
   }
 
@@ -434,7 +442,7 @@ export default class Grid {
     if (Math.random() > this.torchesChance) return [];
 
     const torches = [];
-    const sides = ['top', 'right', 'bottom', 'left'];
+    const sides = ["top", "right", "bottom", "left"];
     const uniqueSidesLimit = Math.min(this.torchesCount, 4);
     const usedSides = new Set();
     let attempts = 0;
@@ -450,7 +458,7 @@ export default class Grid {
 
       const side = sidePool[Math.floor(Math.random() * sidePool.length)];
       const reserved = [...this.doorCells, ...torches];
-      const cell = this.#pickCellOnSide(side, reserved, true, 'torch');
+      const cell = this.#pickCellOnSide(side, reserved, true, "torch");
       if (!cell) continue;
       torches.push(cell);
 
@@ -468,26 +476,26 @@ export default class Grid {
     const tryAddWall = (row, col, side) => {
       const cell = this.get(col, row);
       if (!cell || excludedIds.has(cell.id)) return;
-      perimeter.push(this.#createStaticCellData(row, col, side, 'wall'));
+      perimeter.push(this.#createStaticCellData(row, col, side, "wall"));
     };
 
     for (let col = 0; col < this.cols; col++) {
-      tryAddWall(0, col, 'top');
+      tryAddWall(0, col, "top");
     }
 
     if (this.rows > 1) {
       for (let col = 0; col < this.cols; col++) {
-        tryAddWall(this.rows - 1, col, 'bottom');
+        tryAddWall(this.rows - 1, col, "bottom");
       }
     }
 
     for (let row = 1; row < this.rows - 1; row++) {
-      tryAddWall(row, 0, 'left');
+      tryAddWall(row, 0, "left");
     }
 
     if (this.cols > 1) {
       for (let row = 1; row < this.rows - 1; row++) {
-        tryAddWall(row, this.cols - 1, 'right');
+        tryAddWall(row, this.cols - 1, "right");
       }
     }
 
@@ -499,7 +507,7 @@ export default class Grid {
 
     for (let row = 2; row < this.rows - 2; row++) {
       for (let col = 2; col < this.cols - 2; col++) {
-        const cell = this.#createStaticCellData(row, col, null, 'obstacle');
+        const cell = this.#createStaticCellData(row, col, null, "obstacle");
         if (!cell) continue;
         candidates.push(cell);
       }
@@ -544,7 +552,10 @@ export default class Grid {
     );
     this.#shuffleCells(freeCells);
 
-    const remainingSlots = Math.max(0, this.enemiesCount - this.enemyCells.length);
+    const remainingSlots = Math.max(
+      0,
+      this.enemiesCount - this.enemyCells.length,
+    );
     for (let i = 0; i < Math.min(remainingSlots, freeCells.length); i++) {
       this.#placeEnemyCell(freeCells[i]);
     }

@@ -46,7 +46,7 @@ class MaterialManager {
       }
     }
 
-    console.log("отфильтрованные материалы", this.materials);
+    
   }
   getMaterial(materialName) {
     const fullName = `${materialName}_${this.prefix}`;
