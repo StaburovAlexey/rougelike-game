@@ -31,6 +31,13 @@ export default class Player extends Entity {
     //if (this.hp < this.maxHp * 0.3) radius -= 1;
     return Math.max(1, radius);
   }
+  get chanceDoors() {
+    return {
+      gold: 15,
+      shop: 20,
+      hell: 30,
+    };
+  }
   getLoot(loot) {
     const value = this.inventory.getLoot(loot);
     if (loot.type === "heal") {

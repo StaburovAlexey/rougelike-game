@@ -39,6 +39,7 @@ export default class LevelManager {
       enemiesCount: options.enemies.length,
       lootGroundCount: options.groundLoot.length,
       indexLevel: options.index,
+      player: this.player,
     });
     this.grid.setVisibleCell(this.#getPlayerLightRadius());
     this.startAction = false;

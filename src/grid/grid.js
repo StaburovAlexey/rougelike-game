@@ -34,6 +34,7 @@ export default class Grid {
       enemiesCount = 0,
       lootGroundCount = 0,
       indexLevel = 0,
+      player,
     } = {},
   ) {
     this.cols = cols;
@@ -41,6 +42,7 @@ export default class Grid {
     this.step = CONSTANTS.CELL_SIZE + CONSTANTS.GAP_CELLS;
     this.halfW = halfW;
     this.halfH = halfH;
+    this.player = player;
     this.indexLevel = indexLevel;
     this.doorsCount = Math.min(Math.max(doorsCount, 1), 4);
     this.enemiesCount = Math.max(0, enemiesCount);
@@ -433,8 +435,13 @@ export default class Grid {
       }
     }
 
-    const resultWithSubtype = getSubTypesDoors(result, this.indexLevel);
-    console.log("двери", resultWithSubtype);
+    const resultWithSubtype = getSubTypesDoors(
+      result,
+      this.indexLevel,
+      this.player.chanceDoors,
+    );
+    const check = resultWithSubtype.map((door) => door.subType);
+    console.log("двери", check);
     return result.map((cell) => this.#applyStaticCellData(cell));
   }
 
