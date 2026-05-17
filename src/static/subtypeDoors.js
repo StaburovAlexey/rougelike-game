@@ -1,6 +1,6 @@
 const SUBTYPES_DOORS_CHANCES = [
   { type: "normal", chance: 65, minLevel: 0 },
-  { type: "chanceGold", chance: 100, minLevel: 0 },
+  { type: "chanceGold", chance: 10, minLevel: 0 },
   { type: "chanceLoot", chance: 10, minLevel: 0 },
   { type: "chanceLegendary", chance: 10, minLevel: 4 },
   { type: "noEnemy", chance: 7, minLevel: 0 },

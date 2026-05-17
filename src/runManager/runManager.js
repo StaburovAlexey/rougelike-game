@@ -32,8 +32,7 @@ export default class RunManager {
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
       const enemyGenerator = new GenerateEnemy(i, level.size);
-      // level.enemies = enemyGenerator.enemies;
-      level.enemies = [];
+      level.enemies = enemyGenerator.enemies;
       level.levelPrefix = this.#getLevelPrefix(i);
       this.runMap.push(level);
     }

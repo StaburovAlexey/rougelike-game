@@ -1,10 +1,12 @@
 import Entity from "./Entity";
+import InventoryManager from "../InventoryManager/inventoryManager";
 
 export default class Player extends Entity {
   constructor(position, type) {
     super(position, type);
     this.maxHp = type.hp;
     this.pendingDoorEffect = null;
+    this.inventory = new InventoryManager();
   }
   get dropBonus() {
     // Бонус к шансу выпадения и количеству предметов

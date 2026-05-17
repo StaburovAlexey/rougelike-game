@@ -2,6 +2,7 @@ import * as THREE from "three";
 import materialManager from "../../core/materialManager";
 import textureManager from "../../core/textureManager";
 import CONSTANTS from "../../static/constants";
+import { getLightIntensity } from "../../core/lightingUtils";
 
 export default class Doors {
   constructor(cells, backgroundModels) {
@@ -183,40 +184,13 @@ export default class Doors {
   syncLighting(playerCell, lightRadius = 4, lightCells = []) {
     if (!playerCell) return;
 
-    const minLight = 0.05;
-    const staticLightRadius = 1;
-    const staticLightMinLight = 0.1;
-
     for (const [id, plane] of this.doorPlaneByCellId) {
       const cell = this.cellById.get(id);
       if (!cell) continue;
 
-      const dx = playerCell.col - cell.col;
-      const dz = playerCell.row - cell.row;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      const playerLight =
-        distance <= lightRadius
-          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
-          : 0;
-      const staticLight = this.#isNearLightCell(
-        cell,
-        lightCells,
-        staticLightRadius,
-      )
-        ? staticLightMinLight
-        : 0;
-
-      const intensity = Math.max(playerLight, staticLight);
+      const intensity = getLightIntensity(cell, playerCell, lightRadius, lightCells);
       plane.material.color.setRGB(intensity, intensity, intensity);
     }
-  }
-
-  #isNearLightCell(cell, lightCells, radius) {
-    return lightCells.some((lightCell) => {
-      const dx = cell.col - lightCell.col;
-      const dz = cell.row - lightCell.row;
-      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
-    });
   }
 
   #init() {

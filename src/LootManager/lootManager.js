@@ -1,29 +1,19 @@
 import Loot from './loot';
 import { getEnemyDropChance, buildEnemyDropItem } from '../runManager/generateLoot';
+import { getLightIntensity, shuffle } from '../core/lightingUtils';
 
 export default class LootManager {
   constructor(groundLoot, grid, player, levelIndex, difficulty) {
-    console.log('лут пришел', groundLoot);
     this.grid = grid;
     this.player = player;
     this.levelIndex = levelIndex;
     this.difficulty = difficulty;
     this.groundLoot = this.#renderLoot(groundLoot);
-    console.log('рендер лут', this.groundLoot);
     this.syncVisible();
   }
 
-  #shuffle(list) {
-    const items = [...list];
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    return items;
-  }
-
   #renderLoot(loots) {
-    const cellsForEnemies = this.#shuffle(this.grid.getLootCells());
+    const cellsForEnemies = shuffle(this.grid.getLootCells());
     const count = Math.min(loots.length, cellsForEnemies.length);
 
     return loots.slice(0, count).map((loot, index) => {
@@ -55,7 +45,6 @@ export default class LootManager {
   }
 
   findLoot(cell) {
-    console.log('groud loot', this.groundLoot);
     return this.removeLootAtCell(cell);
   }
 
@@ -123,37 +112,10 @@ export default class LootManager {
   syncLighting(playerCell, lightRadius = 4, lightCells = []) {
     if (!playerCell) return;
 
-    const minLight = 0.05;
-    const staticLightRadius = 1;
-    const staticLightMinLight = 0.1;
-
     this.groundLoot.forEach((loot) => {
       if (!loot.cellPosition) return;
-
-      const dx = playerCell.col - loot.cellPosition.col;
-      const dz = playerCell.row - loot.cellPosition.row;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      const playerLight =
-        distance <= lightRadius
-          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
-          : 0;
-      const staticLight = this.#isNearLightCell(
-        loot.cellPosition,
-        lightCells,
-        staticLightRadius,
-      )
-        ? staticLightMinLight
-        : 0;
-
-      loot.setLightIntensity(Math.max(playerLight, staticLight));
-    });
-  }
-
-  #isNearLightCell(cell, lightCells, radius) {
-    return lightCells.some((lightCell) => {
-      const dx = cell.col - lightCell.col;
-      const dz = cell.row - lightCell.row;
-      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
+      const intensity = getLightIntensity(loot.cellPosition, playerCell, lightRadius, lightCells);
+      loot.setLightIntensity(intensity);
     });
   }
 
