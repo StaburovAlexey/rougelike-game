@@ -158,6 +158,59 @@ export default class Entity {
     });
   }
 
+  showDamageNumber(damage) {
+    if (!this.mesh || !Number.isFinite(damage)) return Promise.resolve();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+
+    const context = canvas.getContext("2d");
+    context.font = "bold 68px Arial";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.lineWidth = 8;
+    context.strokeStyle = "#2a0808";
+    context.fillStyle = "#ff3333";
+    context.strokeText(String(damage), 64, 64);
+    context.fillText(String(damage), 64, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+    });
+
+    const sprite = new THREE.Sprite(material);
+    sprite.position.copy(this.mesh.position);
+    sprite.scale.set(0.45, 0.45, 0.45);
+    sceneManager.add(sprite);
+
+    return new Promise((resolve) => {
+      gsap.to(sprite.position, {
+        y: sprite.position.y + 0.45,
+        duration: 0.9,
+        ease: "power2.out",
+      });
+
+      gsap.to(material, {
+        opacity: 0,
+        duration: 0.9,
+        ease: "power2.in",
+        onComplete: () => {
+          sceneManager.remove(sprite);
+          texture.dispose();
+          material.dispose();
+          resolve();
+        },
+      });
+    });
+  }
+
   dispose() {
     if (!this.mesh) return;
     gsap.killTweensOf(this.meshCellPosition);
@@ -199,13 +252,13 @@ export default class Entity {
 
     const entityDef = entity.inventory?.def ?? 0;
     const atk = this.atk + (this.inventory?.weaponAtk ?? 0);
-    if (entityDef > atk) {
-      entity.hp = entity.hp - 1;
-    } else {
-      entity.hp = entity.hp - atk;
-    }
+    const damage = entityDef > atk ? 1 : atk;
+    entity.hp = entity.hp - damage;
 
-    await entity.flashDamage?.();
+    await Promise.all([
+      entity.flashDamage?.(),
+      entity.showDamageNumber?.(damage),
+    ]);
     entity.inventory?.useArmor?.();
     this.inventory?.useWeapon?.();
   }

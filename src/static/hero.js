@@ -2,7 +2,7 @@ export const HERO_CLASS = {
   warrior: {
     type: "warrior",
     hp: 5,
-    atk: 100,
+    atk: 2,
     def: 0,
   },
   rouge: {
