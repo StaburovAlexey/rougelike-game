@@ -366,7 +366,9 @@ export default class Grid {
     if (staticCell.doorRole !== null) {
       cell.doorRole = staticCell.doorRole;
     }
-
+    if (staticCell.subType) {
+      cell.subType = staticCell.subType;
+    }
     return { ...staticCell };
   }
 
@@ -440,9 +442,7 @@ export default class Grid {
       this.indexLevel,
       this.player.chanceDoors,
     );
-    const check = resultWithSubtype.map((door) => door.subType);
-    console.log("двери", check);
-    return result.map((cell) => this.#applyStaticCellData(cell));
+    return resultWithSubtype.map((cell) => this.#applyStaticCellData(cell));
   }
 
   #generateTorchCells() {
