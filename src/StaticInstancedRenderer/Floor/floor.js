@@ -76,7 +76,7 @@ export default class Floor {
 
     this.#markInstanceColorDirty();
   }
-  hightLightAttak(ids = []) {
+  hightLightAttack(ids = []) {
     const previousIds = [...this.attackHighlightCells];
     this.attackHighlightCells.clear();
 

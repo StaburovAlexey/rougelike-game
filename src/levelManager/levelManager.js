@@ -38,6 +38,8 @@ export default class LevelManager {
       doorsCount: this.doorsCount,
       enemiesCount: options.enemies.length,
       lootGroundCount: options.groundLoot.length,
+      indexLevel: options.index,
+      player: this.player,
     });
     this.grid.setVisibleCell(this.#getPlayerLightRadius());
     this.startAction = false;
@@ -73,6 +75,7 @@ export default class LevelManager {
           return;
         }
         if (cell.type === "door" && cell.doorRole === "out") {
+          this.player.pendingDoorEffect = cell.subType;
           const extraCount = this.player.rewardBonus;
           for (let i = 0; i < extraCount; i++) {
             const item = buildLevelRewardItem(
@@ -168,16 +171,9 @@ export default class LevelManager {
     const lightRadius = this.#getPlayerLightRadius();
     const lightCells = this.staticInstancedRenderer?.getLightCells();
 
-    this.enemies?.syncLighting(
-      playerCell,
-      lightRadius,
-      lightCells,
-    );
-    this.loot?.syncLighting(
-      playerCell,
-      lightRadius,
-      lightCells,
-    );
+    this.enemies?.syncLighting(playerCell, lightRadius, lightCells);
+    this.loot?.syncLighting(playerCell, lightRadius, lightCells);
+    this.staticInstancedRenderer?.syncDoorLighting(playerCell, lightRadius, lightCells);
   }
 
   clearLevel() {

@@ -25,7 +25,6 @@ export default class Entity {
     this.cameraOffsetDirection = new THREE.Vector3();
     this.cameraDepthOffset = this.name === "warrior" ? 0.3 : 0;
     this.syncMeshToCell(this.cellPosition, true);
-    this.inventory = new InventoryManager();
     sceneManager.add(this.mesh);
   }
 
@@ -144,10 +143,15 @@ export default class Entity {
 
   dispose() {
     if (!this.mesh) return;
+    gsap.killTweensOf(this.meshCellPosition);
     sceneManager.remove(this.mesh);
     this.mesh.material?.dispose?.();
     this.mesh.geometry?.dispose?.();
+    this.animator = null;
+    this.inventory = null;
     this.mesh = null;
+    this.cellPosition = null;
+    this.attackTarget = null;
   }
   update(delta, camera) {
     this.animator?.update(delta);
@@ -175,23 +179,15 @@ export default class Entity {
       this.attackFacingTime = 0.25;
     }
 
-    const entityDef = entity.inventory.def;
-    const atk = this.atk + this.inventory.weaponAtk;
+    const entityDef = entity.inventory?.def ?? 0;
+    const atk = this.atk + (this.inventory?.weaponAtk ?? 0);
     if (entityDef > atk) {
       entity.hp = entity.hp - 1;
     } else {
       entity.hp = entity.hp - atk;
     }
 
-    entity.inventory.useArmor();
-    this.inventory.useWeapon();
-    if (this.name == "player") {
-      console.log(this.inventory.weapon[0]);
-      console.log("weaponAtk", this.inventory.weaponAtk);
-    }
-    if (entity.name == "player") {
-      console.log("DEF равен", entityDef);
-      console.log("Игрок получил урон:", atk);
-    }
+    entity.inventory?.useArmor?.();
+    this.inventory?.useWeapon?.();
   }
 }

@@ -1,4 +1,5 @@
 import Enemy from './Enemy';
+import { getLightIntensity, shuffle } from '../core/lightingUtils';
 
 export default class EnemiesManager {
   constructor(enemies, grid, lootManager = null) {
@@ -40,19 +41,9 @@ export default class EnemiesManager {
     );
   }
 
-  #shuffle(list) {
-    const items = [...list];
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    return items;
-  }
-
   #renderEnemies(enemies) {
-    const cellsForEnemies = this.#shuffle(this.grid.getEnemyCells());
+    const cellsForEnemies = shuffle(this.grid.getEnemyCells());
     const count = Math.min(enemies.length, cellsForEnemies.length);
-    console.log('enemise', enemies)
     return enemies.slice(0, count).map((enemy, index) => {
       const cell = cellsForEnemies[index];
       return new Enemy(cell, {
@@ -121,7 +112,7 @@ export default class EnemiesManager {
   #getRandomFreeAdjacentCell(cell, blockedCell = null) {
     if (!cell) return null;
 
-    const candidates = this.#shuffle(this.#getAdjacentCells(cell)).filter(
+    const candidates = shuffle(this.#getAdjacentCells(cell)).filter(
       (nextCell) =>
         !nextCell.blocked &&
         !nextCell.enemy &&
@@ -171,7 +162,7 @@ export default class EnemiesManager {
       const { cell, steps } = queue.shift();
       if (steps >= maxRetreatSteps) continue;
 
-      const nextCells = this.#shuffle(this.#getAdjacentCells(cell));
+      const nextCells = shuffle(this.#getAdjacentCells(cell));
       for (const nextCell of nextCells) {
         if (visited.has(nextCell.id)) continue;
         if (nextCell.blocked || nextCell.enemy || nextCell.player) continue;
@@ -198,7 +189,6 @@ export default class EnemiesManager {
 
     this.#moveEnemyToCell(enemy, retreatCell);
     enemy.syncVisible();
-    console.log(`Enemy ${enemy.name} hit and ran`);
     return true;
   }
 
@@ -234,7 +224,6 @@ export default class EnemiesManager {
 
     if (moved) {
       enemy.syncVisible();
-      console.log(`Enemy ${enemy.name} is moving toward the player`);
     }
 
     return moved;
@@ -250,7 +239,7 @@ export default class EnemiesManager {
     if (lootDestroyChance <= 0 || Math.random() > lootDestroyChance)
       return false;
 
-    const adjacentLootCells = this.#shuffle(
+    const adjacentLootCells = shuffle(
       this.#getAdjacentCells(enemy.cellPosition).filter((cell) => cell.loot),
     );
 
@@ -260,7 +249,6 @@ export default class EnemiesManager {
     const destroyedLoot = this.lootManager.removeLootAtCell(destroyedCell);
     if (!destroyedLoot) return false;
 
-    console.log(`Enemy ${enemy.name} destroyed nearby loot`);
     return true;
   }
 
@@ -275,7 +263,7 @@ export default class EnemiesManager {
   #tryFriendlyFire(enemy) {
     if (!enemy?.friendlyFire) return false;
 
-    const adjacentEnemies = this.#shuffle(this.#getAdjacentEnemies(enemy));
+    const adjacentEnemies = shuffle(this.#getAdjacentEnemies(enemy));
     if (!adjacentEnemies.length) return false;
 
     const allyHitChance =
@@ -285,7 +273,6 @@ export default class EnemiesManager {
     const targetEnemy = adjacentEnemies[0];
     enemy.tryAttack(targetEnemy);
     this.#tryHitAndRun(enemy, targetEnemy.cellPosition);
-    console.log(`Enemy ${enemy.name} hit ally ${targetEnemy.name}`);
 
     if (targetEnemy.hp < 1) {
       this.enemyDie(targetEnemy);
@@ -303,37 +290,10 @@ export default class EnemiesManager {
   syncLighting(playerCell, lightRadius = 4, lightCells = []) {
     if (!playerCell) return;
 
-    const minLight = 0.05;
-    const staticLightRadius = 1;
-    const staticLightMinLight = 0.1;
-
     this.enemies.forEach((enemy) => {
       if (!enemy.cellPosition) return;
-
-      const dx = playerCell.col - enemy.cellPosition.col;
-      const dz = playerCell.row - enemy.cellPosition.row;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      const playerLight =
-        distance <= lightRadius
-          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
-          : 0;
-      const staticLight = this.#isNearLightCell(
-        enemy.cellPosition,
-        lightCells,
-        staticLightRadius,
-      )
-        ? staticLightMinLight
-        : 0;
-
-      enemy.setLightIntensity(Math.max(playerLight, staticLight));
-    });
-  }
-
-  #isNearLightCell(cell, lightCells, radius) {
-    return lightCells.some((lightCell) => {
-      const dx = cell.col - lightCell.col;
-      const dz = cell.row - lightCell.row;
-      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
+      const intensity = getLightIntensity(enemy.cellPosition, playerCell, lightRadius, lightCells);
+      enemy.setLightIntensity(intensity);
     });
   }
 
@@ -368,7 +328,6 @@ export default class EnemiesManager {
       if (!inAggroRange) return;
 
       if (this.#isInAttackRange(enemy, playerCell)) {
-        console.log(`Enemy ${enemy.name} is in attack range`);
         return;
       }
 

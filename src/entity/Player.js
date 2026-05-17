@@ -1,9 +1,12 @@
 import Entity from "./Entity";
+import InventoryManager from "../InventoryManager/inventoryManager";
 
 export default class Player extends Entity {
   constructor(position, type) {
     super(position, type);
     this.maxHp = type.hp;
+    this.pendingDoorEffect = null;
+    this.inventory = new InventoryManager();
   }
   get dropBonus() {
     // Бонус к шансу выпадения и количеству предметов
@@ -30,6 +33,13 @@ export default class Player extends Entity {
     // if (this.inventory.armor.length > 0) radius += 1;
     //if (this.hp < this.maxHp * 0.3) radius -= 1;
     return Math.max(1, radius);
+  }
+  get chanceDoors() {
+    return {
+      chanceGold: 15,
+      shop: 20,
+      hell: 30,
+    };
   }
   getLoot(loot) {
     const value = this.inventory.getLoot(loot);
