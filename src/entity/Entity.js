@@ -141,9 +141,27 @@ export default class Entity {
     this.mesh?.material?.color?.setRGB(value, value, value);
   }
 
+  flashDamage() {
+    const color = this.mesh?.material?.color;
+    if (!color) return Promise.resolve();
+
+    gsap.killTweensOf(color);
+    color.setRGB(1, 0.15, 0.15);
+
+    return new Promise((resolve) => {
+      gsap.timeline({ onComplete: resolve })
+        .to(color, { r: 1, g: 1, b: 1, duration: 0.1, ease: "none" })
+        .to(color, { r: 1, g: 0.15, b: 0.15, duration: 0.1, ease: "none" })
+        .to(color, { r: 1, g: 1, b: 1, duration: 0.1, ease: "none" })
+        .to(color, { r: 1, g: 0.15, b: 0.15, duration: 0.1, ease: "none" })
+        .to(color, { r: 1, g: 1, b: 1, duration: 0.1, ease: "none" });
+    });
+  }
+
   dispose() {
     if (!this.mesh) return;
     gsap.killTweensOf(this.meshCellPosition);
+    gsap.killTweensOf(this.mesh.material?.color);
     sceneManager.remove(this.mesh);
     this.mesh.material?.dispose?.();
     this.mesh.geometry?.dispose?.();
@@ -187,6 +205,7 @@ export default class Entity {
       entity.hp = entity.hp - atk;
     }
 
+    await entity.flashDamage?.();
     entity.inventory?.useArmor?.();
     this.inventory?.useWeapon?.();
   }
