@@ -75,6 +75,7 @@ export default class LevelManager {
           return;
         }
         if (cell.type === "door" && cell.doorRole === "out") {
+          this.player.pendingDoorEffect = cell.subType;
           const extraCount = this.player.rewardBonus;
           for (let i = 0; i < extraCount; i++) {
             const item = buildLevelRewardItem(

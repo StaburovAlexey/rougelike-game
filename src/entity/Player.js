@@ -4,6 +4,7 @@ export default class Player extends Entity {
   constructor(position, type) {
     super(position, type);
     this.maxHp = type.hp;
+    this.pendingDoorEffect = null;
   }
   get dropBonus() {
     // Бонус к шансу выпадения и количеству предметов

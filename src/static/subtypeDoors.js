@@ -43,6 +43,44 @@ function getRandomSubType(availableTypes) {
   return "normal";
 }
 
+const SUBTYPES_DOORS_EFFECTS = {
+  normal: {
+    type: "none",
+  },
+  chanceGold: {
+    type: "groundLoot",
+    category: "gold",
+    count: 3,
+  },
+  chanceLoot: {
+    type: "groundLoot",
+    category: "random",
+    count: 3,
+    exclude: ["gold", "heal"],
+  },
+  chanceLegendary: {
+    type: "groundLoot",
+    category: "legendary",
+    count: 1,
+    exclude: ["gold", "heal"],
+  },
+  noEnemy: {
+    type: "noEnemy",
+  },
+  shop: {
+    type: "shopLevel",
+  },
+  hell: {
+    type: "modifier",
+    enemyMultiplier: 2,
+    rewardBonus: true,
+  },
+};
+
+export function getDoorEffect(subType) {
+  return SUBTYPES_DOORS_EFFECTS[subType] ?? SUBTYPES_DOORS_EFFECTS.normal;
+}
+
 export function getSubTypesDoors(doors, indexLevel, chanceModifiers = {}) {
   console.log("модификация от игрока:", chanceModifiers);
   if (doors.length === 0) {
