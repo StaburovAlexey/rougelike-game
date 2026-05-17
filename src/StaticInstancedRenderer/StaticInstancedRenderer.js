@@ -60,6 +60,10 @@ export default class StaticInstancedRenderer {
     this.floor?.hightLightMove(idsMove);
     this.floor?.hightLightLoot(idsLoot);
   }
+  syncDoorLighting(playerCell, lightRadius, lightCells) {
+    this.doors?.syncLighting(playerCell, lightRadius, lightCells);
+  }
+
   getLightCells() {
     const ids = new Set([
       ...(this.torch?.getLightCellIds() ?? []),

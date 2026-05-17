@@ -122,7 +122,7 @@ class TextureManager {
       tube_flow_6: "/tube/Group 7 - 2_6.png",
       tube_flow_7: "/tube/Group 7 - 2_7.png",
       tube_flow_8: "/tube/Group 7 - 2_8.png",
-      gold: "/doors/gold.png",
+      chanceGold: "/doors/chanceGold.png",
       chanceLoot: "/doors/chanceLoot.png",
       chanceLegendary: "/doors/chanceLegendary.png",
       noEnemy: "/doors/noEnemy.png",

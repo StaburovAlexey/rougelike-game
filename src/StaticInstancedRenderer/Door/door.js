@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import materialManager from "../../core/materialManager";
+import textureManager from "../../core/textureManager";
 import CONSTANTS from "../../static/constants";
 
 export default class Doors {
@@ -18,6 +19,7 @@ export default class Doors {
     this.meshes = [];
     this.cellById = new Map();
     this.cellIndexById = new Map();
+    this.doorPlaneByCellId = new Map();
     this.sideYaw = {
       top: Math.PI,
       right: Math.PI / 2,
@@ -93,7 +95,62 @@ export default class Doors {
     }
   }
 
+  #buildDoorPlanes() {
+    const planeWidth = CONSTANTS.CELL_SIZE * 0.7;
+    const planeHeight = CONSTANTS.CELL_SIZE * 0.7;
+    const planeOffset = CONSTANTS.CELL_SIZE * 0.25;
+    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+
+    const sideDirection = {
+      top: new THREE.Vector3(0, 0, 1),
+      right: new THREE.Vector3(-1, 0, 0),
+      bottom: new THREE.Vector3(0, 0, -1),
+      left: new THREE.Vector3(1, 0, 0),
+    };
+
+    const yawAxis = new THREE.Vector3(0, 1, 0);
+    const planeY = this.baseYOffset + CONSTANTS.CELL_SIZE * 0.7;
+
+    for (const cell of this.cells) {
+      if (cell.subType === "normal" || cell.doorRole === "in") continue;
+
+      const texture = textureManager.get(cell.subType);
+      if (!texture) continue;
+
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+      });
+
+      const plane = new THREE.Mesh(planeGeometry, material);
+      plane.renderOrder = 1;
+
+      const direction = sideDirection[cell.side] ?? new THREE.Vector3(0, 0, 0);
+      const yaw = (this.sideYaw[cell.side] ?? 0) + Math.PI;
+
+      plane.position.set(
+        cell.worldX + direction.x * planeOffset,
+        planeY,
+        cell.worldZ + direction.z * planeOffset,
+      );
+      plane.quaternion.setFromAxisAngle(yawAxis, yaw);
+      plane.visible = false;
+
+      this.instanced.add(plane);
+      this.doorPlaneByCellId.set(cell.id, plane);
+    }
+  }
+
   updateVisible(cells = []) {
+    for (const plane of this.doorPlaneByCellId.values()) {
+      plane.visible = false;
+    }
+
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
     const yawAxis = new THREE.Vector3(0, 1, 0);
@@ -117,7 +174,49 @@ export default class Doors {
         this.meshes[meshIndex].setMatrixAt(index, finalMatrix);
         this.meshes[meshIndex].instanceMatrix.needsUpdate = true;
       }
+
+      const plane = this.doorPlaneByCellId.get(cell.id);
+      if (plane) plane.visible = true;
     }
+  }
+
+  syncLighting(playerCell, lightRadius = 4, lightCells = []) {
+    if (!playerCell) return;
+
+    const minLight = 0.05;
+    const staticLightRadius = 1;
+    const staticLightMinLight = 0.1;
+
+    for (const [id, plane] of this.doorPlaneByCellId) {
+      const cell = this.cellById.get(id);
+      if (!cell) continue;
+
+      const dx = playerCell.col - cell.col;
+      const dz = playerCell.row - cell.row;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      const playerLight =
+        distance <= lightRadius
+          ? minLight + (1 - minLight) * (1 - distance / lightRadius)
+          : 0;
+      const staticLight = this.#isNearLightCell(
+        cell,
+        lightCells,
+        staticLightRadius,
+      )
+        ? staticLightMinLight
+        : 0;
+
+      const intensity = Math.max(playerLight, staticLight);
+      plane.material.color.setRGB(intensity, intensity, intensity);
+    }
+  }
+
+  #isNearLightCell(cell, lightCells, radius) {
+    return lightCells.some((lightCell) => {
+      const dx = cell.col - lightCell.col;
+      const dz = cell.row - lightCell.row;
+      return Math.max(Math.abs(dx), Math.abs(dz)) <= radius;
+    });
   }
 
   #init() {
@@ -128,5 +227,6 @@ export default class Doors {
     }
 
     this.#buildInstancedFromModel();
+    this.#buildDoorPlanes();
   }
 }

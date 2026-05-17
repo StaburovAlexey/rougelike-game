@@ -30,7 +30,8 @@ export default class RunManager {
       };
       level.doorsQuantity = this.getRandomDoorsQuantity();
       const enemyGenerator = new GenerateEnemy(i, level.size);
-      level.enemies = enemyGenerator.enemies;
+      // level.enemies = enemyGenerator.enemies;
+      level.enemies = [];
       level.levelPrefix = this.#getLevelPrefix(i);
       this.runMap.push(level);
     }
@@ -56,7 +57,7 @@ export default class RunManager {
     const lootGenerator = new GenerateLoot(
       options.index,
       options.size,
-      this.difficulty ?? 'normal',
+      this.difficulty ?? "normal",
       this.player.dropBonus,
       this.player.rarityBonus,
       0,
@@ -65,7 +66,7 @@ export default class RunManager {
     this.aciveLevel = new LevelManager(
       {
         ...options,
-        difficulty: this.difficulty ?? 'normal',
+        difficulty: this.difficulty ?? "normal",
         groundLoot: lootGenerator.loot.groundLoot,
         levelReward: lootGenerator.loot.levelReward,
         camera: this.camera,

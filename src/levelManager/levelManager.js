@@ -172,6 +172,7 @@ export default class LevelManager {
 
     this.enemies?.syncLighting(playerCell, lightRadius, lightCells);
     this.loot?.syncLighting(playerCell, lightRadius, lightCells);
+    this.staticInstancedRenderer?.syncDoorLighting(playerCell, lightRadius, lightCells);
   }
 
   clearLevel() {
