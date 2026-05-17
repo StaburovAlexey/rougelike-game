@@ -70,16 +70,19 @@ export default class RunManager {
 
       case "modifier": {
         const enemyGenerator = new GenerateEnemy(options.index, options.size);
-        enemies = enemyGenerator.enemies;
+        let extraEnemies = enemyGenerator.enemies;
         if (effect.enemyMultiplier > 1) {
-          const extra = [];
-          const baseCount = enemies.length;
+          const baseCount = extraEnemies.length;
           const extraCount = Math.floor(baseCount * (effect.enemyMultiplier - 1));
           for (let i = 0; i < extraCount; i++) {
-            extra.push({ ...enemies[i % baseCount], id: baseCount + i });
+            extraEnemies.push({ ...extraEnemies[i % baseCount], id: baseCount + i });
           }
-          enemies = [...enemies, ...extra];
         }
+        const baseId = enemies.length;
+        for (let i = 0; i < extraEnemies.length; i++) {
+          extraEnemies[i] = { ...extraEnemies[i], id: baseId + i };
+        }
+        enemies = [...enemies, ...extraEnemies];
         if (effect.rewardBonus) {
           extraReward.push(
             buildLevelRewardItem(options.index, this.player.rarityBonus),
@@ -135,6 +138,16 @@ export default class RunManager {
               }),
             );
           }
+        }
+
+        if (effect.enemyCount > 0) {
+          const enemyGenerator = new GenerateEnemy(options.index, options.size);
+          const extraEnemies = enemyGenerator.enemies.slice(0, effect.enemyCount);
+          const baseId = enemies.length;
+          for (let i = 0; i < extraEnemies.length; i++) {
+            extraEnemies[i] = { ...extraEnemies[i], id: baseId + i };
+          }
+          enemies = [...enemies, ...extraEnemies];
         }
         break;
       }
