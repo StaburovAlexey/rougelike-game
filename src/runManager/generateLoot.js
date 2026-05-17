@@ -60,7 +60,7 @@ export function buildEnemyDropItem(levelIndex, rarityBonus = 0) {
 // ── класс для groundLoot / levelReward ──────────────────────────────
 
 export default class GenerateLoot {
-  constructor(levelIndex, levelSize, difficulty = 'normal', dropBonus = 0, rarityBonus = 0, rewardBonus = 0) {
+  constructor(levelIndex, levelSize, difficulty = 'normal', dropBonus = 0, rarityBonus = 0) {
     this.levelIndex = levelIndex;
     this.levelSize = levelSize;
     this.difficulty = difficulty;

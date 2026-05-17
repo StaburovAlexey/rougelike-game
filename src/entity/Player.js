@@ -36,7 +36,7 @@ export default class Player extends Entity {
   }
   get chanceDoors() {
     return {
-      gold: 15,
+      chanceGold: 15,
       shop: 20,
       hell: 30,
     };

@@ -149,7 +149,6 @@ export default class RunManager {
       this.difficulty ?? "normal",
       this.player.dropBonus,
       this.player.rarityBonus,
-      0,
     );
 
     const groundLoot = [
