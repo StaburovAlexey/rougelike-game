@@ -148,10 +148,6 @@ export default class Doors {
   }
 
   updateVisible(cells = []) {
-    for (const plane of this.doorPlaneByCellId.values()) {
-      plane.visible = false;
-    }
-
     const basePosition = new THREE.Vector3();
     const baseRotation = new THREE.Quaternion();
     const yawAxis = new THREE.Vector3(0, 1, 0);

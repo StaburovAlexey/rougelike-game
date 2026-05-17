@@ -16,7 +16,7 @@ class Cell {
     this.enemy = null;
     this.loot = null;
     this.meta = {};
-    this.visible = true;
+    this.visible = false;
     this.expand = false;
   }
 }
