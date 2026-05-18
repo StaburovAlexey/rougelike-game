@@ -7,6 +7,7 @@ export const ENEMY_TYPE_RULES = {
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
+    attackHitFrame: 11,
   },
   chaser: {
     hp: 2,
@@ -16,6 +17,7 @@ export const ENEMY_TYPE_RULES = {
     lootDropChance: 0.05,
     speed: 1,
     windUpTurns: 0,
+    attackHitFrame: 1,
   },
   bruiser: {
     hp: 6,
@@ -26,6 +28,7 @@ export const ENEMY_TYPE_RULES = {
     speed: 1,
     windUpTurns: 1,
     hitAndRun: false,
+    attackHitFrame: 1,
   },
   skirmisher: {
     hp: 2,
@@ -36,6 +39,7 @@ export const ENEMY_TYPE_RULES = {
     speed: 1,
     windUpTurns: 0,
     hitAndRun: true,
+    attackHitFrame: 1,
   },
   guard: {
     hp: 5,
@@ -47,6 +51,7 @@ export const ENEMY_TYPE_RULES = {
     speed: 0,
     windUpTurns: 0,
     hitAndRun: false,
+    attackHitFrame: 1,
   },
   ambusher: {
     hp: 6,
@@ -57,6 +62,7 @@ export const ENEMY_TYPE_RULES = {
     speed: 1,
     windUpTurns: 0,
     hitAndRun: false,
+    attackHitFrame: 1,
   },
   berserker: {
     hp: 6,
@@ -72,6 +78,7 @@ export const ENEMY_TYPE_RULES = {
     friendlyFire: true,
     allyHitChance: 0.35,
     lootDestroyChance: 0.6,
+    attackHitFrame: 1,
   },
 };
 

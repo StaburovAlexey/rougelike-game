@@ -8,6 +8,7 @@ export default class Entity {
   constructor(position = null, type) {
     this.hp = type.hp;
     this.atk = type.atk;
+    this.attackHitFrame = type.attackHitFrame;
     this.name = type.type || type.name;
     this.cellPosition = position;
     const mash = new MashEntity(this.name);
@@ -238,18 +239,25 @@ export default class Entity {
 
     this.attackTarget = null;
   }
-  async tryAttack(entity) {
-    this.attackTarget = entity;
-    if (entity?.mesh) {
-      this.attackTargetPosition.copy(entity.mesh.position);
-    }
 
-    this.#syncAttackDirection();
-    const attackStarted = await this.animator?.playOnce("attack");
-    if (!attackStarted) {
-      this.attackFacingTime = 0.25;
-    }
+  #getAttackHitFrameIndex() {
+    const attackFrames = this.animator?.animations?.attack;
+    if (!attackFrames?.length) return 0;
 
+    const fallbackFrame = Math.floor(attackFrames.length * 0.75);
+    const frameNumber =
+      typeof this.attackHitFrame === "number"
+        ? this.attackHitFrame
+        : fallbackFrame;
+
+    return THREE.MathUtils.clamp(
+      Math.floor(frameNumber) - 1,
+      0,
+      attackFrames.length - 1,
+    );
+  }
+
+  async #applyAttackDamage(entity) {
     const entityDef = entity.inventory?.def ?? 0;
     const atk = this.atk + (this.inventory?.weaponAtk ?? 0);
     const damage = entityDef > atk ? 1 : atk;
@@ -261,5 +269,35 @@ export default class Entity {
     ]);
     entity.inventory?.useArmor?.();
     this.inventory?.useWeapon?.();
+  }
+
+  async tryAttack(entity) {
+    this.attackTarget = entity;
+    if (entity?.mesh) {
+      this.attackTargetPosition.copy(entity.mesh.position);
+    }
+
+    this.#syncAttackDirection();
+    const hitFrame = this.#getAttackHitFrameIndex();
+    let didApplyDamage = false;
+    let damagePromise = Promise.resolve();
+
+    const applyDamageOnce = () => {
+      if (didApplyDamage) return;
+      didApplyDamage = true;
+      damagePromise = this.#applyAttackDamage(entity);
+    };
+
+    const attackStarted = await this.animator?.playOnce("attack", {
+      onFrame: (frame) => {
+        if (frame >= hitFrame) applyDamageOnce();
+      },
+    });
+    if (!attackStarted) {
+      this.attackFacingTime = 0.25;
+      applyDamageOnce();
+    }
+
+    await damagePromise;
   }
 }

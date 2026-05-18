@@ -10,7 +10,7 @@ export default class MashEntity {
     const animations = this.#getAnimations(typeTexture);
     this.#prepareTextures(animations);
     const texture = animations.idle[0];
-    this.geometry = new THREE.PlaneGeometry(1, 1);
+    this.geometry = new THREE.PlaneGeometry(1.5, 1);
     this.geometry.userData.disposeOnRemove = true;
     this.material = new THREE.MeshBasicMaterial({
       map: texture,
@@ -46,7 +46,7 @@ export default class MashEntity {
     if (typeTexture === "rouge") {
       this.mesh.scale.set(2, 2, 2);
     } else if (typeTexture === "warrior") {
-      this.mesh.scale.set(1.5, 1.5, 1.5);
+      this.mesh.scale.set(2.1, 2.1, 2.1);
     } else if (typeTexture === "glot") {
       this.mesh.scale.set(2, 2, 2);
     } else {

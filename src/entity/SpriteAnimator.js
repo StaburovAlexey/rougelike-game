@@ -11,6 +11,7 @@ export default class SpriteAnimator {
     this.loop = true;
     this.afterOnce = null;
     this.onComplete = null;
+    this.onFrame = null;
 
     this.#applyFrame();
   }
@@ -27,16 +28,25 @@ export default class SpriteAnimator {
     this.loop = options.loop ?? true;
     this.afterOnce = options.afterOnce ?? null;
     this.onComplete = options.onComplete ?? null;
+    this.onFrame = options.onFrame ?? null;
     this.#applyFrame();
+    this.onFrame?.(this.frame);
     return true;
   }
 
-  playOnce(name, afterOnce = this.defaultAnimation) {
+  playOnce(name, options = {}) {
+    const afterOnce =
+      typeof options === "string"
+        ? options
+        : options.afterOnce ?? this.defaultAnimation;
+    const onFrame = typeof options === "string" ? null : options.onFrame;
+
     return new Promise((resolve) => {
       const started = this.play(name, {
         restart: true,
         loop: false,
         afterOnce,
+        onFrame,
         onComplete: () => resolve(true),
       });
       if (!started) resolve(false);
@@ -57,6 +67,7 @@ export default class SpriteAnimator {
         const onComplete = this.onComplete;
         this.afterOnce = null;
         this.onComplete = null;
+        this.onFrame = null;
         onComplete?.();
         if (nextAnimation) this.play(nextAnimation, { restart: true });
       }
@@ -69,12 +80,14 @@ export default class SpriteAnimator {
       if (this.frame < frames.length - 1) {
         this.frame += 1;
         this.#applyFrame();
+        this.onFrame?.(this.frame);
         continue;
       }
 
       if (this.loop) {
         this.frame = 0;
         this.#applyFrame();
+        this.onFrame?.(this.frame);
         continue;
       }
 
@@ -82,6 +95,7 @@ export default class SpriteAnimator {
       const onComplete = this.onComplete;
       this.afterOnce = null;
       this.onComplete = null;
+      this.onFrame = null;
       onComplete?.();
       if (nextAnimation) this.play(nextAnimation, { restart: true });
       return;
