@@ -26,7 +26,7 @@ export default class MashEntity {
     this.animator = new SpriteAnimator(this.material, animations, {
       fpsByAnimation: {
         idle: 8,
-        attack: 14,
+        attack: 12,
       },
     });
   }
