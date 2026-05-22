@@ -46,6 +46,7 @@ export default class DungeonLight {
       this.fillLight,
       this.rimLight,
     );
+    this.lightGroup.visible = false
     this.scene.add(this.lightGroup);
   }
 

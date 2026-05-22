@@ -1,4 +1,4 @@
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 export default class Controls {
   constructor(camera, domElement) {
@@ -14,5 +14,11 @@ export default class Controls {
   }
   update() {
     this.controls.update();
+  }
+  setEnabled(enabled) {
+    this.controls.enabled = enabled;
+  }
+  dispose() {
+    this.controls.dispose();
   }
 }
