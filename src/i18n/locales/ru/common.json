@@ -1,0 +1,9 @@
+{
+  "app": {
+    "title": "Roguelike Game"
+  },
+  "language": {
+    "en": "Английский",
+    "ru": "Русский"
+  }
+}
