@@ -13,6 +13,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
+   user-select: none;
 }
 
 /* убираем отступы */
@@ -34,7 +35,7 @@ body {
   line-height: 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeSpeed;
-  background: #000;
+  background: greenyellow;
 }
 
 /* медиа */

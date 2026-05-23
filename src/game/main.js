@@ -15,13 +15,13 @@ export async function createGame(
   options = { debug: true, loading },
 ) {
   options.loading?.(true);
-  const sceneManager = initSceneManager(container);
   await textureManager.loadAll();
   await modelManager.loadAll();
   materialManager.initAll();
   animationsManager.loadAll();
   await new Promise((res) => setTimeout(res, 3000));
   options.loading?.(false);
+  let sceneManager = null;
   let camera = null;
   let control = null;
   let run = null;
@@ -36,14 +36,14 @@ export async function createGame(
   let resizeObserver = null;
 
   const resize = () => {
-    if (!camera || disposed) return;
+    if (!sceneManager || !camera || disposed) return;
 
     const size = sceneManager.resize();
     camera.resize(size);
   };
 
   const loop = (now) => {
-    if (disposed) return;
+    if (disposed || !sceneManager || !camera || !control || !run) return;
 
     animationFrameId = requestAnimationFrame(loop);
 
@@ -85,6 +85,7 @@ export async function createGame(
     started = true;
     paused = false;
 
+    sceneManager = initSceneManager(container);
     camera = new Camera(sceneManager.getSize());
     resize();
 
@@ -177,8 +178,9 @@ export async function createGame(
 
     stats?.dom?.remove();
 
-    sceneManager.dispose();
+    sceneManager?.dispose();
 
+    sceneManager = null;
     camera = null;
     control = null;
     run = null;

@@ -3,7 +3,7 @@
     height: 100vh;
     overflow: hidden;
     position: relative;
-    background: #000;
+    background: transparent;
   }
 
   .app-viewport__stage {

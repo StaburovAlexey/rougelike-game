@@ -34,7 +34,7 @@
   animation:
     loader-sprite-frame 1s steps(11) infinite,
     loader-sprite-visibility 3s ease-in-out infinite;
-  animation-delay: 0s, calc(var(--index) * 0.18s);
+  animation-delay: 0s, calc(var(--index) * 0.5s);
 }
 
 @keyframes loader-sprite-frame {

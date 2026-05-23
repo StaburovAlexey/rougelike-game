@@ -22,3 +22,4 @@ deepseek
 *.njsproj
 *.sln
 *.sw?
+.playwright-mcp
