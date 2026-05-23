@@ -1,26 +1,46 @@
 import "./App.css";
 import { Loader } from "./Loader/Loader";
 import { setLanguage } from "../i18n";
-import { useEffect, useState } from "react";
-import { createGame } from "../game/main";
+import { useEffect, useRef, useState } from "react";
+import { createMenuScene } from "../game/menuScene";
 import { MenuContainer } from "./MenuContainer/MenuContainer";
+
 export function App() {
-  const [loading, setLoading] = useState(false);
+  const backgroundRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     setLanguage("ru");
   }, []);
 
-  let game = null;
-  async function сreate() {
-    game = await createGame("app", {
-      debug: true,
-      loading: (boolean) => {
-        setLoading(boolean);
-      },
-    });
-  }
   useEffect(() => {
-    сreate();
+    let menuScene = null;
+    let cancelled = false;
+
+    async function createScene() {
+      menuScene = await createMenuScene(backgroundRef.current, {
+        loading: (boolean) => {
+          if (!cancelled) setLoading(boolean);
+        },
+      });
+
+      if (cancelled) {
+        menuScene.dispose();
+      }
+    }
+
+    createScene();
+
+    return () => {
+      cancelled = true;
+      menuScene?.dispose();
+    };
   }, []);
-  return <>{loading ? <Loader /> : <MenuContainer />}</>;
+
+  return (
+    <>
+      <div className="app-background" ref={backgroundRef} />
+      <div className="app-content">{loading ? <Loader /> : <MenuContainer />}</div>
+    </>
+  );
 }

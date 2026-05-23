@@ -7,10 +7,11 @@ import Torch from "./Torch/torch";
 import { Group } from "three";
 import { modelManager } from "../core/modelManager";
 export default class StaticInstancedRenderer {
-  constructor(grid) {
+  constructor(grid, options = {}) {
     this.grid = grid;
     this.options = {
       grid: this.grid,
+      ...options,
     };
     this.cells = [];
     this.group = new Group();
