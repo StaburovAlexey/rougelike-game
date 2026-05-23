@@ -24,9 +24,7 @@ const resources = {
 };
 
 const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-const browserLanguage = navigator.language?.split("-")[0];
-const initialLanguage =
-  savedLanguage ?? (resources[browserLanguage] ? browserLanguage : DEFAULT_LANGUAGE);
+const initialLanguage = savedLanguage ?? DEFAULT_LANGUAGE;
 
 i18n.use(initReactI18next).init({
   resources,

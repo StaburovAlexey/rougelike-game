@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import "./style.css";
 import GUI from "lil-gui";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import Camera from "./camera/camera";
@@ -11,12 +10,18 @@ import RunManager from "./runManager/runManager";
 import { animationsManager } from "./core/animationManager";
 import { initSceneManager } from "./scene/scene";
 
-export async function createGame(container = "canvas-container", options = {}) {
+export async function createGame(
+  container = "canvas-container",
+  options = { debug: true, loading },
+) {
+  options.loading?.(true);
   const sceneManager = initSceneManager(container);
   await textureManager.loadAll();
   await modelManager.loadAll();
   materialManager.initAll();
   animationsManager.loadAll();
+  await new Promise((res) => setTimeout(res, 3000));
+  options.loading?.(false);
   let camera = null;
   let control = null;
   let run = null;
