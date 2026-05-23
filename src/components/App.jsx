@@ -23,6 +23,8 @@ export function App() {
           if (!cancelled) setLoading(boolean);
         },
       });
+      await new Promise((res) => setTimeout(res, 500));
+        await menuScene.lowerCamera();
 
       if (cancelled) {
         menuScene.dispose();
@@ -40,7 +42,9 @@ export function App() {
   return (
     <>
       <div className="app-background" ref={backgroundRef} />
-      <div className="app-content">{loading ? <Loader /> : <MenuContainer />}</div>
+      <div className="app-content">
+        {loading ? <Loader /> : <MenuContainer />}
+      </div>
     </>
   );
 }

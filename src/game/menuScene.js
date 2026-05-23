@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import gsap from "gsap";
 import Camera from "./camera/camera";
 import materialManager from "./core/materialManager";
 import modelManager from "./core/modelManager";
@@ -8,6 +9,12 @@ import Grid from "./grid/grid";
 import DungeonLight from "./light/dungeonLight";
 import StaticInstancedRenderer from "./StaticInstancedRenderer/StaticInstancedRenderer";
 import { initSceneManager } from "./scene/scene";
+
+const CAMERA_LOW_Y = 1.2;
+const CAMERA_HIGH_Y = 4.2;
+const CAMERA_TARGET_LOW_Y = 0.75;
+const CAMERA_TARGET_HIGH_Y = 5.2;
+const CAMERA_MOVE_DURATION = 3500;
 
 function prepareMenuGrid() {
   const cols = 12;
@@ -114,7 +121,7 @@ export async function createMenuScene(container, options = {}) {
   const focusCell = grid.get(7, 4);
   const target = new THREE.Vector3(
     focusCell?.worldX ?? 0,
-    0.75,
+    CAMERA_TARGET_HIGH_Y,
     focusCell?.worldZ ?? 0,
   );
   const roomCenter = new THREE.Vector3(0, 0, 0);
@@ -128,19 +135,91 @@ export async function createMenuScene(container, options = {}) {
   }
   bonfireDirection.normalize();
 
-  const cameraDistance = 2.5
-  ;
-  cameraObject.position.set(
+  const cameraDistance = 2.5;
+  const cameraPosition = new THREE.Vector3(
     target.x + bonfireDirection.x * cameraDistance,
-    1.1,
+    CAMERA_HIGH_Y,
     target.z + bonfireDirection.z * cameraDistance,
   );
+  cameraObject.position.copy(cameraPosition);
   cameraObject.lookAt(target);
 
   let animationFrameId = null;
   let resizeObserver = null;
   let disposed = false;
   let last = performance.now();
+  let cameraTween = null;
+
+  const startCameraTween = (
+    toPosition,
+    toTarget,
+    duration = CAMERA_MOVE_DURATION,
+    ease = "none",
+  ) =>
+    new Promise((resolve) => {
+      cameraTween?.kill();
+
+      const tweenState = {
+        cameraX: cameraObject.position.x,
+        cameraY: cameraObject.position.y,
+        cameraZ: cameraObject.position.z,
+        targetX: target.x,
+        targetY: target.y,
+        targetZ: target.z,
+      };
+
+      cameraTween = gsap.to(tweenState, {
+        cameraX: toPosition.x,
+        cameraY: toPosition.y,
+        cameraZ: toPosition.z,
+        targetX: toTarget.x,
+        targetY: toTarget.y,
+        targetZ: toTarget.z,
+        duration: duration / 1000,
+        ease,
+        onUpdate() {
+          cameraObject.position.set(
+            tweenState.cameraX,
+            tweenState.cameraY,
+            tweenState.cameraZ,
+          );
+          target.set(tweenState.targetX, tweenState.targetY, tweenState.targetZ);
+          cameraObject.lookAt(target);
+        },
+        onComplete() {
+          cameraTween = null;
+          resolve();
+        },
+      });
+    });
+
+  const moveCameraHeight = (cameraHeight, targetHeight, duration, ease) => {
+    const toPosition = cameraObject.position.clone();
+    toPosition.y = cameraHeight;
+    const toTarget = target.clone();
+    toTarget.y = targetHeight;
+    return startCameraTween(toPosition, toTarget, duration, ease);
+  };
+
+  const getCameraPositionForTarget = (nextTarget) => {
+    const direction = new THREE.Vector3(
+      nextTarget.x - roomCenter.x,
+      0,
+      nextTarget.z - roomCenter.z,
+    );
+
+    if (direction.lengthSq() < 0.001) {
+      direction.copy(bonfireDirection);
+    }
+
+    direction.normalize();
+
+    return new THREE.Vector3(
+      nextTarget.x + direction.x * cameraDistance,
+      cameraObject.position.y,
+      nextTarget.z + direction.z * cameraDistance,
+    );
+  };
 
   const resize = () => {
     if (disposed) return;
@@ -174,6 +253,34 @@ export async function createMenuScene(container, options = {}) {
   options.loading?.(false);
 
   return {
+    lowerCamera(duration = CAMERA_MOVE_DURATION) {
+      return moveCameraHeight(
+        CAMERA_LOW_Y,
+        CAMERA_TARGET_LOW_Y,
+        duration,
+        "power1.out",
+      );
+    },
+    raiseCamera(duration = CAMERA_MOVE_DURATION) {
+      return moveCameraHeight(
+        CAMERA_HIGH_Y,
+        CAMERA_TARGET_HIGH_Y,
+        duration,
+        "power1.out",
+      );
+    },
+    moveCameraToCell(col, row, duration = CAMERA_MOVE_DURATION) {
+      const cell = grid?.get(col, row);
+      if (!cell) return Promise.resolve();
+
+      const nextTarget = new THREE.Vector3(cell.worldX, 0.75, cell.worldZ);
+      return startCameraTween(
+        getCameraPositionForTarget(nextTarget),
+        nextTarget,
+        duration,
+        "power1.out",
+      );
+    },
     dispose() {
       if (disposed) return;
 
@@ -183,6 +290,8 @@ export async function createMenuScene(container, options = {}) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
       }
+      cameraTween?.kill();
+      cameraTween = null;
 
       resizeObserver?.disconnect();
       window.removeEventListener("resize", resize);

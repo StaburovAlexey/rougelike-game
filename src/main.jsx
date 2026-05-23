@@ -6,9 +6,9 @@ import "./i18n";
 import "./style.css";
 
 createRoot(document.getElementById("app")).render(
-  <StrictMode>
+
     <AppViewport>
       <App />
     </AppViewport>
-  </StrictMode>,
+  
 );
