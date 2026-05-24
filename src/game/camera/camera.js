@@ -20,5 +20,11 @@ export default class Camera {
     getCamera() {
        return this._camera;
     }
+    resize(size) {
+       if (!size?.width || !size?.height) return;
+
+       this._camera.aspect = size.width / size.height;
+       this._camera.updateProjectionMatrix();
+    }
 
 }

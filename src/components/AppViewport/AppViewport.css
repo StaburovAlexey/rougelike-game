@@ -1,0 +1,16 @@
+.app-viewport {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: transparent;
+  }
+
+  .app-viewport__stage {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+  }

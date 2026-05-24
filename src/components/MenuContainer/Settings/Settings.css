@@ -1,0 +1,33 @@
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}
+
+.settings-container__header {
+  font-size: 75px;
+}
+
+.settings-container__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-container__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  min-width: 520px;
+  font-size: 42px;
+}
+
+.settings-container__field input {
+  width: 42px;
+  height: 42px;
+  border: 2px solid currentColor;
+  cursor: pointer;
+}

@@ -1,0 +1,15 @@
+#app {
+  width: 100vw;
+  height: 100vh;
+  background-color: transparent;
+  color: white;
+}
+
+.app-content {
+  position: absolute;
+  inset: 0;
+}
+
+.app-content {
+  z-index: 1;
+}

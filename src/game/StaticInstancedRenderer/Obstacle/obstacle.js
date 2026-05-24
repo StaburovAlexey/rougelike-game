@@ -13,6 +13,7 @@ const BONFIRE_LIGHT_FLICKER_AMOUNT = 0.18;
 export default class Obstacle {
   constructor(options, backgroundModels) {
     this.grid = options.grid;
+    this.options = options;
     this.backgroundModels = backgroundModels;
     this.minBonfireDistance = 2;
     this.obstacleCells = this.grid.getObstacleCells();
@@ -37,10 +38,13 @@ export default class Obstacle {
 
     this.variants = this.#loadVariants();
 
-    this.obstacleVariantByCell = this.#generateObstacleVariants();
-    this.obstacleRotationByCell = this.obstacleCells.map(
-      () => Math.random() * Math.PI * 2,
-    );
+    this.obstacleVariantByCell =
+      this.options.obstacleVariantNamesByCell
+        ? this.#getConfiguredObstacleVariants()
+        : this.#generateObstacleVariants();
+    this.obstacleRotationByCell =
+      this.options.obstacleRotationByCell ??
+      this.obstacleCells.map(() => Math.random() * Math.PI * 2);
 
     const variantCounts = new Array(this.variants.length).fill(0);
     for (let i = 0; i < this.obstacleVariantByCell.length; i++) {
@@ -113,6 +117,26 @@ export default class Obstacle {
 
   #isBonfireVariant(variantIndex) {
     return this.variants[variantIndex]?.name?.includes("bonfire");
+  }
+
+  #findVariantIndexByName(name) {
+    if (!name) return 0;
+
+    const normalizedName = name.toLowerCase();
+    return Math.max(
+      0,
+      this.variants.findIndex((variant) =>
+        variant.name.toLowerCase().includes(normalizedName),
+      ),
+    );
+  }
+
+  #getConfiguredObstacleVariants() {
+    return this.obstacleCells.map((cell) =>
+      this.#findVariantIndexByName(
+        this.options.obstacleVariantNamesByCell[cell.id],
+      ),
+    );
   }
 
   #isFarEnoughFromBonfires(cell, bonfireCells) {

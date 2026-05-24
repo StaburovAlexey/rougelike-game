@@ -12,7 +12,7 @@
     "*.js",
     "*.mjs",
     "vite.config.js"
-  ],
+, "src/main.jsx"  ],
   "exclude": [
     "node_modules",
     "dist",

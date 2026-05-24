@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Inkverse";
+  src: url("./assets/fonts/Inkverse-BWDRx.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ===== CSS RESET ===== */
 
 /* box-sizing */
@@ -5,6 +13,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
+   user-select: none;
 }
 
 /* убираем отступы */
@@ -22,10 +31,11 @@ body {
 
 /* тело документа */
 body {
+  font-family: "Inkverse", system-ui, sans-serif;
   line-height: 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeSpeed;
-  background: #000;
+  background: black;
 }
 
 /* медиа */
@@ -70,13 +80,4 @@ a {
 table {
   border-collapse: collapse;
   border-spacing: 0;
-}
-
-#canvas-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }

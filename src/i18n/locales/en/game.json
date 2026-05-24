@@ -1,0 +1,19 @@
+{
+  "actions": {
+    "pause": "Pause",
+    "resume": "Resume",
+    "dispose": "Dispose",
+    "nextLevel": "Next level",
+    "start": "Start"
+  },
+  "hero": {
+    "warrior": "Warrior",
+    "rogue": "Rogue"
+  },
+  "loot": {
+    "gold": "Gold",
+    "weapon": "Weapon",
+    "armor": "Armor",
+    "heal": "Healing potion"
+  }
+}

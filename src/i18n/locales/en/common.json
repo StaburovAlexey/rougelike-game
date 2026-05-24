@@ -1,0 +1,19 @@
+{
+  "app": {
+    "title": "Roguelike Game"
+  },
+  "language": {
+    "en": "English",
+    "ru": "Russian"
+  },
+  "menu": {
+    "newGame": "New Game",
+    "continue": "Continue",
+    "settings": "Settings",
+    "exit": "Exit",
+    "back": "Back"
+  },
+  "settings": {
+    "fullscreen": "Fullscreen"
+  }
+}
