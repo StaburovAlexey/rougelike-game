@@ -12,7 +12,7 @@ import { initSceneManager } from "./scene/scene";
 
 export async function createGame(
   container = "canvas-container",
-  options = { debug: true, loading },
+  options = { debug: true, loading, exit },
 ) {
   options.loading?.(true);
   await textureManager.loadAll();
@@ -119,12 +119,17 @@ export async function createGame(
         pause,
         resume,
         dispose,
+        exit: () => {
+          dispose();
+          options.exit?.();
+        },
         nextLevel: () => run.nextLevel(),
       };
 
       gui.add(gameControls, "pause").name("Pause");
       gui.add(gameControls, "resume").name("Resume");
       gui.add(gameControls, "dispose").name("Dispose");
+      gui.add(gameControls, "exit").name("Exit");
       gui.add(gameControls, "nextLevel").name("Next level");
 
       stats = new Stats();
@@ -187,6 +192,7 @@ export async function createGame(
     gui = null;
     stats = null;
   };
+  
 
   return {
     start,

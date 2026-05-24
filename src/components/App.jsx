@@ -20,7 +20,9 @@ export function App() {
         {window === "main-menu" && (
           <MenuContainer setLoading={setLoading} setWindow={setWindow} />
         )}
-        {window === "game" && <GameContainer setLoading={setLoading}/>}
+        {window === "game" && (
+          <GameContainer setLoading={setLoading} setWindow={setWindow} />
+        )}
       </div>
     </>
   );
