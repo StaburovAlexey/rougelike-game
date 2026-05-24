@@ -99,7 +99,8 @@ export async function createMenuScene(container, options = {}) {
   materialManager.initAll();
   materialManager.setPrefixLevel(1);
   animationsManager.loadAll();
-
+  await new Promise((res) => setTimeout(res, 3000));
+  options.loading?.(false);
   const sceneManager = initSceneManager(container);
   const camera = new Camera(sceneManager.getSize());
   const cameraObject = camera.getCamera();
@@ -253,8 +254,6 @@ export async function createMenuScene(container, options = {}) {
 
   sceneManager.renderer.render(sceneManager.getScene(), cameraObject);
   animationFrameId = requestAnimationFrame(loop);
-  await new Promise((res) => setTimeout(res, 3000));
-  options.loading?.(false);
 
   return {
     lowerCamera(duration = CAMERA_MOVE_DURATION) {

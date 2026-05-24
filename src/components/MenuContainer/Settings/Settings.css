@@ -4,3 +4,7 @@
   align-items: center;
   justify-content: center;
 }
+
+.settings-container__header{
+  font-size: 75px;
+}

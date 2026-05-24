@@ -61,7 +61,10 @@ export function MenuContainer({ children, setLoading }) {
         )}
         {activeItem === "settings" && (
           <Settings>
-            <ButtonMenu onClick={() => setActiveItem("main")} text="Назад" />
+            <ButtonMenu
+              onClick={() => setActiveItem("main")}
+              text={t("menu.back")}
+            />
           </Settings>
         )}
       </div>
