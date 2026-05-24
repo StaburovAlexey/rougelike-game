@@ -5,15 +5,9 @@
   color: white;
 }
 
-.app-background,
 .app-content {
   position: absolute;
   inset: 0;
-}
-
-.app-background {
-  z-index: 0;
-  background: #000;
 }
 
 .app-content {

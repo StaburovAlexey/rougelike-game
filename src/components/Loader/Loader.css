@@ -1,12 +1,16 @@
 .loader-container {
   width: 100%;
   height: 100%;
+  top: 0;
+  right: 0;
+  position: absolute;
   background-color: black;
   display: flex;
   justify-content: end;
   align-items: end;
+  z-index: 100;
 }
-.loader-container__loader{
+.loader-container__loader {
   display: flex;
   justify-content: center;
   align-items: center;

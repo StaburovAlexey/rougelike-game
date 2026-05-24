@@ -183,7 +183,11 @@ export async function createMenuScene(container, options = {}) {
             tweenState.cameraY,
             tweenState.cameraZ,
           );
-          target.set(tweenState.targetX, tweenState.targetY, tweenState.targetZ);
+          target.set(
+            tweenState.targetX,
+            tweenState.targetY,
+            tweenState.targetZ,
+          );
           cameraObject.lookAt(target);
         },
         onComplete() {
@@ -249,7 +253,7 @@ export async function createMenuScene(container, options = {}) {
 
   sceneManager.renderer.render(sceneManager.getScene(), cameraObject);
   animationFrameId = requestAnimationFrame(loop);
-
+  await new Promise((res) => setTimeout(res, 3000));
   options.loading?.(false);
 
   return {

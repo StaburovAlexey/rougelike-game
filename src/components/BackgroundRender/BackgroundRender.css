@@ -1,0 +1,9 @@
+.background-render {
+  position: absolute;
+  inset: 0;
+}
+
+.background-render {
+  z-index: 0;
+  background: #000;
+}

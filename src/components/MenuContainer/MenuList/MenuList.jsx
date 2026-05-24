@@ -1,5 +1,5 @@
 import "./MenuList.css";
 
 export function MenuList({ children }) {
-  return <ul className="menu-list">{children}</ul>;
+  return <div className="menu-list">{children}</div>;
 }
