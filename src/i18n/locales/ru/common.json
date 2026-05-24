@@ -12,5 +12,8 @@
     "settings": "Настройки",
     "exit": "Выйти",
     "back": "Назад"
+  },
+  "settings": {
+    "fullscreen": "Полный экран"
   }
 }

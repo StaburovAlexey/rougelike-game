@@ -12,5 +12,8 @@
     "settings": "Settings",
     "exit": "Exit",
     "back": "Back"
+  },
+  "settings": {
+    "fullscreen": "Fullscreen"
   }
 }
