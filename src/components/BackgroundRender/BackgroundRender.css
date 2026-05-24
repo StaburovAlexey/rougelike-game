@@ -1,9 +1,11 @@
 .background-render {
   position: absolute;
   inset: 0;
-}
-
-.background-render {
   z-index: 0;
   background: #000;
+}
+
+.game-render {
+  width: 100%;
+  height: 100%;
 }

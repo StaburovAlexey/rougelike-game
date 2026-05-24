@@ -7,7 +7,7 @@ import { BackgroundRender } from "../BackgroundRender/BackgroundRender";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
-export function MenuContainer({ children, setLoading }) {
+export function MenuContainer({ children, setLoading, setWindow }) {
   const backgroundRef = useRef(null);
   const { t } = useTranslation("common");
   const [activeItem, setActiveItem] = useState("main");
@@ -39,7 +39,12 @@ export function MenuContainer({ children, setLoading }) {
   }, []);
   function cliclItem(type) {
     console.log("click", type);
-    setActiveItem(type);
+    if (type === "newGame") {
+      setWindow("game");
+    } else {
+      setActiveItem(type);
+    }
+
     console.log("activeItem", activeItem);
   }
   return (
