@@ -14,8 +14,8 @@ const CAMERA_LOW_Y = 1.2;
 const CAMERA_HIGH_Y = 1.2;
 const CAMERA_TARGET_LOW_Y = 0.75;
 const CAMERA_TARGET_HIGH_Y = 0.75;
-const CAMERA_MOVE_DURATION = 3500;
-const SCENE_FADE_DURATION = 5500;
+const CAMERA_MOVE_DURATION = 2500;
+const SCENE_FADE_DURATION = 4500;
 
 function prepareMenuGrid() {
   const cols = 12;

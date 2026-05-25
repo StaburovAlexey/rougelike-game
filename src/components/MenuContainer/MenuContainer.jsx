@@ -32,22 +32,22 @@ export function MenuContainer({ children, setLoading, setWindow }) {
         return;
       }
 
-      if (frameContainerRef.current) {
-        frameContainerTween = gsap.fromTo(
-          frameContainerRef.current,
-          { autoAlpha: 0, y: 24 },
-          { autoAlpha: 1, y: 0, duration: 1, ease: "power1.out" },
-        );
-
-        await frameContainerTween.then();
-      }
+      await menuScene.fadeInScene();
 
       if (cancelled) {
         menuScene.dispose();
         return;
       }
 
-      await menuScene.fadeInScene();
+      if (frameContainerRef.current) {
+        frameContainerTween = gsap.fromTo(
+          frameContainerRef.current,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 2, ease: "power1.out" },
+        );
+
+        await frameContainerTween.then();
+      }
 
       if (cancelled) {
         menuScene.dispose();
