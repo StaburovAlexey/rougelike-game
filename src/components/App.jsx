@@ -1,6 +1,5 @@
 import "./App.css";
 import { Loader } from "./Loader/Loader";
-import { setLanguage } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 
 import { MenuContainer } from "./MenuContainer/MenuContainer";
@@ -17,10 +16,6 @@ export function App() {
   const [loaderVisible, setLoaderVisible] = useState(true);
   const [window, setWindow] = useState("main-menu");
   const transitionInProgressRef = useRef(false);
-
-  useEffect(() => {
-    setLanguage("ru");
-  }, []);
 
   useEffect(() => {
     if (loading) {

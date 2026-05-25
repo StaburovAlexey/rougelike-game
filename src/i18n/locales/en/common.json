@@ -14,6 +14,7 @@
     "back": "Back"
   },
   "settings": {
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "language": "Language"
   }
 }
