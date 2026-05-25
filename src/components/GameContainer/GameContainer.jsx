@@ -1,8 +1,8 @@
 import { BackgroundRender } from "../BackgroundRender/BackgroundRender";
 import "./GameContainer.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createGame } from "../../game/main.js";
-export function GameContainer({ setLoading, setWindow }) {
+export function GameContainer({ setLoading, transitionTo }) {
   const gameRef = useRef(null);
   useEffect(() => {
     let game = null;
@@ -14,8 +14,7 @@ export function GameContainer({ setLoading, setWindow }) {
           if (!cancelled) setLoading(boolean);
         },
         exit: () => {
-          setLoading(true);
-          setWindow("main-menu");
+          transitionTo("main-menu");
         },
         debug: true,
       });

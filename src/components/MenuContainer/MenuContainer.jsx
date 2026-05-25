@@ -1,19 +1,23 @@
 import "./MenuContainer.css";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { gsap } from "gsap";
 import { MenuList } from "./MenuList/MenuList";
 import { createMenuScene } from "../../game/menuScene.js";
 import { BackgroundRender } from "../BackgroundRender/BackgroundRender";
+import { FrameContainer } from "../FrameContainer/FrameContainer.jsx";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
-export function MenuContainer({ children, setLoading, setWindow }) {
+export function MenuContainer({ children, setLoading, transitionTo }) {
   const backgroundRef = useRef(null);
+  const frameContainerRef = useRef(null);
   const { t } = useTranslation("common");
   const [activeItem, setActiveItem] = useState("main");
 
   useEffect(() => {
     let menuScene = null;
+    let frameContainerTween = null;
     let cancelled = false;
 
     async function createScene() {
@@ -22,11 +26,32 @@ export function MenuContainer({ children, setLoading, setWindow }) {
           if (!cancelled) setLoading(boolean);
         },
       });
-      await new Promise((res) => setTimeout(res, 500));
-      await menuScene.lowerCamera();
 
       if (cancelled) {
         menuScene.dispose();
+        return;
+      }
+
+      await menuScene.fadeInScene();
+
+      if (cancelled) {
+        menuScene.dispose();
+        return;
+      }
+
+      if (frameContainerRef.current) {
+        frameContainerTween = gsap.fromTo(
+          frameContainerRef.current,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 2, ease: "power1.out" },
+        );
+
+        await frameContainerTween.then();
+      }
+
+      if (cancelled) {
+        menuScene.dispose();
+        return;
       }
     }
 
@@ -34,23 +59,21 @@ export function MenuContainer({ children, setLoading, setWindow }) {
 
     return () => {
       cancelled = true;
+      frameContainerTween?.kill();
       menuScene?.dispose();
     };
   }, []);
   function cliclItem(type) {
-    console.log("click", type);
     if (type === "newGame") {
-      setWindow("game");
+      transitionTo("game");
     } else {
       setActiveItem(type);
     }
-
-    console.log("activeItem", activeItem);
   }
   return (
     <div className="menu-container">
       <BackgroundRender className="background-render" ref={backgroundRef} />
-      <div className="menu-container__list">
+      <FrameContainer className="menu-container__list" ref={frameContainerRef}>
         {activeItem === "main" && (
           <MenuList>
             {menuList.map((item, index) => {
@@ -72,7 +95,7 @@ export function MenuContainer({ children, setLoading, setWindow }) {
             />
           </Settings>
         )}
-      </div>
+      </FrameContainer>
     </div>
   );
 }

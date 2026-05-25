@@ -1,0 +1,52 @@
+.frame-container {
+  --frame-scale: 0.4;
+  --content-offset-x: -10px;
+  --content-offset-y: 5px;
+  --background-opacity: 0.7;
+  --background-inset-top: calc(100px * var(--frame-scale));
+  --background-inset-right: calc(90px * var(--frame-scale));
+  --background-inset-bottom: calc(100px * var(--frame-scale));
+  --background-inset-left: calc(90px * var(--frame-scale));
+
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  padding: calc(308px * var(--frame-scale))
+    calc(298px * var(--frame-scale)) calc(355px * var(--frame-scale))
+    calc(362px * var(--frame-scale));
+}
+
+.frame-container::before {
+  content: "";
+  position: absolute;
+  inset: var(--background-inset-top) var(--background-inset-right)
+    var(--background-inset-bottom) var(--background-inset-left);
+  background: rgb(0 0 0 / var(--background-opacity));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.frame-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-style: solid;
+  border-image-source: url("../../assets/png/border.png");
+  border-image-slice: 308 298 355 362 fill;
+  border-width: calc(308px * var(--frame-scale))
+    calc(298px * var(--frame-scale)) calc(355px * var(--frame-scale))
+    calc(362px * var(--frame-scale));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.frame-container__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(var(--content-offset-x), var(--content-offset-y));
+}
