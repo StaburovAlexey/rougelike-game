@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import gsap from "gsap";
 import GUI from "lil-gui";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import Camera from "./camera/camera";
@@ -9,6 +10,17 @@ import materialManager from "./core/materialManager";
 import RunManager from "./runManager/runManager";
 import { animationsManager } from "./core/animationManager";
 import { initSceneManager } from "./scene/scene";
+
+const CAMERA_MOVE_DISTANCE = 10;
+const CAMERA_MOVE_HEIGHT = 4.5;
+const CAMERA_MIN_ZOOM = 0.5;
+const CAMERA_MAX_ZOOM = 3;
+const CAMERA_MOVE_DURATION = 0.7;
+const TWO_PI = Math.PI * 2;
+
+function normalizeAngleDelta(delta) {
+  return Math.atan2(Math.sin(delta), Math.cos(delta));
+}
 
 export async function createGame(
   container = "canvas-container",
@@ -34,6 +46,7 @@ export async function createGame(
   let paused = false;
   let disposed = false;
   let resizeObserver = null;
+  let cameraMoveTween = null;
   const loading = async (activateFunction = null) => {
     options.loading?.(true);
     await new Promise((res) => setTimeout(res, 1000));
@@ -45,6 +58,71 @@ export async function createGame(
 
     const size = sceneManager.resize();
     camera.resize(size);
+  };
+  const moveCameraToDirection = (direction, { immediate = false } = {}) => {
+    if (!camera || !control || disposed) return;
+
+    const target = control.getTarget(new THREE.Vector3());
+    const cameraObject = camera.getCamera();
+    const currentOffset = new THREE.Vector3().subVectors(
+      cameraObject.position,
+      target,
+    );
+    const currentRadius =
+      Math.hypot(currentOffset.x, currentOffset.z) || CAMERA_MOVE_DISTANCE;
+    const startAngle = Math.atan2(currentOffset.x, currentOffset.z);
+    const endAngle = Math.atan2(direction.x, direction.z);
+    const targetAngle = startAngle + normalizeAngleDelta(endAngle - startAngle);
+    const angleState = { angle: startAngle };
+
+    const updateCameraPosition = () => {
+      cameraObject.position.set(
+        target.x + Math.sin(angleState.angle) * currentRadius,
+        target.y + CAMERA_MOVE_HEIGHT,
+        target.z + Math.cos(angleState.angle) * currentRadius,
+      );
+      cameraObject.lookAt(target);
+      cameraObject.updateProjectionMatrix();
+      control.update();
+    };
+
+    cameraMoveTween?.kill();
+
+    if (immediate) {
+      angleState.angle = endAngle;
+      updateCameraPosition();
+      return;
+    }
+
+    cameraMoveTween = gsap.to(angleState, {
+      angle: targetAngle,
+      duration: CAMERA_MOVE_DURATION,
+      ease: "power2.inOut",
+      onUpdate: updateCameraPosition,
+      onComplete: () => {
+        cameraMoveTween = null;
+      },
+    });
+  };
+  const moveCameraNorth = () => {
+    moveCameraToDirection(new THREE.Vector3(1, 0, 1));
+  };
+  const moveCameraSouth = () => {
+    moveCameraToDirection(new THREE.Vector3(-1, 0, -1));
+  };
+  const moveCameraWest = () => {
+    moveCameraToDirection(new THREE.Vector3(-1, 0, 1));
+  };
+  const moveCameraEast = () => {
+    moveCameraToDirection(new THREE.Vector3(1, 0, -1));
+  };
+  const setCameraZoom = (zoom) => {
+    if (!camera || disposed) return;
+
+    const cameraObject = camera.getCamera();
+    cameraObject.zoom = zoom;
+    cameraObject.updateProjectionMatrix();
+    control?.update();
   };
 
   const loop = (now) => {
@@ -91,13 +169,17 @@ export async function createGame(
     paused = false;
 
     sceneManager = initSceneManager(container);
-    camera = new Camera(sceneManager.getSize());
+    camera = new Camera(sceneManager.getSize(), {
+      type: "orthographic",
+      orthographicSize: 5,
+    });
     resize();
 
     control = new Controls(
       camera.getCamera(),
       sceneManager.renderer.domElement,
     );
+    moveCameraToDirection(new THREE.Vector3(1, 0, 1), { immediate: true });
 
     run = new RunManager({
       typeRun: "classic",
@@ -136,6 +218,17 @@ export async function createGame(
           //run.nextLevel();
           //options.loading?.(false);
         },
+        moveCameraNorth,
+        moveCameraSouth,
+        moveCameraWest,
+        moveCameraEast,
+      };
+      const cameraControls = {
+        zoom: camera.getCamera().zoom,
+        moveCameraNorth,
+        moveCameraSouth,
+        moveCameraWest,
+        moveCameraEast,
       };
 
       gui.add(gameControls, "pause").name("Pause");
@@ -143,6 +236,16 @@ export async function createGame(
       gui.add(gameControls, "dispose").name("Dispose");
       gui.add(gameControls, "exit").name("Exit");
       gui.add(gameControls, "nextLevel").name("Next level");
+
+      const cameraFolder = gui.addFolder("Camera");
+      cameraFolder
+        .add(cameraControls, "zoom", CAMERA_MIN_ZOOM, CAMERA_MAX_ZOOM, 0.1)
+        .name("Zoom")
+        .onChange(setCameraZoom);
+      cameraFolder.add(cameraControls, "moveCameraNorth").name("North");
+      cameraFolder.add(cameraControls, "moveCameraSouth").name("South");
+      cameraFolder.add(cameraControls, "moveCameraWest").name("West");
+      cameraFolder.add(cameraControls, "moveCameraEast").name("East");
 
       stats = new Stats();
       stats.dom.style.position = "absolute";
@@ -187,6 +290,8 @@ export async function createGame(
     resizeObserver?.disconnect();
     resizeObserver = null;
     window.removeEventListener("resize", resize);
+    cameraMoveTween?.kill();
+    cameraMoveTween = null;
 
     run?.aciveLevel?.clearLevel();
 
@@ -211,6 +316,10 @@ export async function createGame(
     resume,
     dispose,
     resize,
+    moveCameraNorth,
+    moveCameraSouth,
+    moveCameraWest,
+    moveCameraEast,
     get isPaused() {
       return paused;
     },
