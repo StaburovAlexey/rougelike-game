@@ -11,10 +11,11 @@ import StaticInstancedRenderer from "./StaticInstancedRenderer/StaticInstancedRe
 import { initSceneManager } from "./scene/scene";
 
 const CAMERA_LOW_Y = 1.2;
-const CAMERA_HIGH_Y = 4.2;
+const CAMERA_HIGH_Y = 1.2;
 const CAMERA_TARGET_LOW_Y = 0.75;
-const CAMERA_TARGET_HIGH_Y = 5.2;
+const CAMERA_TARGET_HIGH_Y = 0.75;
 const CAMERA_MOVE_DURATION = 3500;
+const SCENE_FADE_DURATION = 5500;
 
 function prepareMenuGrid() {
   const cols = 12;
@@ -102,6 +103,8 @@ export async function createMenuScene(container, options = {}) {
   await new Promise((res) => setTimeout(res, 3000));
   options.loading?.(false);
   const sceneManager = initSceneManager(container);
+  const sceneContainer = sceneManager.getContainer();
+  gsap.set(sceneContainer, { autoAlpha: 0 });
   const camera = new Camera(sceneManager.getSize());
   const cameraObject = camera.getCamera();
 
@@ -150,6 +153,7 @@ export async function createMenuScene(container, options = {}) {
   let disposed = false;
   let last = performance.now();
   let cameraTween = null;
+  let sceneFadeTween = null;
 
   const startCameraTween = (
     toPosition,
@@ -256,6 +260,16 @@ export async function createMenuScene(container, options = {}) {
   animationFrameId = requestAnimationFrame(loop);
 
   return {
+    fadeInScene(duration = SCENE_FADE_DURATION) {
+      sceneFadeTween?.kill();
+      sceneFadeTween = gsap.to(sceneContainer, {
+        autoAlpha: 1,
+        duration: duration / 1000,
+        ease: "power1.out",
+      });
+
+      return sceneFadeTween.then();
+    },
     lowerCamera(duration = CAMERA_MOVE_DURATION) {
       return moveCameraHeight(
         CAMERA_LOW_Y,
@@ -295,6 +309,8 @@ export async function createMenuScene(container, options = {}) {
       }
       cameraTween?.kill();
       cameraTween = null;
+      sceneFadeTween?.kill();
+      sceneFadeTween = null;
 
       resizeObserver?.disconnect();
       window.removeEventListener("resize", resize);
