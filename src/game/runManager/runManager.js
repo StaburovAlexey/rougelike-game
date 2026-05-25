@@ -4,9 +4,15 @@ import GenerateLoot, { buildLevelRewardItem } from "./generateLoot";
 import Player from "../entity/Player";
 import { HERO_CLASS } from "../static/hero";
 import { getDoorEffect } from "../static/subtypeDoors";
-import { buildLootItem, LOOT_SOURCES, pickWeighted, getLootTypeWeights, getLootRarityWeights } from "../static/loot";
+import {
+  buildLootItem,
+  LOOT_SOURCES,
+  pickWeighted,
+  getLootTypeWeights,
+  getLootRarityWeights,
+} from "../static/loot";
 export default class RunManager {
-  constructor({ difficulty, typeRun, classHero, camera, domElement }) {
+  constructor({ difficulty, typeRun, classHero, camera, domElement, loader }) {
     this.difficulty = difficulty;
     this.typeRun = typeRun;
     this.classHero = classHero;
@@ -17,6 +23,7 @@ export default class RunManager {
     this.activeIndex = 0;
     this.aciveLevel = null;
     this.player = new Player(null, HERO_CLASS["warrior"]);
+    this.loader = loader;
     this.#init();
   }
   #init() {
@@ -73,9 +80,14 @@ export default class RunManager {
         let extraEnemies = enemyGenerator.enemies;
         if (effect.enemyMultiplier > 1) {
           const baseCount = extraEnemies.length;
-          const extraCount = Math.floor(baseCount * (effect.enemyMultiplier - 1));
+          const extraCount = Math.floor(
+            baseCount * (effect.enemyMultiplier - 1),
+          );
           for (let i = 0; i < extraCount; i++) {
-            extraEnemies.push({ ...extraEnemies[i % baseCount], id: baseCount + i });
+            extraEnemies.push({
+              ...extraEnemies[i % baseCount],
+              id: baseCount + i,
+            });
           }
         }
         const baseId = enemies.length;
@@ -104,7 +116,10 @@ export default class RunManager {
             );
           } else if (effect.category === "legendary") {
             const exclude = effect.exclude ?? [];
-            const typeWeights = getLootTypeWeights(options.index, LOOT_SOURCES.ground);
+            const typeWeights = getLootTypeWeights(
+              options.index,
+              LOOT_SOURCES.ground,
+            );
             for (const ex of exclude) {
               typeWeights[ex] = 0;
             }
@@ -120,14 +135,24 @@ export default class RunManager {
           } else {
             // random (possibly with exclusions)
             const exclude = effect.exclude ?? [];
-            const typeWeights = getLootTypeWeights(options.index, LOOT_SOURCES.ground);
+            const typeWeights = getLootTypeWeights(
+              options.index,
+              LOOT_SOURCES.ground,
+            );
             for (const ex of exclude) {
               typeWeights[ex] = 0;
             }
             const type = pickWeighted(typeWeights) ?? "gold";
-            const rarityWeights = getLootRarityWeights(options.index, LOOT_SOURCES.ground);
-            rarityWeights.rare = Math.floor(rarityWeights.rare * (1 + this.player.rarityBonus));
-            rarityWeights.legendary = Math.floor(rarityWeights.legendary * (1 + this.player.rarityBonus));
+            const rarityWeights = getLootRarityWeights(
+              options.index,
+              LOOT_SOURCES.ground,
+            );
+            rarityWeights.rare = Math.floor(
+              rarityWeights.rare * (1 + this.player.rarityBonus),
+            );
+            rarityWeights.legendary = Math.floor(
+              rarityWeights.legendary * (1 + this.player.rarityBonus),
+            );
             const rarity = pickWeighted(rarityWeights) ?? "common";
             extraGroundLoot.push(
               buildLootItem({
@@ -142,7 +167,10 @@ export default class RunManager {
 
         if (effect.enemyCount > 0) {
           const enemyGenerator = new GenerateEnemy(options.index, options.size);
-          const extraEnemies = enemyGenerator.enemies.slice(0, effect.enemyCount);
+          const extraEnemies = enemyGenerator.enemies.slice(
+            0,
+            effect.enemyCount,
+          );
           const baseId = enemies.length;
           for (let i = 0; i < extraEnemies.length; i++) {
             extraEnemies[i] = { ...extraEnemies[i], id: baseId + i };
@@ -190,8 +218,9 @@ export default class RunManager {
       this.player,
     );
   }
-  nextLevel() {
+  async nextLevel() {
     if (this.activeIndex === this.length - 1) return;
+    await this.loader();
     this.activeIndex++;
     const level = this.runMap[this.activeIndex];
     this.renderLevel(level);

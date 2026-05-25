@@ -31,7 +31,7 @@
   position: absolute;
   inset: 0;
   border-style: solid;
-  border-image-source: url("../../assets/png/border2.png");
+  border-image-source: url("../../assets/png/border.png");
   border-image-slice: 308 298 355 362 fill;
   border-width: calc(308px * var(--frame-scale))
     calc(298px * var(--frame-scale)) calc(355px * var(--frame-scale))

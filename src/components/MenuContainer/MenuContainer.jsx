@@ -9,7 +9,7 @@ import { FrameContainer } from "../FrameContainer/FrameContainer.jsx";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
-export function MenuContainer({ children, setLoading, setWindow }) {
+export function MenuContainer({ children, setLoading, transitionTo }) {
   const backgroundRef = useRef(null);
   const frameContainerRef = useRef(null);
   const { t } = useTranslation("common");
@@ -65,7 +65,7 @@ export function MenuContainer({ children, setLoading, setWindow }) {
   }, []);
   function cliclItem(type) {
     if (type === "newGame") {
-      setWindow("game");
+      transitionTo("game");
     } else {
       setActiveItem(type);
     }

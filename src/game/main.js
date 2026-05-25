@@ -34,7 +34,12 @@ export async function createGame(
   let paused = false;
   let disposed = false;
   let resizeObserver = null;
-
+  const loading = async (activateFunction = null) => {
+    options.loading?.(true);
+    await new Promise((res) => setTimeout(res, 1000));
+    activateFunction?.();
+    options.loading?.(false);
+  };
   const resize = () => {
     if (!sceneManager || !camera || disposed) return;
 
@@ -99,6 +104,7 @@ export async function createGame(
       classHero: "warrior",
       camera: camera.getCamera(),
       domElement: sceneManager.renderer.domElement,
+      loader: loading,
     });
 
     if (options.debug) {
@@ -120,10 +126,16 @@ export async function createGame(
         resume,
         dispose,
         exit: () => {
-          dispose();
           options.exit?.();
+          dispose();
         },
-        nextLevel: () => run.nextLevel(),
+        nextLevel: async () => {
+          run.nextLevel();
+          //options.loading?.(true);
+          //await new Promise((res) => setTimeout(res, 1000));
+          //run.nextLevel();
+          //options.loading?.(false);
+        },
       };
 
       gui.add(gameControls, "pause").name("Pause");
@@ -192,7 +204,6 @@ export async function createGame(
     gui = null;
     stats = null;
   };
-  
 
   return {
     start,
