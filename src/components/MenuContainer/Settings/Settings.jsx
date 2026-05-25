@@ -33,6 +33,7 @@ export function Settings({ children }) {
   return (
     <div className="settings-container">
       <h1 className="settings-container__header">{t("menu.settings")}</h1>
+
       <div className="settings-container__body">
         <label className="settings-container__field">
           <span>{t("settings.fullscreen")}</span>

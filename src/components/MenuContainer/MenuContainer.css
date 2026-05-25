@@ -17,8 +17,6 @@
   pointer-events: none;
 }
 .menu-container__list {
-  padding: 20px;
-  border-radius: 20px;
   position: absolute;
   top: 50%;
   right: 50%;

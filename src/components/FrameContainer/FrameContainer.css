@@ -1,0 +1,21 @@
+.frame-container {
+  --frame-scale: 0.4;
+  --content-offset-x: -10px;
+  --content-offset-y: 5px;
+
+  box-sizing: border-box;
+  display: inline-flex;
+  border-style: solid;
+  border-image-source: url("../../assets/png/border2.png");
+  border-image-slice: 308 298 355 362 fill;
+  border-width: calc(308px * var(--frame-scale))
+    calc(298px * var(--frame-scale)) calc(355px * var(--frame-scale))
+    calc(362px * var(--frame-scale));
+}
+
+.frame-container__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(var(--content-offset-x), var(--content-offset-y));
+}

@@ -5,18 +5,19 @@ import { gsap } from "gsap";
 import { MenuList } from "./MenuList/MenuList";
 import { createMenuScene } from "../../game/menuScene.js";
 import { BackgroundRender } from "../BackgroundRender/BackgroundRender";
+import { FrameContainer } from "../FrameContainer/FrameContainer.jsx";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
 export function MenuContainer({ children, setLoading, setWindow }) {
   const backgroundRef = useRef(null);
-  const menuListRef = useRef(null);
+  const frameContainerRef = useRef(null);
   const { t } = useTranslation("common");
   const [activeItem, setActiveItem] = useState("main");
 
   useEffect(() => {
     let menuScene = null;
-    let menuListTween = null;
+    let frameContainerTween = null;
     let cancelled = false;
 
     async function createScene() {
@@ -31,14 +32,14 @@ export function MenuContainer({ children, setLoading, setWindow }) {
         return;
       }
 
-      if (menuListRef.current) {
-        menuListTween = gsap.fromTo(
-          menuListRef.current,
+      if (frameContainerRef.current) {
+        frameContainerTween = gsap.fromTo(
+          frameContainerRef.current,
           { autoAlpha: 0, y: 24 },
           { autoAlpha: 1, y: 0, duration: 1, ease: "power1.out" },
         );
 
-        await menuListTween.then();
+        await frameContainerTween.then();
       }
 
       if (cancelled) {
@@ -52,14 +53,13 @@ export function MenuContainer({ children, setLoading, setWindow }) {
         menuScene.dispose();
         return;
       }
-
     }
 
     createScene();
 
     return () => {
       cancelled = true;
-      menuListTween?.kill();
+      frameContainerTween?.kill();
       menuScene?.dispose();
     };
   }, []);
@@ -73,9 +73,9 @@ export function MenuContainer({ children, setLoading, setWindow }) {
   return (
     <div className="menu-container">
       <BackgroundRender className="background-render" ref={backgroundRef} />
-      <div className="menu-container__list">
+      <FrameContainer className="menu-container__list" ref={frameContainerRef}>
         {activeItem === "main" && (
-          <MenuList ref={menuListRef}>
+          <MenuList>
             {menuList.map((item, index) => {
               return (
                 <ButtonMenu
@@ -95,7 +95,7 @@ export function MenuContainer({ children, setLoading, setWindow }) {
             />
           </Settings>
         )}
-      </div>
+      </FrameContainer>
     </div>
   );
 }
