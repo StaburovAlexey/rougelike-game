@@ -13,10 +13,10 @@ import { initSceneManager } from "./scene/scene";
 
 const CAMERA_MOVE_DISTANCE = 10;
 const CAMERA_MOVE_HEIGHT = 4.5;
+const CAMERA_TARGET_HEIGHT = 0.2;
 const CAMERA_MIN_ZOOM = 0.5;
-const CAMERA_MAX_ZOOM = 3;
+const CAMERA_MAX_ZOOM = 1;
 const CAMERA_MOVE_DURATION = 0.7;
-const TWO_PI = Math.PI * 2;
 
 function normalizeAngleDelta(delta) {
   return Math.atan2(Math.sin(delta), Math.cos(delta));
@@ -47,6 +47,7 @@ export async function createGame(
   let disposed = false;
   let resizeObserver = null;
   let cameraMoveTween = null;
+  let cameraAngle = Math.atan2(1, 1);
   const loading = async (activateFunction = null) => {
     options.loading?.(true);
     await new Promise((res) => setTimeout(res, 1000));
@@ -59,38 +60,46 @@ export async function createGame(
     const size = sceneManager.resize();
     camera.resize(size);
   };
+  const getCameraTarget = () => {
+    const playerMesh = run?.player?.mesh;
+
+    if (playerMesh) {
+      return new THREE.Vector3(
+        playerMesh.position.x,
+        CAMERA_TARGET_HEIGHT,
+        playerMesh.position.z,
+      );
+    }
+
+    return control?.getTarget(new THREE.Vector3()) ?? new THREE.Vector3();
+  };
+  const applyCameraTransform = () => {
+    if (!camera || !control || disposed) return;
+
+    const target = getCameraTarget();
+    const cameraObject = camera.getCamera();
+
+    cameraObject.position.set(
+      target.x + Math.sin(cameraAngle) * CAMERA_MOVE_DISTANCE,
+      CAMERA_TARGET_HEIGHT + CAMERA_MOVE_HEIGHT,
+      target.z + Math.cos(cameraAngle) * CAMERA_MOVE_DISTANCE,
+    );
+    cameraObject.lookAt(target);
+    cameraObject.updateProjectionMatrix();
+    control.setTarget(target.x, target.y, target.z);
+  };
   const moveCameraToDirection = (direction, { immediate = false } = {}) => {
     if (!camera || !control || disposed) return;
 
-    const target = control.getTarget(new THREE.Vector3());
-    const cameraObject = camera.getCamera();
-    const currentOffset = new THREE.Vector3().subVectors(
-      cameraObject.position,
-      target,
-    );
-    const currentRadius =
-      Math.hypot(currentOffset.x, currentOffset.z) || CAMERA_MOVE_DISTANCE;
-    const startAngle = Math.atan2(currentOffset.x, currentOffset.z);
     const endAngle = Math.atan2(direction.x, direction.z);
-    const targetAngle = startAngle + normalizeAngleDelta(endAngle - startAngle);
-    const angleState = { angle: startAngle };
-
-    const updateCameraPosition = () => {
-      cameraObject.position.set(
-        target.x + Math.sin(angleState.angle) * currentRadius,
-        target.y + CAMERA_MOVE_HEIGHT,
-        target.z + Math.cos(angleState.angle) * currentRadius,
-      );
-      cameraObject.lookAt(target);
-      cameraObject.updateProjectionMatrix();
-      control.update();
-    };
+    const targetAngle = cameraAngle + normalizeAngleDelta(endAngle - cameraAngle);
+    const angleState = { angle: cameraAngle };
 
     cameraMoveTween?.kill();
 
     if (immediate) {
-      angleState.angle = endAngle;
-      updateCameraPosition();
+      cameraAngle = endAngle;
+      applyCameraTransform();
       return;
     }
 
@@ -98,8 +107,13 @@ export async function createGame(
       angle: targetAngle,
       duration: CAMERA_MOVE_DURATION,
       ease: "power2.inOut",
-      onUpdate: updateCameraPosition,
+      onUpdate: () => {
+        cameraAngle = angleState.angle;
+        applyCameraTransform();
+      },
       onComplete: () => {
+        cameraAngle = endAngle;
+        applyCameraTransform();
         cameraMoveTween = null;
       },
     });
@@ -140,25 +154,10 @@ export async function createGame(
     const delta = (now - last) / 1000;
     last = now;
 
-    const playerMesh = run.player?.mesh;
-
-    if (playerMesh) {
-      const oldTarget = control.getTarget(new THREE.Vector3());
-      const newX = playerMesh.position.x;
-      const newY = playerMesh.position.y;
-      const newZ = playerMesh.position.z;
-
-      const cam = camera.getCamera();
-      cam.position.x += newX - oldTarget.x;
-      cam.position.y += newY - oldTarget.y;
-      cam.position.z += newZ - oldTarget.z;
-
-      control.setTarget(newX, newY, newZ);
-    }
-
-    control.update();
+    applyCameraTransform();
     run.update(delta);
     stats?.update();
+    applyCameraTransform();
 
     sceneManager.renderer.render(sceneManager.getScene(), camera.getCamera());
   };

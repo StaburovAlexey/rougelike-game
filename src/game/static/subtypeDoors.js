@@ -54,6 +54,7 @@ const SUBTYPES_DOORS_EFFECTS = {
         category: "gold",
         count: 3,
       },
+      { type: "playerModifier", stat: "damagePerTurn", value: 1, roomsLeft: 1 },
     ],
   },
   chanceLoot: {
