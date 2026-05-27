@@ -3,66 +3,30 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { gsap } from "gsap";
 import { MenuList } from "./MenuList/MenuList";
-import { createMenuScene } from "../../game/menuScene.js";
-import { BackgroundRender } from "../BackgroundRender/BackgroundRender";
 import { FrameContainer } from "../FrameContainer/FrameContainer.jsx";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
-export function MenuContainer({ children, setLoading, transitionTo }) {
-  const backgroundRef = useRef(null);
+export function MenuContainer({ active, children, transitionTo }) {
   const frameContainerRef = useRef(null);
   const { t } = useTranslation("common");
   const [activeItem, setActiveItem] = useState("main");
 
   useEffect(() => {
-    let menuScene = null;
     let frameContainerTween = null;
-    let cancelled = false;
 
-    async function createScene() {
-      menuScene = await createMenuScene(backgroundRef.current, {
-        loading: (boolean) => {
-          if (!cancelled) setLoading(boolean);
-        },
-      });
-
-      if (cancelled) {
-        menuScene.dispose();
-        return;
-      }
-
-      await menuScene.fadeInScene();
-
-      if (cancelled) {
-        menuScene.dispose();
-        return;
-      }
-
-      if (frameContainerRef.current) {
-        frameContainerTween = gsap.fromTo(
-          frameContainerRef.current,
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 2, ease: "power1.out" },
-        );
-
-        await frameContainerTween.then();
-      }
-
-      if (cancelled) {
-        menuScene.dispose();
-        return;
-      }
+    if (active && frameContainerRef.current) {
+      frameContainerTween = gsap.fromTo(
+        frameContainerRef.current,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 2, ease: "power1.out" },
+      );
     }
 
-    createScene();
-
     return () => {
-      cancelled = true;
       frameContainerTween?.kill();
-      menuScene?.dispose();
     };
-  }, []);
+  }, [active]);
   function cliclItem(type) {
     if (type === "newGame") {
       transitionTo("game");
@@ -72,7 +36,6 @@ export function MenuContainer({ children, setLoading, transitionTo }) {
   }
   return (
     <div className="menu-container">
-      <BackgroundRender className="background-render" ref={backgroundRef} />
       <FrameContainer className="menu-container__list" ref={frameContainerRef}>
         {activeItem === "main" && (
           <MenuList>

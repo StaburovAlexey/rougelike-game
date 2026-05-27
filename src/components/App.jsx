@@ -1,9 +1,10 @@
 import "./App.css";
 import { Loader } from "./Loader/Loader";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MenuContainer } from "./MenuContainer/MenuContainer";
-import { GameContainer } from "./GameContainer/GameContainer";
+import { AppViewport } from "./AppViewport/AppViewport";
+import { BackgroundLayer } from "./BackgroundLayer/BackgroundLayer";
 
 const LOADER_TRANSITION_DURATION = 600;
 
@@ -15,6 +16,7 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [loaderVisible, setLoaderVisible] = useState(true);
   const [window, setWindow] = useState("main-menu");
+  const [backgroundReady, setBackgroundReady] = useState(false);
   const transitionInProgressRef = useRef(false);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function App() {
     };
   }, [loading]);
 
-  async function transitionTo(nextWindow) {
+  const transitionTo = useCallback(async (nextWindow) => {
     if (transitionInProgressRef.current) {
       return;
     }
@@ -44,19 +46,27 @@ export function App() {
 
     setWindow(nextWindow);
     transitionInProgressRef.current = false;
-  }
+  }, []);
 
   return (
-    <>
-      <div className="app-content">
-        {loaderVisible && <Loader active={loading} />}
+    <div className="app">
+      <BackgroundLayer
+        onReady={setBackgroundReady}
+        screen={window}
+        setLoading={setLoading}
+        transitionTo={transitionTo}
+      />
+
+      <AppViewport>
         {window === "main-menu" && (
-          <MenuContainer setLoading={setLoading} transitionTo={transitionTo} />
+          <MenuContainer
+            active={backgroundReady}
+            transitionTo={transitionTo}
+          />
         )}
-        {window === "game" && (
-          <GameContainer setLoading={setLoading} transitionTo={transitionTo} />
-        )}
-      </div>
-    </>
+      </AppViewport>
+
+      {loaderVisible && <Loader active={loading} />}
+    </div>
   );
 }
