@@ -1,16 +1,10 @@
 import LevelManager from "../levelManager/levelManager";
 import GenerateEnemy from "./generateEnemy";
-import GenerateLoot, { buildLevelRewardItem } from "./generateLoot";
+import GenerateLoot from "./generateLoot";
 import Player from "../entity/Player";
 import { HERO_CLASS } from "../static/hero";
 import { getDoorEffect } from "../static/subtypeDoors";
-import {
-  buildLootItem,
-  LOOT_SOURCES,
-  pickWeighted,
-  getLootTypeWeights,
-  getLootRarityWeights,
-} from "../static/loot";
+import { applyDoorEffects } from "./doorEffects";
 export default class RunManager {
   constructor({ difficulty, typeRun, classHero, camera, domElement, loader }) {
     this.difficulty = difficulty;
@@ -63,126 +57,9 @@ export default class RunManager {
       this.aciveLevel.clearLevel();
     }
 
+    this.player.tickRoomModifiers();
     const effect = getDoorEffect(this.player.pendingDoorEffect ?? "normal");
     this.player.pendingDoorEffect = null;
-
-    let enemies = options.enemies;
-    let extraGroundLoot = [];
-    let extraReward = [];
-
-    switch (effect.type) {
-      case "noEnemy":
-        enemies = [];
-        break;
-
-      case "modifier": {
-        const enemyGenerator = new GenerateEnemy(options.index, options.size);
-        let extraEnemies = enemyGenerator.enemies;
-        if (effect.enemyMultiplier > 1) {
-          const baseCount = extraEnemies.length;
-          const extraCount = Math.floor(
-            baseCount * (effect.enemyMultiplier - 1),
-          );
-          for (let i = 0; i < extraCount; i++) {
-            extraEnemies.push({
-              ...extraEnemies[i % baseCount],
-              id: baseCount + i,
-            });
-          }
-        }
-        const baseId = enemies.length;
-        for (let i = 0; i < extraEnemies.length; i++) {
-          extraEnemies[i] = { ...extraEnemies[i], id: baseId + i };
-        }
-        enemies = [...enemies, ...extraEnemies];
-        if (effect.rewardBonus) {
-          extraReward.push(
-            buildLevelRewardItem(options.index, this.player.rarityBonus),
-          );
-        }
-        break;
-      }
-
-      case "groundLoot": {
-        for (let i = 0; i < effect.count; i++) {
-          if (effect.category === "gold") {
-            extraGroundLoot.push(
-              buildLootItem({
-                type: "gold",
-                rarity: "common",
-                levelIndex: options.index,
-                source: LOOT_SOURCES.ground,
-              }),
-            );
-          } else if (effect.category === "legendary") {
-            const exclude = effect.exclude ?? [];
-            const typeWeights = getLootTypeWeights(
-              options.index,
-              LOOT_SOURCES.ground,
-            );
-            for (const ex of exclude) {
-              typeWeights[ex] = 0;
-            }
-            const type = pickWeighted(typeWeights) ?? "gold";
-            extraGroundLoot.push(
-              buildLootItem({
-                type,
-                rarity: "legendary",
-                levelIndex: options.index,
-                source: LOOT_SOURCES.ground,
-              }),
-            );
-          } else {
-            // random (possibly with exclusions)
-            const exclude = effect.exclude ?? [];
-            const typeWeights = getLootTypeWeights(
-              options.index,
-              LOOT_SOURCES.ground,
-            );
-            for (const ex of exclude) {
-              typeWeights[ex] = 0;
-            }
-            const type = pickWeighted(typeWeights) ?? "gold";
-            const rarityWeights = getLootRarityWeights(
-              options.index,
-              LOOT_SOURCES.ground,
-            );
-            rarityWeights.rare = Math.floor(
-              rarityWeights.rare * (1 + this.player.rarityBonus),
-            );
-            rarityWeights.legendary = Math.floor(
-              rarityWeights.legendary * (1 + this.player.rarityBonus),
-            );
-            const rarity = pickWeighted(rarityWeights) ?? "common";
-            extraGroundLoot.push(
-              buildLootItem({
-                type,
-                rarity,
-                levelIndex: options.index,
-                source: LOOT_SOURCES.ground,
-              }),
-            );
-          }
-        }
-
-        if (effect.enemyCount > 0) {
-          const enemyGenerator = new GenerateEnemy(options.index, options.size);
-          const extraEnemies = enemyGenerator.enemies.slice(
-            0,
-            effect.enemyCount,
-          );
-          const baseId = enemies.length;
-          for (let i = 0; i < extraEnemies.length; i++) {
-            extraEnemies[i] = { ...extraEnemies[i], id: baseId + i };
-          }
-          enemies = [...enemies, ...extraEnemies];
-        }
-        break;
-      }
-
-      case "shopLevel":
-        break;
-    }
 
     const lootGenerator = new GenerateLoot(
       options.index,
@@ -192,14 +69,15 @@ export default class RunManager {
       this.player.rarityBonus,
     );
 
-    const groundLoot = [
-      ...lootGenerator.loot.groundLoot,
-      ...extraGroundLoot.filter(Boolean),
-    ];
-    const levelReward = [
-      ...lootGenerator.loot.levelReward,
-      ...extraReward.filter(Boolean),
-    ];
+    const { enemies, groundLoot, levelReward } = applyDoorEffects({
+      effectConfig: effect,
+      enemies: options.enemies,
+      groundLoot: lootGenerator.loot.groundLoot,
+      levelIndex: options.index,
+      levelReward: lootGenerator.loot.levelReward,
+      levelSize: options.size,
+      player: this.player,
+    });
 
     console.log("data level", options);
     this.aciveLevel = new LevelManager(

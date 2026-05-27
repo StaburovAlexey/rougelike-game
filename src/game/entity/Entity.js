@@ -259,7 +259,11 @@ export default class Entity {
 
   async #applyAttackDamage(entity) {
     const entityDef = entity.inventory?.def ?? 0;
-    const atk = this.atk + (this.inventory?.weaponAtk ?? 0);
+    const damageMultiplier = this.damageMultiplier ?? 1;
+    const atk = Math.max(
+      0,
+      Math.ceil((this.atk + (this.inventory?.weaponAtk ?? 0)) * damageMultiplier),
+    );
     const damage = entityDef > atk ? 1 : atk;
     entity.hp = entity.hp - damage;
 

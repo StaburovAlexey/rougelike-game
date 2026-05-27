@@ -45,35 +45,48 @@ function getRandomSubType(availableTypes) {
 
 const SUBTYPES_DOORS_EFFECTS = {
   normal: {
-    type: "none",
+    effects: [],
   },
   chanceGold: {
-    type: "groundLoot",
-    category: "gold",
-    count: 3,
+    effects: [
+      {
+        type: "groundLoot",
+        category: "gold",
+        count: 3,
+      },
+    ],
   },
   chanceLoot: {
-    type: "groundLoot",
-    category: "random",
-    count: 3,
-    exclude: ["gold", "heal"],
+    effects: [
+      {
+        type: "groundLoot",
+        category: "random",
+        count: 3,
+        exclude: ["gold", "heal"],
+      },
+    ],
   },
   chanceLegendary: {
-    type: "groundLoot",
-    category: "legendary",
-    count: 1,
-    exclude: ["gold", "heal"],
+    effects: [
+      {
+        type: "groundLoot",
+        category: "legendary",
+        count: 1,
+        exclude: ["gold", "heal"],
+      },
+    ],
   },
   noEnemy: {
-    type: "noEnemy",
+    effects: [{ type: "noEnemy" }],
   },
   shop: {
-    type: "shopLevel",
+    effects: [{ type: "shopLevel" }],
   },
   hell: {
-    type: "modifier",
-    enemyMultiplier: 2,
-    rewardBonus: true,
+    effects: [
+      { type: "enemyCountMultiplier", value: 2 },
+      { type: "extraReward", count: 1 },
+    ],
   },
 };
 

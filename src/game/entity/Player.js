@@ -6,7 +6,54 @@ export default class Player extends Entity {
     super(position, type);
     this.maxHp = type.hp;
     this.pendingDoorEffect = null;
+    this.modifiers = [];
     this.inventory = new InventoryManager();
+  }
+  addModifier(modifier) {
+    if (!modifier?.stat) return;
+    this.modifiers.push({ ...modifier });
+  }
+  getModifierValue(stat) {
+    return this.modifiers
+      .filter((modifier) => modifier.stat === stat)
+      .reduce((sum, modifier) => sum + (modifier.value ?? 0), 0);
+  }
+  getModifierMultiplier(stat) {
+    return this.modifiers
+      .filter((modifier) => modifier.stat === stat)
+      .reduce((multiplier, modifier) => {
+        return multiplier * (modifier.multiplier ?? 1);
+      }, 1);
+  }
+  tickRoomModifiers() {
+    this.modifiers = this.modifiers
+      .map((modifier) => {
+        if (typeof modifier.roomsLeft !== "number") return modifier;
+        return { ...modifier, roomsLeft: modifier.roomsLeft - 1 };
+      })
+      .filter((modifier) => {
+        return typeof modifier.roomsLeft !== "number" || modifier.roomsLeft > 0;
+      });
+  }
+  applyTurnModifiers() {
+    const damagePerTurn = this.getModifierValue("damagePerTurn");
+    if (damagePerTurn > 0) {
+      this.hp = Math.max(0, this.hp - damagePerTurn);
+      this.flashDamage?.();
+      this.showDamageNumber?.(damagePerTurn);
+    }
+
+    this.modifiers = this.modifiers
+      .map((modifier) => {
+        if (typeof modifier.turnsLeft !== "number") return modifier;
+        return { ...modifier, turnsLeft: modifier.turnsLeft - 1 };
+      })
+      .filter((modifier) => {
+        return typeof modifier.turnsLeft !== "number" || modifier.turnsLeft > 0;
+      });
+  }
+  get damageMultiplier() {
+    return this.getModifierMultiplier("damageMultiplier");
   }
   get dropBonus() {
     // Бонус к шансу выпадения и количеству предметов
@@ -28,7 +75,7 @@ export default class Player extends Entity {
     return bonus;
   }
   get lightRadius() {
-    let radius = 3;
+    let radius = 3 + this.getModifierValue("lightRadius");
     //  if (this.inventory.weapon.length > 0) radius += 1;
     // if (this.inventory.armor.length > 0) radius += 1;
     //if (this.hp < this.maxHp * 0.3) radius -= 1;

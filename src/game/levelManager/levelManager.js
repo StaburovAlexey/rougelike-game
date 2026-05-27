@@ -114,6 +114,7 @@ export default class LevelManager {
           this.#syncPlayerLight();
         }
         this.enemies.tryMove();
+        this.player.applyTurnModifiers();
         this.enemies.syncVisible();
         this.#syncEntityLighting();
         this.loot.syncVisible();

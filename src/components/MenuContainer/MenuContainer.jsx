@@ -19,7 +19,7 @@ export function MenuContainer({ active, children, transitionTo }) {
       frameContainerTween = gsap.fromTo(
         frameContainerRef.current,
         { autoAlpha: 0 },
-        { autoAlpha: 1, duration: 2, ease: "power1.out" },
+        { autoAlpha: 1, duration: 1, ease: "power1.out" },
       );
     }
 
