@@ -1,0 +1,34 @@
+.run-settings-container {
+  display: grid;
+  grid-template-columns: repeat(5, 280px);
+  grid-template-rows: 80px 380px 130px 80px;
+  gap:40px;
+  grid-template-areas:
+    "slots-gold slots-gold slots-gold slots-gold slots-gold "
+    "hero hero hero stats stats"
+    "slots slots slots run-slots run-slots"
+    "btn btn btn btn btn";
+}
+.run-settings-container .flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.run-settings-container .hero {
+  grid-area: hero;
+}
+.run-settings-container .stats {
+  grid-area: stats;
+}
+.run-settings-container .slots {
+  grid-area: slots;
+}
+.run-settings-container .run-slots {
+  grid-area: run-slots;
+}
+.run-settings-container .slots-gold {
+  grid-area: slots-gold;
+}
+.run-settings-container .btn {
+  grid-area: btn;
+}

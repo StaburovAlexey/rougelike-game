@@ -35,6 +35,7 @@ export function App() {
   }, [loading]);
 
   const transitionTo = useCallback(async (nextWindow) => {
+    console.log(nextWindow)
     if (transitionInProgressRef.current) {
       return;
     }
@@ -59,10 +60,7 @@ export function App() {
 
       <AppViewport>
         {window === "main-menu" && (
-          <MenuContainer
-            active={backgroundReady}
-            transitionTo={transitionTo}
-          />
+          <MenuContainer active={backgroundReady} transitionTo={transitionTo} />
         )}
       </AppViewport>
 

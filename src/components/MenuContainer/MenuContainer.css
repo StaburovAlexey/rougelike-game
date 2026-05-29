@@ -4,19 +4,8 @@
   position: relative;
   pointer-events: none;
 }
-.menu-container::after {
-  content: "";
-  background-color: black;
-  opacity: 0.1;
-  right: 0;
-  top: 0;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
+
+
 .menu-container__list {
   position: absolute;
   left: 50%;

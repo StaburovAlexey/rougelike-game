@@ -6,6 +6,7 @@ import { MenuList } from "./MenuList/MenuList";
 import { FrameContainer } from "../FrameContainer/FrameContainer.jsx";
 import { Settings } from "./Settings/Settings.jsx";
 import { ButtonMenu } from "./ButtonMenu/ButtonMenu.jsx";
+import { RunSettings } from "../RunSettings/RunSettings.jsx";
 const menuList = ["newGame", "continue", "settings", "exit"];
 export function MenuContainer({ active, children, transitionTo }) {
   const frameContainerRef = useRef(null);
@@ -28,11 +29,11 @@ export function MenuContainer({ active, children, transitionTo }) {
     };
   }, [active]);
   function cliclItem(type) {
-    if (type === "newGame") {
-      transitionTo("game");
-    } else {
-      setActiveItem(type);
-    }
+    // if (type === "newGame") {
+    //   transitionTo("run-settings");
+    // } else {
+    setActiveItem(type);
+    // }
   }
   return (
     <div className="menu-container">
@@ -58,6 +59,7 @@ export function MenuContainer({ active, children, transitionTo }) {
             />
           </Settings>
         )}
+        {activeItem === "newGame" && <RunSettings>кнопки</RunSettings>}
       </FrameContainer>
     </div>
   );

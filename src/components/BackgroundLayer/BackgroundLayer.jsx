@@ -14,6 +14,7 @@ export function BackgroundLayer({ onReady, screen, setLoading, transitionTo }) {
     onReady(false);
 
     async function createScene() {
+    
       if (screen === "main-menu") {
         scene = await createMenuScene(backgroundRef.current, {
           loading: (value) => {
