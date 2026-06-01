@@ -65,9 +65,9 @@
   --tilt-x: 0deg;
   --tilt-y: 0deg;
   position: absolute;
-  left: calc(50% - (var(--card-width) / 2) + (var(--index) * 104px) - 52px);
-  bottom: -10px;
-  z-index: calc(2 + var(--index));
+  left: calc(50% - (var(--card-width) / 2) + (var(--index) * 132px) - 132px);
+  bottom: calc(10px + var(--arc-y, 0px));
+  z-index: calc(10 - var(--index));
   width: var(--card-width);
   height: var(--card-height);
   display: grid;
@@ -85,7 +85,7 @@
     inset 0 -28px 42px rgb(0 0 0 / 0.36),
     0 18px 24px rgb(0 0 0 / 0.48);
   color: rgb(243 238 225);
-  transform: rotate(calc((var(--index) - 0.5) * 7deg));
+  transform: rotate(var(--arc-rotate, 0deg));
   transform-style: preserve-3d;
   transform-origin: center bottom;
   transition:
@@ -98,7 +98,8 @@
 }
 
 .run-settings-hero-card:hover,
-.run-settings-hero-card:focus-visible {
+.run-settings-hero-card:focus-visible,
+.run-settings-hero-card.is-selected {
   z-index: 10;
   bottom: 30px;
   border-color: rgb(232 213 164 / 0.95);
@@ -107,7 +108,26 @@
     inset 0 -28px 42px rgb(0 0 0 / 0.28),
     0 0 22px rgb(177 32 58 / 0.28),
     0 24px 32px rgb(0 0 0 / 0.56);
+  transform: rotate(0deg);
+}
+
+.run-settings-hero-card:hover,
+.run-settings-hero-card:focus-visible {
   transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) rotate(0deg);
+}
+
+.run-settings-hero-card.is-unavailable {
+  cursor: not-allowed;
+}
+
+.run-settings-hero-card.is-unavailable:hover,
+.run-settings-hero-card.is-unavailable:focus-visible {
+  transform: rotate(0deg);
+}
+
+.run-settings-hero-card.is-unavailable .run-settings-hero-card__title {
+  filter: blur(4px);
+  opacity: 0.58;
 }
 
 .run-settings-hero-card::before {
@@ -142,6 +162,36 @@
   transform: scale(2.5);
   transform-origin: center bottom;
   filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.55));
+}
+
+.run-settings-hero-card__sprite--unavailable {
+  width: 74%;
+  height: 170px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.88);
+  filter: blur(10px);
+  transform: translateZ(28px) scale(0.9);
+}
+
+.run-settings-hero-card__unavailable-label {
+  position: absolute;
+  left: 50%;
+  top: 112px;
+  z-index: 4;
+  width: calc(100% - 36px);
+  padding: 8px 12px;
+  background: rgb(151 18 27 / 0.96);
+  color: rgb(255 255 255);
+  font-size: 28px;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.42);
+  transform: translateX(-50%) translateZ(44px) rotate(-18deg);
+  transform-origin: center;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.18),
+    0 8px 14px rgb(0 0 0 / 0.36);
+  pointer-events: none;
 }
 
 .run-settings-hero-card__title,

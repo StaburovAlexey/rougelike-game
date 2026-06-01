@@ -13,4 +13,11 @@ export const HERO_CLASS = {
     def: 0,
     attackHitFrame: 6,
   },
+   shield: {
+    type: "shield",
+    hp: 5,
+    atk: 2,
+    def: 0,
+    attackHitFrame: 9,
+  },
 };

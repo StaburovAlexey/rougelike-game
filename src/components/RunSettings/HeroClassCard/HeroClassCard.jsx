@@ -9,6 +9,10 @@ const HERO_CARD_DATA = {
     title: "Разбойник",
     idleFrames: 6,
   },
+  shield: {
+    title: "Щитоносец",
+    idleFrames: 8,
+  },
 };
 
 function HeroIdleAnimation({ heroType, frames }) {
@@ -37,10 +41,21 @@ function HeroIdleAnimation({ heroType, frames }) {
   );
 }
 
-export function HeroClassCard({ hero, index }) {
+export function HeroClassCard({
+  hero,
+  index,
+  isSelected,
+  isUnavailable,
+  onSelect,
+}) {
   const card = HERO_CARD_DATA[hero.type];
+  const arcOffset = index - 1;
 
   function handlePointerMove(event) {
+    if (isUnavailable) {
+      return;
+    }
+
     const cardElement = event.currentTarget;
     const rect = cardElement.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width - 0.5;
@@ -63,13 +78,35 @@ export function HeroClassCard({ hero, index }) {
 
   return (
     <button
-      className="run-settings-hero-card"
+      aria-disabled={isUnavailable}
+      aria-pressed={isSelected}
+      className={`run-settings-hero-card${isSelected ? " is-selected" : ""}${
+        isUnavailable ? " is-unavailable" : ""
+      }`}
+      onClick={() => {
+        if (!isUnavailable) {
+          onSelect(hero);
+        }
+      }}
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}
-      style={{ "--index": index }}
+      style={{
+        "--arc-rotate": `${arcOffset * 4}deg`,
+        "--arc-y": `${Math.abs(arcOffset) * -8}px`,
+        "--index": index,
+      }}
       type="button"
     >
-      <HeroIdleAnimation frames={card.idleFrames} heroType={hero.type} />
+      {isUnavailable ? (
+        <div className="run-settings-hero-card__sprite run-settings-hero-card__sprite--unavailable" />
+      ) : (
+        <HeroIdleAnimation frames={card.idleFrames} heroType={hero.type} />
+      )}
+      {isUnavailable && (
+        <span className="run-settings-hero-card__unavailable-label">
+          Недоступно
+        </span>
+      )}
       <span className="run-settings-hero-card__title">{card.title}</span>
     </button>
   );

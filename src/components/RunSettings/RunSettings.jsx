@@ -1,10 +1,23 @@
 import { ContainerItemRunSettings } from "../ContainerItemRunSettings/ContainerItemRunSettings";
 import { HERO_CLASS } from "../../game/static/hero";
 import { HeroClassCard } from "./HeroClassCard/HeroClassCard";
+import { useState } from "react";
 import "./RunSettings.css";
 
-export function RunSettings({ children }) {
+export function RunSettings({
+  children,
+  availableHeroTypes = [],
+  onHeroClassChange,
+}) {
   const heroClasses = Object.values(HERO_CLASS);
+  const [selectedHeroType, setSelectedHeroType] = useState(null);
+
+  function handleHeroSelect(hero) {
+    const nextHeroType = selectedHeroType === hero.type ? null : hero.type;
+
+    setSelectedHeroType(nextHeroType);
+    onHeroClassChange?.(nextHeroType ? hero : null);
+  }
 
   return (
     <div className="run-settings-container">
@@ -16,7 +29,10 @@ export function RunSettings({ children }) {
                 <HeroClassCard
                   hero={hero}
                   index={index}
+                  isSelected={selectedHeroType === hero.type}
+                  isUnavailable={!availableHeroTypes.includes(hero.type)}
                   key={hero.type}
+                  onSelect={handleHeroSelect}
                 />
               );
             })}

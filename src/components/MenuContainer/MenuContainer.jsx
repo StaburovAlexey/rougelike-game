@@ -59,7 +59,14 @@ export function MenuContainer({ active, children, transitionTo }) {
             />
           </Settings>
         )}
-        {activeItem === "newGame" && <RunSettings>кнопки</RunSettings>}
+        {activeItem === "newGame" && (
+          <RunSettings availableHeroTypes={["warrior"]}>
+            <ButtonMenu
+              onClick={() => setActiveItem("main")}
+              text={t("menu.back")}
+            />
+          </RunSettings>
+        )}
       </FrameContainer>
     </div>
   );
