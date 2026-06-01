@@ -5,3 +5,8 @@
 .button-menu:hover {
   opacity: 0.8;
 }
+
+.button-menu:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

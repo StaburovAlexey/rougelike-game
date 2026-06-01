@@ -12,6 +12,7 @@ export function MenuContainer({ active, children, transitionTo }) {
   const frameContainerRef = useRef(null);
   const { t } = useTranslation("common");
   const [activeItem, setActiveItem] = useState("main");
+  const [selectedHeroClass, setSelectedHeroClass] = useState(null);
 
   useEffect(() => {
     let frameContainerTween = null;
@@ -35,6 +36,15 @@ export function MenuContainer({ active, children, transitionTo }) {
     setActiveItem(type);
     // }
   }
+
+  function handleStartGame() {
+    if (!selectedHeroClass) {
+      return;
+    }
+
+    transitionTo("game");
+  }
+
   return (
     <div className="menu-container">
       <FrameContainer className="menu-container__list" ref={frameContainerRef}>
@@ -60,10 +70,18 @@ export function MenuContainer({ active, children, transitionTo }) {
           </Settings>
         )}
         {activeItem === "newGame" && (
-          <RunSettings availableHeroTypes={["warrior"]}>
+          <RunSettings
+            availableHeroTypes={["warrior"]}
+            onHeroClassChange={setSelectedHeroClass}
+          >
             <ButtonMenu
               onClick={() => setActiveItem("main")}
               text={t("menu.back")}
+            />
+            <ButtonMenu
+              disabled={!selectedHeroClass}
+              onClick={handleStartGame}
+              text={t("game:actions.start")}
             />
           </RunSettings>
         )}
