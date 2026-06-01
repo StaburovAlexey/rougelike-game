@@ -55,12 +55,15 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+  perspective: 900px;
   isolation: isolate;
 }
 
 .run-settings-hero-card {
   --card-width: 230px;
   --card-height: 300px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
   position: absolute;
   left: calc(50% - (var(--card-width) / 2) + (var(--index) * 104px) - 52px);
   bottom: -10px;
@@ -83,6 +86,7 @@
     0 18px 24px rgb(0 0 0 / 0.48);
   color: rgb(243 238 225);
   transform: rotate(calc((var(--index) - 0.5) * 7deg));
+  transform-style: preserve-3d;
   transform-origin: center bottom;
   transition:
     transform 0.24s ease,
@@ -90,6 +94,7 @@
     box-shadow 0.24s ease,
     border-color 0.24s ease,
     z-index 0s;
+  will-change: transform;
 }
 
 .run-settings-hero-card:hover,
@@ -102,7 +107,7 @@
     inset 0 -28px 42px rgb(0 0 0 / 0.28),
     0 0 22px rgb(177 32 58 / 0.28),
     0 24px 32px rgb(0 0 0 / 0.56);
-  transform: rotate(0deg);
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) rotate(0deg);
 }
 
 .run-settings-hero-card::before {
@@ -115,22 +120,6 @@
   pointer-events: none;
 }
 
-.run-settings-hero-card::after {
-  content: "";
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  top: 14px;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(232 213 164 / 0.74),
-    transparent
-  );
-  pointer-events: none;
-}
-
 .run-settings-hero-card__sprite {
   position: relative;
   align-self: center;
@@ -138,8 +127,9 @@
   width: 100%;
   height: 224px;
   image-rendering: pixelated;
-   overflow: hidden;
-
+  overflow: hidden;
+  transform: translateZ(28px);
+  transform-style: preserve-3d;
 }
 
 .run-settings-hero-card__sprite img {
@@ -147,6 +137,8 @@
   height: 100%;
   object-fit: contain;
   object-position: center bottom;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   transform: scale(2.5);
   transform-origin: center bottom;
   filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.55));
@@ -155,8 +147,9 @@
 .run-settings-hero-card__title,
 .run-settings-hero-card__stats {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   text-align: center;
+  transform: translateZ(36px);
 }
 
 .run-settings-hero-card__title {

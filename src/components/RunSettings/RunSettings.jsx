@@ -1,47 +1,7 @@
 import { ContainerItemRunSettings } from "../ContainerItemRunSettings/ContainerItemRunSettings";
 import { HERO_CLASS } from "../../game/static/hero";
-import { useEffect, useState } from "react";
+import { HeroClassCard } from "./HeroClassCard/HeroClassCard";
 import "./RunSettings.css";
-
-const HERO_CARD_DATA = {
-  warrior: {
-    title: "Воин",
-    idleFrames: 8,
-  },
-  rouge: {
-    title: "Разбойник",
-    idleFrames: 6,
-  },
-  fff: {
-    title: "Щитоновсец",
-  },
-};
-
-function HeroIdleAnimation({ heroType, frames }) {
-  const [frame, setFrame] = useState(1);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setFrame((currentFrame) => {
-        return currentFrame >= frames ? 1 : currentFrame + 1;
-      });
-    }, 160);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [frames]);
-
-  return (
-    <div className="run-settings-hero-card__sprite">
-      <img
-        alt=""
-        aria-hidden="true"
-        src={`/player/${heroType}/idle/${frame}.png`}
-      />
-    </div>
-  );
-}
 
 export function RunSettings({ children }) {
   const heroClasses = Object.values(HERO_CLASS);
@@ -52,23 +12,12 @@ export function RunSettings({ children }) {
         <ContainerItemRunSettings>
           <div className="run-settings-hero-deck">
             {heroClasses.map((hero, index) => {
-              const card = HERO_CARD_DATA[hero.type];
-
               return (
-                <button
-                  className="run-settings-hero-card"
+                <HeroClassCard
+                  hero={hero}
+                  index={index}
                   key={hero.type}
-                  style={{ "--index": index }}
-                  type="button"
-                >
-                  <HeroIdleAnimation
-                    frames={card.idleFrames}
-                    heroType={hero.type}
-                  />
-                  <span className="run-settings-hero-card__title">
-                    {card.title}
-                  </span>
-                </button>
+                />
               );
             })}
           </div>
